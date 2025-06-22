@@ -8,8 +8,8 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(callSuper=true)
-public class Trainer extends User{
+@EqualsAndHashCode(callSuper = true)
+public class Trainer extends User {
     private TrainingType specialization;
     private Long userId;
 }
