@@ -1,0 +1,47 @@
+package com.gym.crm.dao.impl;
+
+import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.model.Training;
+import com.gym.crm.storage.InMemoryStorage;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Repository;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+@Repository
+public class TrainingDAOImpl implements TrainingDAO {
+    private InMemoryStorage storage;
+
+    @Autowired
+    public void setStorage(InMemoryStorage storage) {
+        this.storage = storage;
+    }
+
+    @Override
+    public Training create(Training training) {
+        Long id = storage.getNextTrainingId();
+
+        Map<Long, Training> trainings = storage.getTrainings();
+        trainings.put(id, training);
+
+        return training;
+    }
+
+    @Override
+    public Optional<Training> findById(Long id) {
+        Map<Long, Training> trainings = storage.getTrainings();
+        Training training = trainings.get(id);
+
+        return Optional.ofNullable(training);
+    }
+
+    @Override
+    public List<Training> findAll() {
+        Map<Long, Training> trainings = storage.getTrainings();
+
+        return trainings.values().stream()
+                .toList();
+    }
+}
