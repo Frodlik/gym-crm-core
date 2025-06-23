@@ -6,15 +6,13 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Getter
@@ -22,28 +20,39 @@ public class InMemoryStorage {
     @Value("${storage.init.file.path}")
     private String initDataFilePath;
 
-    private final Map<Long, Trainee> trainees = new ConcurrentHashMap<>();
-    private final Map<Long, Trainer> trainers = new ConcurrentHashMap<>();
-    private final Map<Long, Training> trainings = new ConcurrentHashMap<>();
-    private final Map<String, TrainingType> trainingTypes = new ConcurrentHashMap<>();
+    private TraineeStorage traineeStorage;
+    private TrainerStorage trainerStorage;
+    private TrainingStorage trainingStorage;
+    private TrainingTypeStorage trainingTypeStorage;
 
-    private final AtomicLong traineeIdGenerator = new AtomicLong(1);
-    private final AtomicLong trainerIdGenerator = new AtomicLong(1);
-    private final AtomicLong trainingIdGenerator = new AtomicLong(1);
+    @Autowired
+    public void setTraineeStorage(TraineeStorage traineeStorage) {
+        this.traineeStorage = traineeStorage;
+    }
+
+    @Autowired
+    public void setTrainerStorage(TrainerStorage trainerStorage) {
+        this.trainerStorage = trainerStorage;
+    }
+
+    @Autowired
+    public void setTrainingStorage(TrainingStorage trainingStorage) {
+        this.trainingStorage = trainingStorage;
+    }
+
+    @Autowired
+    public void setTrainingTypeStorage(TrainingTypeStorage trainingTypeStorage) {
+        this.trainingTypeStorage = trainingTypeStorage;
+    }
 
     @PostConstruct
-    public void initializeStorage() {
+    public void initializeData() {
         loadInitialData();
     }
 
     private void loadInitialData() {
-        try (InputStream inputStream = new FileInputStream(initDataFilePath) {
-        };
+        try (InputStream inputStream = new FileInputStream(initDataFilePath);
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-            if (inputStream == null) {
-                loadDefaultData();
-                return;
-            }
 
             String line;
             String currentSection = null;
@@ -75,6 +84,8 @@ public class InMemoryStorage {
                 }
             }
         } catch (IOException e) {
+            System.err.println("Could not load initial data from file: " + initDataFilePath +
+                    ". Loading default data instead.");
             loadDefaultData();
         }
     }
@@ -83,14 +94,14 @@ public class InMemoryStorage {
         String[] parts = line.split(",");
         if (parts.length >= 1) {
             String typeName = parts[0].trim();
-            trainingTypes.put(typeName, new TrainingType(typeName));
+            trainingTypeStorage.getTrainingTypes().put(typeName, new TrainingType(typeName));
         }
     }
 
     private void loadTrainee(String line) {
         String[] parts = line.split(",");
         if (parts.length >= 6) {
-            Long id = traineeIdGenerator.getAndIncrement();
+            Long id = traineeStorage.getNextId();
             Trainee trainee = new Trainee();
             trainee.setUserId(id);
             trainee.setFirstName(parts[0].trim());
@@ -102,14 +113,14 @@ public class InMemoryStorage {
             if (parts.length > 6 && !parts[6].trim().isEmpty()) {
                 trainee.setAddress(parts[6].trim());
             }
-            trainees.put(id, trainee);
+            traineeStorage.getTrainees().put(id, trainee);
         }
     }
 
     private void loadTrainer(String line) {
         String[] parts = line.split(",");
         if (parts.length >= 6) {
-            Long id = trainerIdGenerator.getAndIncrement();
+            Long id = trainerStorage.getNextId();
             Trainer trainer = new Trainer();
             trainer.setUserId(id);
             trainer.setFirstName(parts[0].trim());
@@ -118,44 +129,34 @@ public class InMemoryStorage {
             trainer.setPassword(parts[3].trim());
             trainer.setIsActive(Boolean.parseBoolean(parts[4].trim()));
             String specializationName = parts[5].trim();
-            trainer.setSpecialization(trainingTypes.get(specializationName));
-            trainers.put(id, trainer);
+            trainer.setSpecialization(trainingTypeStorage.getTrainingTypes().get(specializationName));
+            trainerStorage.getTrainers().put(id, trainer);
         }
     }
 
     private void loadTraining(String line) {
         String[] parts = line.split(",");
         if (parts.length >= 6) {
-            Long id = trainingIdGenerator.getAndIncrement();
+            Long id = trainingStorage.getNextId();
             Training training = new Training();
             training.setTraineeId(Long.parseLong(parts[0].trim()));
             training.setTrainerId(Long.parseLong(parts[1].trim()));
             training.setTrainingName(parts[2].trim());
             String trainingTypeName = parts[3].trim();
-            training.setTrainingType(trainingTypes.get(trainingTypeName));
+            training.setTrainingType(trainingTypeStorage.getTrainingTypes().get(trainingTypeName));
             training.setTrainingDate(LocalDate.parse(parts[4].trim(), DateTimeFormatter.ISO_LOCAL_DATE));
             training.setDuration(Integer.parseInt(parts[5].trim()));
-            trainings.put(id, training);
+            trainingStorage.getTrainings().put(id, training);
         }
     }
 
     private void loadDefaultData() {
-        trainingTypes.put("FITNESS", new TrainingType("FITNESS"));
-        trainingTypes.put("YOGA", new TrainingType("YOGA"));
-        trainingTypes.put("ZUMBA", new TrainingType("ZUMBA"));
-        trainingTypes.put("STRETCHING", new TrainingType("STRETCHING"));
-        trainingTypes.put("RESISTANCE", new TrainingType("RESISTANCE"));
-    }
+        trainingTypeStorage.getTrainingTypes().put("FITNESS", new TrainingType("FITNESS"));
+        trainingTypeStorage.getTrainingTypes().put("YOGA", new TrainingType("YOGA"));
+        trainingTypeStorage.getTrainingTypes().put("ZUMBA", new TrainingType("ZUMBA"));
+        trainingTypeStorage.getTrainingTypes().put("STRETCHING", new TrainingType("STRETCHING"));
+        trainingTypeStorage.getTrainingTypes().put("RESISTANCE", new TrainingType("RESISTANCE"));
 
-    public Long getNextTraineeId() {
-        return traineeIdGenerator.getAndIncrement();
-    }
-
-    public Long getNextTrainerId() {
-        return trainerIdGenerator.getAndIncrement();
-    }
-
-    public Long getNextTrainingId() {
-        return trainingIdGenerator.getAndIncrement();
+        System.out.println("Default training types loaded successfully");
     }
 }

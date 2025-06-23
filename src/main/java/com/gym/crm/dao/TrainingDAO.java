@@ -7,6 +7,8 @@ import java.util.Optional;
 
 public interface TrainingDAO {
     Training create(Training training);
+
     Optional<Training> findById(Long id);
+
     List<Training> findAll();
 }

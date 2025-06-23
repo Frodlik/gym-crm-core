@@ -2,7 +2,7 @@ package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TrainingDAO;
 import com.gym.crm.model.Training;
-import com.gym.crm.storage.InMemoryStorage;
+import com.gym.crm.storage.TrainingStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -12,18 +12,18 @@ import java.util.Optional;
 
 @Repository
 public class TrainingDAOImpl implements TrainingDAO {
-    private InMemoryStorage storage;
+    private TrainingStorage trainingStorage;
 
     @Autowired
-    public void setStorage(InMemoryStorage storage) {
-        this.storage = storage;
+    public void setStorage(TrainingStorage trainingStorage) {
+        this.trainingStorage = trainingStorage;
     }
 
     @Override
     public Training create(Training training) {
-        Long id = storage.getNextTrainingId();
+        Long id = trainingStorage.getNextId();
 
-        Map<Long, Training> trainings = storage.getTrainings();
+        Map<Long, Training> trainings = trainingStorage.getTrainings();
         trainings.put(id, training);
 
         return training;
@@ -31,7 +31,7 @@ public class TrainingDAOImpl implements TrainingDAO {
 
     @Override
     public Optional<Training> findById(Long id) {
-        Map<Long, Training> trainings = storage.getTrainings();
+        Map<Long, Training> trainings = trainingStorage.getTrainings();
         Training training = trainings.get(id);
 
         return Optional.ofNullable(training);
@@ -39,7 +39,7 @@ public class TrainingDAOImpl implements TrainingDAO {
 
     @Override
     public List<Training> findAll() {
-        Map<Long, Training> trainings = storage.getTrainings();
+        Map<Long, Training> trainings = trainingStorage.getTrainings();
 
         return trainings.values().stream()
                 .toList();
