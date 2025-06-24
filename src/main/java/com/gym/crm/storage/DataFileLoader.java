@@ -23,6 +23,10 @@ public class DataFileLoader {
     private TrainingStorage trainingStorage;
     private TrainingTypeStorage trainingTypeStorage;
 
+    private enum DataSection {
+        TRAINING_TYPES, TRAINEES, TRAINERS, TRAININGS
+    }
+
     @Autowired
     public void setTraineeStorage(TraineeStorage traineeStorage) {
         this.traineeStorage = traineeStorage;
@@ -43,12 +47,28 @@ public class DataFileLoader {
         this.trainingTypeStorage = trainingTypeStorage;
     }
 
-    public void loadDataFromFile(String filePath) {
+    public void loadTrainingTypesFromFile(String filePath) {
+        loadDataSection(filePath, DataSection.TRAINING_TYPES);
+    }
+
+    public void loadTraineesFromFile(String filePath) {
+        loadDataSection(filePath, DataSection.TRAINEES);
+    }
+
+    public void loadTrainersFromFile(String filePath) {
+        loadDataSection(filePath, DataSection.TRAINERS);
+    }
+
+    public void loadTrainingsFromFile(String filePath) {
+        loadDataSection(filePath, DataSection.TRAININGS);
+    }
+
+    private void loadDataSection(String filePath, DataSection targetSection) {
         try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
             String line;
-            String currentSection = null;
+            boolean inTargetSection = false;
 
             while ((line = reader.readLine()) != null) {
                 line = line.trim();
@@ -57,27 +77,33 @@ public class DataFileLoader {
                 }
 
                 if (line.startsWith("[") && line.endsWith("]")) {
-                    currentSection = line.substring(1, line.length() - 1);
+                    String sectionName = line.substring(1, line.length() - 1);
+                    inTargetSection = isInTargetSection(sectionName, targetSection);
                     continue;
                 }
 
-                switch (currentSection) {
-                    case "TRAINING_TYPES":
-                        loadTrainingType(line);
-                        break;
-                    case "TRAINEES":
-                        loadTrainee(line);
-                        break;
-                    case "TRAINERS":
-                        loadTrainer(line);
-                        break;
-                    case "TRAININGS":
-                        loadTraining(line);
-                        break;
+                if (!inTargetSection) {
+                    continue;
                 }
+
+                switch (targetSection) {
+                    case TRAINING_TYPES -> loadTrainingType(line);
+                    case TRAINEES -> loadTrainee(line);
+                    case TRAINERS -> loadTrainer(line);
+                    case TRAININGS -> loadTraining(line);
+                }
+
             }
         } catch (IOException e) {
-            log.warn("Could not load initial data from file: {}", filePath, e);
+            log.warn("Could not load {} data from file: {}", targetSection, filePath, e);
+        }
+    }
+
+    private boolean isInTargetSection(String sectionName, DataSection targetSection) {
+        try {
+            return DataSection.valueOf(sectionName) == targetSection;
+        } catch (IllegalArgumentException e) {
+            return false;
         }
     }
 
