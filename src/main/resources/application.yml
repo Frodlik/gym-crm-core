@@ -4,4 +4,4 @@ server:
 storage:
   init:
     file:
-      path: D:/EPAM/init-data.txt
+      path: init-data.txt
