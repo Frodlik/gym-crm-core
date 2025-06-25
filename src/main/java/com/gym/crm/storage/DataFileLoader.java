@@ -16,18 +16,23 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
+import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINEES;
+import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINERS;
+import static com.gym.crm.storage.DataFileLoader.DataSection.TRAININGS;
+import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINING_TYPES;
+
 @Component
 @Slf4j
 public class DataFileLoader {
     @Value("${storage.init.file.path}")
     private String initDataFilePath;
 
-    private enum DataSection {
+    enum DataSection {
         TRAINING_TYPES, TRAINEES, TRAINERS, TRAININGS
     }
 
     public TrainingTypeStorage loadTrainingTypesFromFile(TrainingTypeStorage storage) {
-        loadDataSection(DataSection.TRAINING_TYPES, line -> {
+        loadDataSection(TRAINING_TYPES, line -> {
             TrainingType type = parseTrainingType(line);
             if (type != null) {
                 storage.getTrainingTypes().put(type.getTrainingTypeName(), type);
@@ -37,7 +42,7 @@ public class DataFileLoader {
     }
 
     public TraineeStorage loadTraineesFromFile(TraineeStorage storage) {
-        loadDataSection(DataSection.TRAINEES, line -> {
+        loadDataSection(TRAINEES, line -> {
             Trainee trainee = parseTrainee(line, storage.getNextId());
             if (trainee != null) {
                 storage.getTrainees().put(trainee.getUserId(), trainee);
@@ -47,7 +52,7 @@ public class DataFileLoader {
     }
 
     public TrainerStorage loadTrainersFromFile(TrainerStorage storage, TrainingTypeStorage typeStorage) {
-        loadDataSection(DataSection.TRAINERS, line -> {
+        loadDataSection(TRAINERS, line -> {
             Trainer trainer = parseTrainer(line, storage.getNextId(), typeStorage);
             if (trainer != null) {
                 storage.getTrainers().put(trainer.getUserId(), trainer);
@@ -57,10 +62,11 @@ public class DataFileLoader {
     }
 
     public TrainingStorage loadTrainingsFromFile(TrainingStorage storage, TrainingTypeStorage typeStorage) {
-        loadDataSection(DataSection.TRAININGS, line -> {
-            Training training = parseTraining(line, storage.getNextId(), typeStorage);
+        loadDataSection(TRAININGS, line -> {
+            Long id = storage.getNextId();
+            Training training = parseTraining(line, id, typeStorage);
             if (training != null) {
-                storage.getTrainings().put(storage.getNextId(), training);
+                storage.getTrainings().put(id, training);
             }
         });
         return storage;

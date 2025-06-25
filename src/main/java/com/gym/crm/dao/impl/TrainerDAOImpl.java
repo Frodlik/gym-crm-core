@@ -2,6 +2,7 @@ package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.model.Trainer;
+import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TrainerStorage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
@@ -15,8 +16,8 @@ public class TrainerDAOImpl implements TrainerDAO {
     private TrainerStorage trainerStorage;
 
     @Autowired
-    public void setStorage(TrainerStorage trainerStorage) {
-        this.trainerStorage = trainerStorage;
+    public void setStorage(InMemoryStorage inMemoryStorage) {
+        this.trainerStorage = inMemoryStorage.getTrainerStorage();
     }
 
     @Override
