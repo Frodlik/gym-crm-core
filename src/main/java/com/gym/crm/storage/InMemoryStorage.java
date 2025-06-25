@@ -71,7 +71,7 @@ public class InMemoryStorage {
             return storageType.cast(obj);
         }
 
-        throw new IllegalStateException("Invalid storage type for '" + entityName.name().toLowerCase() + "'");
+        throw new IllegalStateException("Invalid storage type for '%s'".formatted(entityName.name().toLowerCase()));
     }
 
     @PostConstruct
