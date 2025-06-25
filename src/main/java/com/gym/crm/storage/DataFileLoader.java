@@ -5,7 +5,7 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.io.BufferedReader;
@@ -14,57 +14,60 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.function.Consumer;
 
 @Component
 @Slf4j
 public class DataFileLoader {
-    private TraineeStorage traineeStorage;
-    private TrainerStorage trainerStorage;
-    private TrainingStorage trainingStorage;
-    private TrainingTypeStorage trainingTypeStorage;
+    @Value("${storage.init.file.path}")
+    private String initDataFilePath;
 
     private enum DataSection {
         TRAINING_TYPES, TRAINEES, TRAINERS, TRAININGS
     }
 
-    @Autowired
-    public void setTraineeStorage(TraineeStorage traineeStorage) {
-        this.traineeStorage = traineeStorage;
+    public TrainingTypeStorage loadTrainingTypesFromFile(TrainingTypeStorage storage) {
+        loadDataSection(DataSection.TRAINING_TYPES, line -> {
+            TrainingType type = parseTrainingType(line);
+            if (type != null) {
+                storage.getTrainingTypes().put(type.getTrainingTypeName(), type);
+            }
+        });
+        return storage;
     }
 
-    @Autowired
-    public void setTrainerStorage(TrainerStorage trainerStorage) {
-        this.trainerStorage = trainerStorage;
+    public TraineeStorage loadTraineesFromFile(TraineeStorage storage) {
+        loadDataSection(DataSection.TRAINEES, line -> {
+            Trainee trainee = parseTrainee(line, storage.getNextId());
+            if (trainee != null) {
+                storage.getTrainees().put(trainee.getUserId(), trainee);
+            }
+        });
+        return storage;
     }
 
-    @Autowired
-    public void setTrainingStorage(TrainingStorage trainingStorage) {
-        this.trainingStorage = trainingStorage;
+    public TrainerStorage loadTrainersFromFile(TrainerStorage storage, TrainingTypeStorage typeStorage) {
+        loadDataSection(DataSection.TRAINERS, line -> {
+            Trainer trainer = parseTrainer(line, storage.getNextId(), typeStorage);
+            if (trainer != null) {
+                storage.getTrainers().put(trainer.getUserId(), trainer);
+            }
+        });
+        return storage;
     }
 
-    @Autowired
-    public void setTrainingTypeStorage(TrainingTypeStorage trainingTypeStorage) {
-        this.trainingTypeStorage = trainingTypeStorage;
+    public TrainingStorage loadTrainingsFromFile(TrainingStorage storage, TrainingTypeStorage typeStorage) {
+        loadDataSection(DataSection.TRAININGS, line -> {
+            Training training = parseTraining(line, storage.getNextId(), typeStorage);
+            if (training != null) {
+                storage.getTrainings().put(storage.getNextId(), training);
+            }
+        });
+        return storage;
     }
 
-    public void loadTrainingTypesFromFile(String filePath) {
-        loadDataSection(filePath, DataSection.TRAINING_TYPES);
-    }
-
-    public void loadTraineesFromFile(String filePath) {
-        loadDataSection(filePath, DataSection.TRAINEES);
-    }
-
-    public void loadTrainersFromFile(String filePath) {
-        loadDataSection(filePath, DataSection.TRAINERS);
-    }
-
-    public void loadTrainingsFromFile(String filePath) {
-        loadDataSection(filePath, DataSection.TRAININGS);
-    }
-
-    private void loadDataSection(String filePath, DataSection targetSection) {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(filePath);
+    private void loadDataSection(DataSection targetSection, Consumer<String> lineProcessor) {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(initDataFilePath);
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
             String line;
@@ -82,20 +85,12 @@ public class DataFileLoader {
                     continue;
                 }
 
-                if (!inTargetSection) {
-                    continue;
+                if (inTargetSection) {
+                    lineProcessor.accept(line);
                 }
-
-                switch (targetSection) {
-                    case TRAINING_TYPES -> loadTrainingType(line);
-                    case TRAINEES -> loadTrainee(line);
-                    case TRAINERS -> loadTrainer(line);
-                    case TRAININGS -> loadTraining(line);
-                }
-
             }
         } catch (IOException e) {
-            log.warn("Could not load {} data from file: {}", targetSection, filePath, e);
+            log.warn("Could not load {} data from file: {}", targetSection, initDataFilePath, e);
         }
     }
 
@@ -107,23 +102,20 @@ public class DataFileLoader {
         }
     }
 
-    private void loadTrainingType(String line) {
+    private TrainingType parseTrainingType(String line) {
         String[] parts = line.split(",");
         if (parts.length < 1) {
-            return;
+            return null;
         }
-
-        String typeName = parts[0].trim();
-        trainingTypeStorage.getTrainingTypes().put(typeName, new TrainingType(typeName));
+        return new TrainingType(parts[0].trim());
     }
 
-    private void loadTrainee(String line) {
+    private Trainee parseTrainee(String line, Long id) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
-            return;
+            return null;
         }
 
-        Long id = traineeStorage.getNextId();
         Trainee trainee = new Trainee();
         trainee.setUserId(id);
         trainee.setFirstName(parts[0].trim());
@@ -137,16 +129,15 @@ public class DataFileLoader {
             trainee.setAddress(parts[6].trim());
         }
 
-        traineeStorage.getTrainees().put(id, trainee);
+        return trainee;
     }
 
-    private void loadTrainer(String line) {
+    private Trainer parseTrainer(String line, Long id, TrainingTypeStorage typeStorage) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
-            return;
+            return null;
         }
 
-        Long id = trainerStorage.getNextId();
         Trainer trainer = new Trainer();
         trainer.setUserId(id);
         trainer.setFirstName(parts[0].trim());
@@ -156,28 +147,27 @@ public class DataFileLoader {
         trainer.setIsActive(Boolean.parseBoolean(parts[4].trim()));
 
         String specializationName = parts[5].trim();
-        trainer.setSpecialization(trainingTypeStorage.getTrainingTypes().get(specializationName));
+        trainer.setSpecialization(typeStorage.getTrainingTypes().get(specializationName));
 
-        trainerStorage.getTrainers().put(id, trainer);
+        return trainer;
     }
 
-    private void loadTraining(String line) {
+    private Training parseTraining(String line, Long id, TrainingTypeStorage typeStorage) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
-            return;
+            return null;
         }
 
-        Long id = trainingStorage.getNextId();
         Training training = new Training();
         training.setTraineeId(Long.parseLong(parts[0].trim()));
         training.setTrainerId(Long.parseLong(parts[1].trim()));
         training.setTrainingName(parts[2].trim());
 
         String trainingTypeName = parts[3].trim();
-        training.setTrainingType(trainingTypeStorage.getTrainingTypes().get(trainingTypeName));
+        training.setTrainingType(typeStorage.getTrainingTypes().get(trainingTypeName));
         training.setTrainingDate(LocalDate.parse(parts[4].trim(), DateTimeFormatter.ISO_LOCAL_DATE));
         training.setDuration(Integer.parseInt(parts[5].trim()));
 
-        trainingStorage.getTrainings().put(id, training);
+        return training;
     }
 }
