@@ -4,7 +4,8 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -22,8 +23,9 @@ import static com.gym.crm.storage.DataFileLoader.DataSection.TRAININGS;
 import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINING_TYPES;
 
 @Component
-@Slf4j
 public class DataFileLoader {
+    private static final Logger logger = LoggerFactory.getLogger(DataFileLoader.class);
+
     @Value("${storage.init.file.path}")
     private String initDataFilePath;
 
@@ -96,7 +98,7 @@ public class DataFileLoader {
                 }
             }
         } catch (IOException e) {
-            log.warn("Could not load {} data from file: {}", targetSection, initDataFilePath, e);
+            logger.warn("Could not load {} data from file: {}", targetSection, initDataFilePath, e);
         }
     }
 
@@ -104,6 +106,7 @@ public class DataFileLoader {
         try {
             return DataSection.valueOf(sectionName) == targetSection;
         } catch (IllegalArgumentException e) {
+            logger.warn("Unknown section [{}] encountered in file, skipping.", sectionName);
             return false;
         }
     }
@@ -119,6 +122,7 @@ public class DataFileLoader {
     private Trainee parseTrainee(String line, Long id) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
+            logger.warn("Invalid format for trainee line: {}", line);
             return null;
         }
 
@@ -141,6 +145,7 @@ public class DataFileLoader {
     private Trainer parseTrainer(String line, Long id, TrainingTypeStorage typeStorage) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
+            logger.warn("Invalid format for trainer line: {}", line);
             return null;
         }
 
@@ -161,6 +166,7 @@ public class DataFileLoader {
     private Training parseTraining(String line, Long id, TrainingTypeStorage typeStorage) {
         String[] parts = line.split(",");
         if (parts.length < 6) {
+            logger.warn("Invalid format for training line: {}", line);
             return null;
         }
 

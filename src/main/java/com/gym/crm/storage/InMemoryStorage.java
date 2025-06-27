@@ -2,6 +2,8 @@ package com.gym.crm.storage;
 
 import jakarta.annotation.PostConstruct;
 import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -16,6 +18,8 @@ import static com.gym.crm.storage.InMemoryStorage.EntityName.TRAINING_TYPE;
 @Component
 @Getter
 public class InMemoryStorage {
+    private static final Logger logger = LoggerFactory.getLogger(InMemoryStorage.class);
+
     enum EntityName {
         TRAINEE, TRAINER, TRAINING, TRAINING_TYPE
     }
@@ -71,6 +75,7 @@ public class InMemoryStorage {
             return storageType.cast(obj);
         }
 
+        logger.error("Storage type mismatch for entity: {}. Expected: {}", entityName, storageType.getSimpleName());
         throw new IllegalStateException("Invalid storage type for '%s'".formatted(entityName.name().toLowerCase()));
     }
 

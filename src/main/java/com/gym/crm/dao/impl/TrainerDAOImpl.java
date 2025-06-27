@@ -4,6 +4,8 @@ import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TrainerStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,8 @@ import java.util.Optional;
 
 @Repository
 public class TrainerDAOImpl implements TrainerDAO {
+    private static final Logger log = LoggerFactory.getLogger(TrainerDAOImpl.class);
+
     private TrainerStorage trainerStorage;
 
     @Autowired
@@ -28,6 +32,8 @@ public class TrainerDAOImpl implements TrainerDAO {
         Map<Long, Trainer> trainers = trainerStorage.getTrainers();
         trainers.put(id, trainer);
 
+        log.info("Created Trainer with ID: {}", id);
+
         return trainer;
     }
 
@@ -36,12 +42,16 @@ public class TrainerDAOImpl implements TrainerDAO {
         Map<Long, Trainer> trainers = trainerStorage.getTrainers();
         Trainer trainer = trainers.get(id);
 
+        log.debug("Trainer found with ID: {}", id);
+
         return Optional.ofNullable(trainer);
     }
 
     @Override
     public List<Trainer> findAll() {
         Map<Long, Trainer> trainers = trainerStorage.getTrainers();
+
+        log.debug("Retrieved all trainers. Count: {}", trainers.size());
 
         return trainers.values().stream()
                 .toList();
@@ -56,6 +66,8 @@ public class TrainerDAOImpl implements TrainerDAO {
         }
 
         trainers.put(trainer.getUserId(), trainer);
+
+        log.info("Trainer updated with ID: {}", trainer.getUserId());
 
         return trainer;
     }
