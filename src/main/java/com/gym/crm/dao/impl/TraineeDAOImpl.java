@@ -4,6 +4,8 @@ import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TraineeStorage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,8 @@ import java.util.Optional;
 
 @Repository
 public class TraineeDAOImpl implements TraineeDAO {
+    private static final Logger log = LoggerFactory.getLogger(TraineeDAOImpl.class);
+
     private TraineeStorage traineeStorage;
 
     @Autowired
@@ -28,6 +32,8 @@ public class TraineeDAOImpl implements TraineeDAO {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
         trainees.put(id, trainee);
 
+        log.info("Created Trainee with id: {}", id);
+
         return trainee;
     }
 
@@ -36,12 +42,16 @@ public class TraineeDAOImpl implements TraineeDAO {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
         Trainee trainee = trainees.get(id);
 
+        log.debug("Found trainee with ID: {}", id);
+
         return Optional.ofNullable(trainee);
     }
 
     @Override
     public List<Trainee> findAll() {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
+
+        log.debug("Retrieved all trainees. Count: {}", trainees.size());
 
         return trainees.values().stream()
                 .toList();
@@ -57,6 +67,8 @@ public class TraineeDAOImpl implements TraineeDAO {
 
         trainees.put(trainee.getUserId(), trainee);
 
+        log.info("Trainee updated with ID: {}", trainee.getUserId());
+
         return trainee;
     }
 
@@ -64,6 +76,8 @@ public class TraineeDAOImpl implements TraineeDAO {
     public boolean delete(Long id) {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
         Trainee removed = trainees.remove(id);
+
+        log.info("Trainee deleted with ID: {}", id);
 
         return removed != null;
     }

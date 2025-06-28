@@ -11,6 +11,8 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.service.TrainingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +20,8 @@ import java.util.Optional;
 
 @Service
 public class TrainingServiceImpl implements TrainingService {
+    private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
+
     private TrainingDAO trainingDAO;
     private TraineeDAO traineeDAO;
     private TrainerDAO trainerDAO;
@@ -45,6 +49,8 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public TrainingResponse create(TrainingCreateRequest request) {
+        logger.debug("Creating training: traineeId={}, trainerId={}", request.getTraineeId(), request.getTrainerId());
+
         Optional<Trainee> trainee = traineeDAO.findById(request.getTraineeId());
         Optional<Trainer> trainer = trainerDAO.findById(request.getTrainerId());
 
@@ -58,11 +64,15 @@ public class TrainingServiceImpl implements TrainingService {
 
         Training saved = trainingDAO.create(training);
 
+        logger.info("Training created successfully");
+
         return trainingMapper.toResponse(saved);
     }
 
     @Override
     public Optional<TrainingResponse> findById(Long id) {
+        logger.debug("Finding training by ID: {}", id);
+
         return trainingDAO.findById(id)
                 .map(trainingMapper::toResponse);
     }
