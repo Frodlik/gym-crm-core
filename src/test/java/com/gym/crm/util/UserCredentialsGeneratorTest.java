@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
@@ -121,26 +122,12 @@ class UserCredentialsGeneratorTest {
 
     @Test
     void generatePassword_ShouldUseAllAvailableCharacters() {
-        boolean hasUppercase = false;
-        boolean hasLowercase = false;
-        boolean hasDigit = false;
+        String actual = sut.generatePassword();
 
-        for (int i = 0; i < 100; i++) {
-            String password = sut.generatePassword();
-            var chars = password.chars().mapToObj(c -> (char) c).toList();
-
-            hasUppercase = hasUppercase || chars.stream().anyMatch(Character::isUpperCase);
-            hasLowercase = hasLowercase || chars.stream().anyMatch(Character::isLowerCase);
-            hasDigit = hasDigit || chars.stream().anyMatch(Character::isDigit);
-
-            if (hasUppercase && hasLowercase && hasDigit) {
-                break;
-            }
-        }
-
-        assertTrue(hasUppercase, "Generated passwords should contain uppercase letters");
-        assertTrue(hasLowercase, "Generated passwords should contain lowercase letters");
-        assertTrue(hasDigit, "Generated passwords should contain digits");
+        assertAll("Password must contain required character types",
+                () -> assertTrue(actual.chars().anyMatch(Character::isUpperCase), "Must contain uppercase letter"),
+                () -> assertTrue(actual.chars().anyMatch(Character::isLowerCase), "Must contain lowercase letter"),
+                () -> assertTrue(actual.chars().anyMatch(Character::isDigit), "Must contain digit"));
     }
 
     @Test
