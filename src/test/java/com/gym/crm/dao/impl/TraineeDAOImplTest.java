@@ -57,17 +57,17 @@ class TraineeDAOImplTest {
         when(traineeStorage.getNextId()).thenReturn(TRAINEE_ID);
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainee result = dao.create(trainee);
+        Trainee actual = dao.create(trainee);
 
-        assertNotNull(result);
-        assertEquals(TRAINEE_ID, result.getUserId());
-        assertEquals(FIRST_NAME, result.getFirstName());
-        assertEquals(LAST_NAME, result.getLastName());
-        assertEquals(USERNAME, result.getUsername());
-        assertEquals(PASSWORD, result.getPassword());
-        assertEquals(DATE_OF_BIRTH, result.getDateOfBirth());
-        assertEquals(ADDRESS, result.getAddress());
-        assertTrue(result.getIsActive());
+        assertNotNull(actual);
+        assertEquals(TRAINEE_ID, actual.getUserId());
+        assertEquals(FIRST_NAME, actual.getFirstName());
+        assertEquals(LAST_NAME, actual.getLastName());
+        assertEquals(USERNAME, actual.getUsername());
+        assertEquals(PASSWORD, actual.getPassword());
+        assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
+        assertEquals(ADDRESS, actual.getAddress());
+        assertTrue(actual.getIsActive());
 
         verify(traineeStorage).getNextId();
         verify(traineeStorage).getTrainees();
@@ -81,32 +81,32 @@ class TraineeDAOImplTest {
         when(traineeStorage.getNextId()).thenReturn(TRAINEE_ID);
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainee result = dao.create(trainee);
+        Trainee actual = dao.create(trainee);
 
-        assertNotNull(result);
-        assertEquals(TRAINEE_ID, result.getUserId());
-        assertEquals(FIRST_NAME, result.getFirstName());
-        assertEquals(LAST_NAME, result.getLastName());
-        assertEquals(USERNAME, result.getUsername());
-        assertEquals(PASSWORD, result.getPassword());
-        assertEquals(DATE_OF_BIRTH, result.getDateOfBirth());
-        assertNull(result.getAddress());
-        assertFalse(result.getIsActive());
+        assertNotNull(actual);
+        assertEquals(TRAINEE_ID, actual.getUserId());
+        assertEquals(FIRST_NAME, actual.getFirstName());
+        assertEquals(LAST_NAME, actual.getLastName());
+        assertEquals(USERNAME, actual.getUsername());
+        assertEquals(PASSWORD, actual.getPassword());
+        assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
+        assertNull(actual.getAddress());
+        assertFalse(actual.getIsActive());
     }
 
     @Test
     void testFindById_ShouldReturnTraineeWhenExists() {
-        Trainee trainee = createSampleTrainee(TRAINEE_ID);
+        Trainee expected = createSampleTrainee(TRAINEE_ID);
         Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
-        traineesMap.put(TRAINEE_ID, trainee);
+        traineesMap.put(TRAINEE_ID, expected);
 
         when(traineeStorage.getTrainees()).thenReturn(traineesMap);
 
-        Optional<Trainee> result = dao.findById(TRAINEE_ID);
+        Optional<Trainee> actual = dao.findById(TRAINEE_ID);
 
-        assertTrue(result.isPresent());
-        assertEquals(trainee, result.get());
-        assertEquals(TRAINEE_ID, result.get().getUserId());
+        assertTrue(actual.isPresent());
+        assertEquals(expected, actual.get());
+        assertEquals(TRAINEE_ID, actual.get().getUserId());
         verify(traineeStorage).getTrainees();
     }
 
@@ -116,9 +116,9 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        Optional<Trainee> result = dao.findById(id);
+        Optional<Trainee> actual = dao.findById(id);
 
-        assertFalse(result.isPresent());
+        assertFalse(actual.isPresent());
         verify(traineeStorage).getTrainees();
     }
 
@@ -135,11 +135,11 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(traineesMap);
 
-        List<Trainee> result = dao.findAll();
+        List<Trainee> actual = dao.findAll();
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(trainee1));
-        assertTrue(result.contains(trainee2));
+        assertEquals(2, actual.size());
+        assertTrue(actual.contains(trainee1));
+        assertTrue(actual.contains(trainee2));
         verify(traineeStorage).getTrainees();
     }
 
@@ -147,9 +147,9 @@ class TraineeDAOImplTest {
     void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        List<Trainee> result = dao.findAll();
+        List<Trainee> actual = dao.findAll();
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
         verify(traineeStorage).getTrainees();
     }
 
@@ -161,17 +161,17 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(traineesMap);
 
-        Trainee updatedTrainee = createSampleTrainee(TRAINEE_ID);
-        updatedTrainee.setFirstName("John Updated");
-        updatedTrainee.setAddress("456 Oak Ave");
-        updatedTrainee.setIsActive(false);
+        Trainee expected = createSampleTrainee(TRAINEE_ID);
+        expected.setFirstName("John Updated");
+        expected.setAddress("456 Oak Ave");
+        expected.setIsActive(false);
 
-        Trainee result = dao.update(updatedTrainee);
+        Trainee actual = dao.update(expected);
 
-        assertEquals(updatedTrainee, result);
-        assertEquals("John Updated", result.getFirstName());
-        assertEquals("456 Oak Ave", result.getAddress());
-        assertFalse(result.getIsActive());
+        assertEquals(expected, actual);
+        assertEquals(expected.getFirstName(), actual.getFirstName());
+        assertEquals(expected.getAddress(), actual.getAddress());
+        assertFalse(actual.getIsActive());
         verify(traineeStorage).getTrainees();
     }
 
@@ -181,10 +181,7 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> dao.update(trainee)
-        );
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.update(trainee));
 
         assertEquals("Trainee not found with ID: 999", exception.getMessage());
         verify(traineeStorage).getTrainees();

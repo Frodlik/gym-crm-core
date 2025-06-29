@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -42,6 +41,8 @@ class TraineeServiceImplTest {
     private static final Long TRAINEE_ID = 1L;
     private static final String GENERATED_PASSWORD = "generatedPassword";
 
+    private final Trainee trainee = buildTrainee();
+
     @Mock
     private TraineeDAO traineeDAO;
     @Mock
@@ -49,19 +50,17 @@ class TraineeServiceImplTest {
     @Mock
     private TraineeMapper traineeMapper;
     @InjectMocks
-    private TraineeServiceImpl traineeService;
-
-    private final Trainee trainee = buildTrainee();
+    private TraineeServiceImpl service;
 
     @Test
     void create_ShouldCreateTraineeSuccessfully() {
         TraineeCreateRequest createRequest = GymTestObjects.buildTraineeCreateRequest();
-        List<Trainee> existingTrainees = Arrays.asList(
+        List<Trainee> existingTrainees = List.of(
                 createTraineeWithUsername("existing.user1"),
                 createTraineeWithUsername("existing.user2")
         );
-        List<String> existingUsernames = Arrays.asList("existing.user1", "existing.user2");
-        TraineeResponse expectedResponse = buildTraineeResponse();
+        List<String> existingUsernames = List.of("existing.user1", "existing.user2");
+        TraineeResponse expected = buildTraineeResponse();
 
         when(traineeMapper.toEntity(createRequest)).thenReturn(trainee);
         when(traineeDAO.findAll()).thenReturn(existingTrainees);
@@ -69,13 +68,13 @@ class TraineeServiceImplTest {
                 .thenReturn(USERNAME);
         when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
         when(traineeDAO.create(trainee)).thenReturn(trainee);
-        when(traineeMapper.toResponse(trainee)).thenReturn(expectedResponse);
+        when(traineeMapper.toResponse(trainee)).thenReturn(expected);
 
-        TraineeResponse result = traineeService.create(createRequest);
+        TraineeResponse actual = service.create(createRequest);
 
-        assertNotNull(result);
-        assertEquals(expectedResponse.getId(), result.getId());
-        assertEquals(expectedResponse.getUsername(), result.getUsername());
+        assertNotNull(actual);
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getUsername(), actual.getUsername());
 
         verify(traineeMapper).toEntity(createRequest);
         verify(traineeDAO).findAll();
@@ -90,16 +89,16 @@ class TraineeServiceImplTest {
 
     @Test
     void findById_ShouldReturnTraineeWhenExists() {
-        TraineeResponse expectedResponse = GymTestObjects.buildTraineeResponse();
+        TraineeResponse expected = GymTestObjects.buildTraineeResponse();
 
         when(traineeDAO.findById(TRAINEE_ID)).thenReturn(Optional.of(trainee));
-        when(traineeMapper.toResponse(trainee)).thenReturn(expectedResponse);
+        when(traineeMapper.toResponse(trainee)).thenReturn(expected);
 
-        Optional<TraineeResponse> result = traineeService.findById(TRAINEE_ID);
+        Optional<TraineeResponse> actual = service.findById(TRAINEE_ID);
 
-        assertTrue(result.isPresent());
-        assertEquals(expectedResponse.getId(), result.get().getId());
-        assertEquals(expectedResponse.getUsername(), result.get().getUsername());
+        assertTrue(actual.isPresent());
+        assertEquals(expected.getId(), actual.get().getId());
+        assertEquals(expected.getUsername(), actual.get().getUsername());
 
         verify(traineeDAO).findById(TRAINEE_ID);
         verify(traineeMapper).toResponse(trainee);
@@ -110,9 +109,9 @@ class TraineeServiceImplTest {
         Long traineeId = 999L;
         when(traineeDAO.findById(traineeId)).thenReturn(Optional.empty());
 
-        Optional<TraineeResponse> result = traineeService.findById(traineeId);
+        Optional<TraineeResponse> actual = service.findById(traineeId);
 
-        assertFalse(result.isPresent());
+        assertFalse(actual.isPresent());
 
         verify(traineeDAO).findById(traineeId);
         verify(traineeMapper, never()).toResponse(any());
@@ -122,19 +121,19 @@ class TraineeServiceImplTest {
     void update_ShouldUpdateTraineeSuccessfully() {
         TraineeUpdateRequest updateRequest = GymTestObjects.buildTraineeUpdateRequest();
         Trainee updatedTrainee = buildUpdatedTrainee();
-        TraineeResponse updatedResponse = buildUpdatedResponse();
+        TraineeResponse expected = buildUpdatedResponse();
 
         when(traineeDAO.findById(updateRequest.getId())).thenReturn(Optional.of(trainee));
         when(traineeDAO.update(trainee)).thenReturn(updatedTrainee);
-        when(traineeMapper.toResponse(updatedTrainee)).thenReturn(updatedResponse);
+        when(traineeMapper.toResponse(updatedTrainee)).thenReturn(expected);
 
-        TraineeResponse result = traineeService.update(updateRequest);
+        TraineeResponse actual = service.update(updateRequest);
 
-        assertNotNull(result);
-        assertEquals(updatedResponse.getId(), result.getId());
-        assertEquals(updatedResponse.getFirstName(), result.getFirstName());
-        assertEquals(updatedResponse.getLastName(), result.getLastName());
-        assertEquals(updatedResponse.isActive(), result.isActive());
+        assertNotNull(actual);
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getFirstName(), actual.getFirstName());
+        assertEquals(expected.getLastName(), actual.getLastName());
+        assertEquals(expected.isActive(), actual.isActive());
 
         verify(traineeDAO).findById(updateRequest.getId());
         verify(traineeDAO).update(trainee);
@@ -153,10 +152,7 @@ class TraineeServiceImplTest {
 
         when(traineeDAO.findById(updateRequest.getId())).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(
-                CoreServiceException.class,
-                () -> traineeService.update(updateRequest)
-        );
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.update(updateRequest));
 
         assertEquals("Trainee not found with id: " + updateRequest.getId(), exception.getMessage());
 
@@ -167,7 +163,7 @@ class TraineeServiceImplTest {
 
     @Test
     void delete_ShouldCallDAODelete() {
-        traineeService.delete(TRAINEE_ID);
+        service.delete(TRAINEE_ID);
 
         verify(traineeDAO).delete(TRAINEE_ID);
     }

@@ -56,16 +56,16 @@ class TrainerDAOImplTest {
         when(trainerStorage.getNextId()).thenReturn(TRAINER_ID);
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainer result = dao.create(trainer);
+        Trainer actual = dao.create(trainer);
 
-        assertNotNull(result);
-        assertEquals(TRAINER_ID, result.getUserId());
-        assertEquals(FIRST_NAME, result.getFirstName());
-        assertEquals(LAST_NAME, result.getLastName());
-        assertEquals(USERNAME, result.getUsername());
-        assertEquals(PASSWORD, result.getPassword());
-        assertTrue(result.getIsActive());
-        assertEquals(DEFAULT_SPECIALIZATION, result.getSpecialization());
+        assertNotNull(actual);
+        assertEquals(TRAINER_ID, actual.getUserId());
+        assertEquals(FIRST_NAME, actual.getFirstName());
+        assertEquals(LAST_NAME, actual.getLastName());
+        assertEquals(USERNAME, actual.getUsername());
+        assertEquals(PASSWORD, actual.getPassword());
+        assertTrue(actual.getIsActive());
+        assertEquals(DEFAULT_SPECIALIZATION, actual.getSpecialization());
     }
 
     @Test
@@ -75,31 +75,31 @@ class TrainerDAOImplTest {
         when(trainerStorage.getNextId()).thenReturn(2L);
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainer result = dao.create(trainer);
+        Trainer actual = dao.create(trainer);
 
-        assertNotNull(result);
-        assertEquals(2L, result.getUserId());
-        assertEquals(FIRST_NAME, result.getFirstName());
-        assertEquals(LAST_NAME, result.getLastName());
-        assertEquals(USERNAME, result.getUsername());
-        assertEquals(PASSWORD, result.getPassword());
-        assertFalse(result.getIsActive());
-        assertNull(result.getSpecialization());
+        assertNotNull(actual);
+        assertEquals(2L, actual.getUserId());
+        assertEquals(FIRST_NAME, actual.getFirstName());
+        assertEquals(LAST_NAME, actual.getLastName());
+        assertEquals(USERNAME, actual.getUsername());
+        assertEquals(PASSWORD, actual.getPassword());
+        assertFalse(actual.getIsActive());
+        assertNull(actual.getSpecialization());
     }
 
     @Test
     void testFindById_ShouldReturnTrainerWhenExists() {
-        Trainer trainer = createTrainerWithId(TRAINER_ID);
+        Trainer expected = createTrainerWithId(TRAINER_ID);
         Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
-        trainersMap.put(TRAINER_ID, trainer);
+        trainersMap.put(TRAINER_ID, expected);
 
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        Optional<Trainer> result = dao.findById(TRAINER_ID);
+        Optional<Trainer> actual = dao.findById(TRAINER_ID);
 
-        assertTrue(result.isPresent());
-        assertEquals(trainer, result.get());
-        assertEquals(TRAINER_ID, result.get().getUserId());
+        assertTrue(actual.isPresent());
+        assertEquals(expected, actual.get());
+        assertEquals(TRAINER_ID, actual.get().getUserId());
         verify(trainerStorage).getTrainers();
     }
 
@@ -109,9 +109,9 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Optional<Trainer> result = dao.findById(id);
+        Optional<Trainer> actual = dao.findById(id);
 
-        assertFalse(result.isPresent());
+        assertFalse(actual.isPresent());
         verify(trainerStorage).getTrainers();
     }
 
@@ -129,11 +129,11 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        List<Trainer> result = dao.findAll();
+        List<Trainer> actual = dao.findAll();
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(trainer1));
-        assertTrue(result.contains(trainer2));
+        assertEquals(2, actual.size());
+        assertTrue(actual.contains(trainer1));
+        assertTrue(actual.contains(trainer2));
         verify(trainerStorage).getTrainers();
     }
 
@@ -141,9 +141,9 @@ class TrainerDAOImplTest {
     void testFindAll_ShouldReturnEmptyListWhenNoTrainers() {
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        List<Trainer> result = dao.findAll();
+        List<Trainer> actual = dao.findAll();
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
         verify(trainerStorage).getTrainers();
     }
 
@@ -155,17 +155,17 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        Trainer updatedTrainer = createTrainerWithId(TRAINER_ID);
-        updatedTrainer.setFirstName("Jane Updated");
-        updatedTrainer.setIsActive(false);
-        updatedTrainer.setSpecialization(new TrainingType("Pilates"));
+        Trainer expected = createTrainerWithId(TRAINER_ID);
+        expected.setFirstName("Jane Updated");
+        expected.setIsActive(false);
+        expected.setSpecialization(new TrainingType("Pilates"));
 
-        Trainer result = dao.update(updatedTrainer);
+        Trainer actual = dao.update(expected);
 
-        assertEquals(updatedTrainer, result);
-        assertEquals("Jane Updated", result.getFirstName());
-        assertFalse(result.getIsActive());
-        assertEquals("Pilates", result.getSpecialization().getTrainingTypeName());
+        assertEquals(expected, actual);
+        assertEquals(expected.getFirstName(), actual.getFirstName());
+        assertFalse(actual.getIsActive());
+        assertEquals(expected.getSpecialization().getTrainingTypeName(), actual.getSpecialization().getTrainingTypeName());
         verify(trainerStorage, times(1)).getTrainers();
     }
 
@@ -175,10 +175,7 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
-                () -> dao.update(trainer)
-        );
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.update(trainer));
 
         assertEquals("Trainer not found with ID: 999", exception.getMessage());
         verify(trainerStorage).getTrainers();
@@ -208,6 +205,7 @@ class TrainerDAOImplTest {
         trainer.setPassword(PASSWORD);
         trainer.setIsActive(isActive);
         trainer.setSpecialization(specialization);
+
         return trainer;
     }
 

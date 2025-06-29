@@ -30,19 +30,19 @@ class UserCredentialsGeneratorTest {
     private static final int PASSWORD_LENGTH = 10;
     private static final Pattern VALID_CHARACTERS_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
 
-    private UserCredentialsGenerator userCredentialsGenerator;
+    private UserCredentialsGenerator sut;
 
     @BeforeEach
     void setUp() {
-        userCredentialsGenerator = new UserCredentialsGenerator();
+        sut = new UserCredentialsGenerator();
     }
 
     @ParameterizedTest
     @MethodSource("usernameGenerationProvider")
     void generateUsername_ShouldGenerateExpectedUsername(String firstName, String lastName, List<String> existing, String expectedUsername) {
-        String actualUsername = userCredentialsGenerator.generateUsername(firstName, lastName, existing);
+        String actual = sut.generateUsername(firstName, lastName, existing);
 
-        assertEquals(expectedUsername, actualUsername);
+        assertEquals(expectedUsername, actual);
     }
 
     @Test
@@ -52,68 +52,71 @@ class UserCredentialsGeneratorTest {
                 "Jane.Smith5", "Jane.Smith6", "Jane.Smith7", "Jane.Smith8", "Jane.Smith9"
         );
 
-        String result = userCredentialsGenerator.generateUsername("Jane", "Smith", existingUsernames);
+        String actual = sut.generateUsername("Jane", "Smith", existingUsernames);
+        String expected = "Jane.Smith10";
 
-        assertEquals("Jane.Smith10", result);
+        assertEquals(expected, actual);
     }
 
     @Test
     void generateUsername_ShouldWorkWithSpecialCharactersInNames() {
         List<String> existingUsernames = Collections.emptyList();
 
-        String result = userCredentialsGenerator.generateUsername("Jean-Pierre", "O'Connor", existingUsernames);
+        String actual = sut.generateUsername("Jean-Pierre", "O'Connor", existingUsernames);
+        String expected = "Jean-Pierre.O'Connor";
 
-        assertEquals("Jean-Pierre.O'Connor", result);
+        assertEquals(expected, actual);
     }
 
     @Test
     void generateUsername_ShouldHandleEmptyExistingUsernames() {
         List<String> existingUsernames = Collections.emptyList();
 
-        String result = userCredentialsGenerator.generateUsername("Test", "User", existingUsernames);
+        String actual = sut.generateUsername("Test", "User", existingUsernames);
+        String expected = "Test.User";
 
-        assertEquals("Test.User", result);
+        assertEquals(expected, actual);
     }
 
     @Test
     void generateUsername_ShouldHandleNullValues() {
         assertThrows(NullPointerException.class, () ->
-                userCredentialsGenerator.generateUsername("Test", "User", null));
+                sut.generateUsername("Test", "User", null));
     }
 
     @Test
     void generatePassword_ShouldGeneratePasswordWithCorrectLength() {
-        String password = userCredentialsGenerator.generatePassword();
+        String actual = sut.generatePassword();
 
-        assertNotNull(password);
-        assertEquals(PASSWORD_LENGTH, password.length());
+        assertNotNull(actual);
+        assertEquals(PASSWORD_LENGTH, actual.length());
     }
 
     @Test
     void generatePassword_ShouldGeneratePasswordWithValidCharacters() {
-        String password = userCredentialsGenerator.generatePassword();
+        String actual = sut.generatePassword();
 
-        assertTrue(VALID_CHARACTERS_PATTERN.matcher(password).matches());
+        assertTrue(VALID_CHARACTERS_PATTERN.matcher(actual).matches());
     }
 
     @Test
     void generatePassword_ShouldGenerateDifferentPasswords() {
-        String password1 = userCredentialsGenerator.generatePassword();
-        String password2 = userCredentialsGenerator.generatePassword();
-        String password3 = userCredentialsGenerator.generatePassword();
+        String first = sut.generatePassword();
+        String second = sut.generatePassword();
+        String third = sut.generatePassword();
 
-        assertNotEquals(password1, password2);
-        assertNotEquals(password2, password3);
-        assertNotEquals(password1, password3);
+        assertNotEquals(first, second);
+        assertNotEquals(second, third);
+        assertNotEquals(first, third);
     }
 
     @Test
     void generatePassword_ShouldNotReturnNullOrEmpty() {
-        String password = userCredentialsGenerator.generatePassword();
+        String actual = sut.generatePassword();
 
-        assertNotNull(password);
-        assertFalse(password.isEmpty());
-        assertFalse(password.isBlank());
+        assertNotNull(actual);
+        assertFalse(actual.isEmpty());
+        assertFalse(actual.isBlank());
     }
 
     @Test
@@ -123,15 +126,16 @@ class UserCredentialsGeneratorTest {
         boolean hasDigit = false;
 
         for (int i = 0; i < 100; i++) {
-            String password = userCredentialsGenerator.generatePassword();
+            String password = sut.generatePassword();
+            var chars = password.chars().mapToObj(c -> (char) c).toList();
 
-            for (char c : password.toCharArray()) {
-                if (Character.isUpperCase(c)) hasUppercase = true;
-                if (Character.isLowerCase(c)) hasLowercase = true;
-                if (Character.isDigit(c)) hasDigit = true;
+            hasUppercase = hasUppercase || chars.stream().anyMatch(Character::isUpperCase);
+            hasLowercase = hasLowercase || chars.stream().anyMatch(Character::isLowerCase);
+            hasDigit = hasDigit || chars.stream().anyMatch(Character::isDigit);
+
+            if (hasUppercase && hasLowercase && hasDigit) {
+                break;
             }
-
-            if (hasUppercase && hasLowercase && hasDigit) break;
         }
 
         assertTrue(hasUppercase, "Generated passwords should contain uppercase letters");
@@ -145,17 +149,18 @@ class UserCredentialsGeneratorTest {
         String lastName = "VeryLongLastNameThatExceedsNormalLength";
         List<String> existingUsernames = Collections.emptyList();
 
-        String result = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
+        String actual = sut.generateUsername(firstName, lastName, existingUsernames);
+        String expected = firstName + "." + lastName;
 
-        assertEquals(firstName + "." + lastName, result);
+        assertEquals(expected, actual);
     }
 
     @Test
     void generateUsername_ShouldBeConsistentForSameInputs() {
         List<String> existingUsernames = List.of("John.Doe", "John.Doe1");
 
-        String result1 = userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
-        String result2 = userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
+        String result1 = sut.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
+        String result2 = sut.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
 
         assertEquals(result1, result2);
         assertEquals("John.Doe2", result1);

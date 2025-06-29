@@ -47,9 +47,9 @@ class TrainerServiceImplTest {
     @Mock
     private TrainerMapper trainerMapper;
     @InjectMocks
-    private TrainerServiceImpl trainerService;
+    private TrainerServiceImpl service;
 
-    private Trainer trainer = buildTrainer();
+    private final Trainer trainer = buildTrainer();
 
     @Test
     void create_ShouldCreateTrainerSuccessfully() {
@@ -59,7 +59,7 @@ class TrainerServiceImplTest {
                 createTrainerWithUsername("existing.trainer2")
         );
         List<String> existingUsernames = List.of("existing.trainer1", "existing.trainer2");
-        TrainerResponse expectedResponse = GymTestObjects.buildTrainerResponse();
+        TrainerResponse expected = GymTestObjects.buildTrainerResponse();
 
         when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
@@ -67,14 +67,14 @@ class TrainerServiceImplTest {
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
         when(trainerDAO.create(trainer)).thenReturn(trainer);
-        when(trainerMapper.toResponse(trainer)).thenReturn(expectedResponse);
+        when(trainerMapper.toResponse(trainer)).thenReturn(expected);
 
-        TrainerResponse result = trainerService.create(createRequest);
+        TrainerResponse actual = service.create(createRequest);
 
-        assertNotNull(result);
-        assertEquals(expectedResponse.getId(), result.getId());
-        assertEquals(expectedResponse.getUsername(), result.getUsername());
-        assertEquals(expectedResponse.getSpecialization(), result.getSpecialization());
+        assertNotNull(actual);
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getUsername(), actual.getUsername());
+        assertEquals(expected.getSpecialization(), actual.getSpecialization());
 
         verify(trainerMapper).toEntity(createRequest);
         verify(trainerDAO).findAll();
@@ -102,9 +102,9 @@ class TrainerServiceImplTest {
         when(trainerDAO.create(trainer)).thenReturn(trainer);
         when(trainerMapper.toResponse(trainer)).thenReturn(expectedResponse);
 
-        TrainerResponse result = trainerService.create(createRequest);
+        TrainerResponse actual = service.create(createRequest);
 
-        assertNotNull(result);
+        assertNotNull(actual);
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
 
@@ -112,17 +112,17 @@ class TrainerServiceImplTest {
 
     @Test
     void findById_ShouldReturnTrainerWhenExists() {
-        TrainerResponse expectedResponse = GymTestObjects.buildTrainerResponse();
+        TrainerResponse expected = GymTestObjects.buildTrainerResponse();
 
         when(trainerDAO.findById(TRAINER_ID)).thenReturn(Optional.of(trainer));
-        when(trainerMapper.toResponse(trainer)).thenReturn(expectedResponse);
+        when(trainerMapper.toResponse(trainer)).thenReturn(expected);
 
-        Optional<TrainerResponse> result = trainerService.findById(TRAINER_ID);
+        Optional<TrainerResponse> actual = service.findById(TRAINER_ID);
 
-        assertTrue(result.isPresent());
-        assertEquals(expectedResponse.getId(), result.get().getId());
-        assertEquals(expectedResponse.getUsername(), result.get().getUsername());
-        assertEquals(expectedResponse.getSpecialization(), result.get().getSpecialization());
+        assertTrue(actual.isPresent());
+        assertEquals(expected.getId(), actual.get().getId());
+        assertEquals(expected.getUsername(), actual.get().getUsername());
+        assertEquals(expected.getSpecialization(), actual.get().getSpecialization());
 
         verify(trainerDAO).findById(TRAINER_ID);
         verify(trainerMapper).toResponse(trainer);
@@ -134,7 +134,7 @@ class TrainerServiceImplTest {
 
         when(trainerDAO.findById(trainerId)).thenReturn(Optional.empty());
 
-        Optional<TrainerResponse> result = trainerService.findById(trainerId);
+        Optional<TrainerResponse> result = service.findById(trainerId);
 
         assertFalse(result.isPresent());
 
@@ -146,20 +146,20 @@ class TrainerServiceImplTest {
     void update_ShouldUpdateTrainerSuccessfully() {
         TrainerUpdateRequest updateRequest = GymTestObjects.buildTrainerUpdateRequest();
         Trainer updatedTrainer = buildUpdatedTrainer();
-        TrainerResponse updatedResponse = buildUpdatedResponse();
+        TrainerResponse expected = buildUpdatedResponse();
 
         when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.of(trainer));
         when(trainerDAO.update(trainer)).thenReturn(updatedTrainer);
-        when(trainerMapper.toResponse(updatedTrainer)).thenReturn(updatedResponse);
+        when(trainerMapper.toResponse(updatedTrainer)).thenReturn(expected);
 
-        TrainerResponse result = trainerService.update(updateRequest);
+        TrainerResponse actual = service.update(updateRequest);
 
-        assertNotNull(result);
-        assertEquals(updatedResponse.getId(), result.getId());
-        assertEquals(updatedResponse.getFirstName(), result.getFirstName());
-        assertEquals(updatedResponse.getLastName(), result.getLastName());
-        assertEquals(updatedResponse.isActive(), result.isActive());
-        assertEquals(updatedResponse.getSpecialization(), result.getSpecialization());
+        assertNotNull(actual);
+        assertEquals(expected.getId(), actual.getId());
+        assertEquals(expected.getFirstName(), actual.getFirstName());
+        assertEquals(expected.getLastName(), actual.getLastName());
+        assertEquals(expected.isActive(), actual.isActive());
+        assertEquals(expected.getSpecialization(), actual.getSpecialization());
 
         verify(trainerDAO).findById(updateRequest.getId());
         verify(trainerDAO).update(trainer);
@@ -177,10 +177,7 @@ class TrainerServiceImplTest {
 
         when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(
-                CoreServiceException.class,
-                () -> trainerService.update(updateRequest)
-        );
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.update(updateRequest));
 
         assertEquals("Trainer not found with id: " + updateRequest.getId(), exception.getMessage());
 

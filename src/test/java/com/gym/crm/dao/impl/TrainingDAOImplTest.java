@@ -40,12 +40,12 @@ class TrainingDAOImplTest {
     @Mock
     private TrainingStorage trainingStorage;
     @InjectMocks
-    private TrainingDAOImpl trainingDAO;
+    private TrainingDAOImpl dao;
 
     @BeforeEach
     void setUp() {
         when(inMemoryStorage.getTrainingStorage()).thenReturn(trainingStorage);
-        trainingDAO.setStorage(inMemoryStorage);
+        dao.setStorage(inMemoryStorage);
     }
 
     @Test
@@ -55,15 +55,15 @@ class TrainingDAOImplTest {
         when(trainingStorage.getNextId()).thenReturn(1L);
         when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        Training result = trainingDAO.create(training);
+        Training actual = dao.create(training);
 
-        assertNotNull(result);
-        assertEquals(TRAINEE_ID, result.getTraineeId());
-        assertEquals(TRAINER_ID, result.getTrainerId());
-        assertEquals(TRAINING_NAME, result.getTrainingName());
-        assertEquals(TRAINING_TYPE, result.getTrainingType());
-        assertEquals(TRAINING_DATE, result.getTrainingDate());
-        assertEquals(DURATION, result.getDuration());
+        assertNotNull(actual);
+        assertEquals(TRAINEE_ID, actual.getTraineeId());
+        assertEquals(TRAINER_ID, actual.getTrainerId());
+        assertEquals(TRAINING_NAME, actual.getTrainingName());
+        assertEquals(TRAINING_TYPE, actual.getTrainingType());
+        assertEquals(TRAINING_DATE, actual.getTrainingDate());
+        assertEquals(DURATION, actual.getDuration());
 
         verify(trainingStorage).getNextId();
         verify(trainingStorage).getTrainings();
@@ -77,30 +77,30 @@ class TrainingDAOImplTest {
         when(trainingStorage.getNextId()).thenReturn(2L);
         when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        Training result = trainingDAO.create(training);
+        Training actual = dao.create(training);
 
-        assertNotNull(result);
-        assertEquals(3L, result.getTraineeId());
-        assertEquals(4L, result.getTrainerId());
-        assertEquals("General Training", result.getTrainingName());
-        assertNull(result.getTrainingType());
-        assertEquals(LocalDate.of(2024, 2, 20), result.getTrainingDate());
-        assertEquals(90, result.getDuration());
+        assertNotNull(actual);
+        assertEquals(3L, actual.getTraineeId());
+        assertEquals(4L, actual.getTrainerId());
+        assertEquals("General Training", actual.getTrainingName());
+        assertNull(actual.getTrainingType());
+        assertEquals(LocalDate.of(2024, 2, 20), actual.getTrainingDate());
+        assertEquals(90, actual.getDuration());
     }
 
     @Test
     void testFindById_ShouldReturnTrainingWhenExists() {
         Long id = 1L;
-        Training training = createSampleTraining();
+        Training expected = createSampleTraining();
         Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
-        trainingsMap.put(id, training);
+        trainingsMap.put(id, expected);
 
         when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
 
-        Optional<Training> result = trainingDAO.findById(id);
+        Optional<Training> actual = dao.findById(id);
 
-        assertTrue(result.isPresent());
-        assertEquals(training, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(expected, actual.get());
         verify(trainingStorage).getTrainings();
     }
 
@@ -108,9 +108,9 @@ class TrainingDAOImplTest {
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        Optional<Training> result = trainingDAO.findById(999L);
+        Optional<Training> actual = dao.findById(999L);
 
-        assertFalse(result.isPresent());
+        assertFalse(actual.isPresent());
         verify(trainingStorage).getTrainings();
     }
 
@@ -120,18 +120,17 @@ class TrainingDAOImplTest {
         Training training2 = createTraining(3L, 4L, "Evening Pilates", new TrainingType("Pilates"),
                 TRAINING_DATE, 75);
 
-
         Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
         trainingsMap.put(1L, training1);
         trainingsMap.put(2L, training2);
 
         when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
 
-        List<Training> result = trainingDAO.findAll();
+        List<Training> actual = dao.findAll();
 
-        assertEquals(2, result.size());
-        assertTrue(result.contains(training1));
-        assertTrue(result.contains(training2));
+        assertEquals(2, actual.size());
+        assertTrue(actual.contains(training1));
+        assertTrue(actual.contains(training2));
         verify(trainingStorage).getTrainings();
     }
 
@@ -139,29 +138,29 @@ class TrainingDAOImplTest {
     void testFindAll_ShouldReturnEmptyListWhenNoTrainings() {
         when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        List<Training> result = trainingDAO.findAll();
+        List<Training> actual = dao.findAll();
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
         verify(trainingStorage).getTrainings();
     }
 
     @Test
     void testCreate_ShouldHandleTrainingWithMinimalData() {
         LocalDate today = LocalDate.now();
-        Training training = createTraining(5L, 6L, "Quick Session", null, today, 30);
+        Training expected = createTraining(5L, 6L, "Quick Session", null, today, 30);
 
         when(trainingStorage.getNextId()).thenReturn(3L);
         when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        Training result = trainingDAO.create(training);
+        Training actual = dao.create(expected);
 
-        assertNotNull(result);
-        assertEquals(5L, result.getTraineeId());
-        assertEquals(6L, result.getTrainerId());
-        assertEquals("Quick Session", result.getTrainingName());
-        assertEquals(today, result.getTrainingDate());
-        assertEquals(30, result.getDuration());
-        assertNull(result.getTrainingType());
+        assertNotNull(actual);
+        assertEquals(expected.getTraineeId(), actual.getTraineeId());
+        assertEquals(expected.getTrainerId(), actual.getTrainerId());
+        assertEquals(expected.getTrainingName(), actual.getTrainingName());
+        assertEquals(today, actual.getTrainingDate());
+        assertEquals(expected.getDuration(), actual.getDuration());
+        assertNull(actual.getTrainingType());
     }
 
     @Test
@@ -171,7 +170,7 @@ class TrainingDAOImplTest {
 
         when(newStorage.getTrainingStorage()).thenReturn(newTrainingStorage);
 
-        trainingDAO.setStorage(newStorage);
+        dao.setStorage(newStorage);
 
         verify(newStorage).getTrainingStorage();
     }
@@ -188,6 +187,7 @@ class TrainingDAOImplTest {
         training.setTrainingType(type);
         training.setTrainingDate(date);
         training.setDuration(duration);
+
         return training;
     }
 }
