@@ -1,4 +1,4 @@
-package service;
+package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
@@ -6,12 +6,12 @@ import com.gym.crm.dao.TrainingDAO;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
+import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.service.impl.TrainingServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,6 +34,20 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingServiceImplTest {
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
+    private static final String USERNAME = "john.doe";
+    private static final String TRAINER_FIRST_NAME = "Mike";
+    private static final String TRAINER_LAST_NAME = "Johnson";
+    private static final String TRAINER_USERNAME = "mike.johnson";
+    private static final String TRAINING_NAME = "Morning Workout";
+    private static final String FITNESS_TYPE = "Fitness";
+    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
+    private static final int TRAINING_DURATION = 60;
+    private static final Long TRAINEE_ID = 1L;
+    private static final Long TRAINER_ID = 2L;
+    private static final Long TRAINING_ID = 1L;
+
     @Mock
     private TrainingDAO trainingDAO;
     @Mock
@@ -45,70 +59,30 @@ class TrainingServiceImplTest {
     @InjectMocks
     private TrainingServiceImpl trainingService;
 
-    private Training training;
-    private Trainee trainee;
-    private Trainer trainer;
-    private TrainingCreateRequest createRequest;
-    private TrainingResponse trainingResponse;
-
-    @BeforeEach
-    void setUp() {
-        TrainingType trainingType = new TrainingType("Fitness");
-
-        trainee = new Trainee();
-        trainee.setUserId(1L);
-        trainee.setFirstName("John");
-        trainee.setLastName("Doe");
-        trainee.setUsername("john.doe");
-
-        trainer = new Trainer();
-        trainer.setUserId(2L);
-        trainer.setFirstName("Mike");
-        trainer.setLastName("Johnson");
-        trainer.setUsername("mike.johnson");
-
-        training = new Training();
-        training.setTraineeId(1L);
-        training.setTrainerId(2L);
-        training.setTrainingName("Morning Workout");
-        training.setTrainingType(trainingType);
-        training.setTrainingDate(LocalDate.of(2024, 1, 15));
-        training.setDuration(60);
-
-        createRequest = new TrainingCreateRequest();
-        createRequest.setTraineeId(1L);
-        createRequest.setTrainerId(2L);
-        createRequest.setTrainingName("Morning Workout");
-        createRequest.setTrainingDate(LocalDate.of(2024, 1, 15));
-        createRequest.setTrainingDuration(60);
-
-        trainingResponse = new TrainingResponse();
-        trainingResponse.setId(1L);
-        trainingResponse.setTraineeUsername("john.doe");
-        trainingResponse.setTrainerUsername("mike.johnson");
-        trainingResponse.setTrainingName("Morning Workout");
-        trainingResponse.setTrainingType(trainingType);
-        trainingResponse.setTrainingDate(LocalDate.of(2024, 1, 15));
-        trainingResponse.setTrainingDuration(60);
-    }
+    private final Training training = buildTraining();
+    private final Trainee trainee = buildTrainee();
+    private final Trainer trainer = buildTrainer();
 
     @Test
     void create_ShouldCreateTrainingSuccessfully() {
+        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+        TrainingResponse expectedResponse = GymTestObjects.buildTrainingResponse();
+
         when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(trainee));
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
         when(trainingDAO.create(training)).thenReturn(training);
-        when(trainingMapper.toResponse(training)).thenReturn(trainingResponse);
+        when(trainingMapper.toResponse(training)).thenReturn(expectedResponse);
 
         TrainingResponse result = trainingService.create(createRequest);
 
         assertNotNull(result);
-        assertEquals(trainingResponse.getId(), result.getId());
-        assertEquals(trainingResponse.getTraineeUsername(), result.getTraineeUsername());
-        assertEquals(trainingResponse.getTrainerUsername(), result.getTrainerUsername());
-        assertEquals(trainingResponse.getTrainingName(), result.getTrainingName());
-        assertEquals(trainingResponse.getTrainingDate(), result.getTrainingDate());
-        assertEquals(trainingResponse.getTrainingDuration(), result.getTrainingDuration());
+        assertEquals(expectedResponse.getId(), result.getId());
+        assertEquals(expectedResponse.getTraineeUsername(), result.getTraineeUsername());
+        assertEquals(expectedResponse.getTrainerUsername(), result.getTrainerUsername());
+        assertEquals(expectedResponse.getTrainingName(), result.getTrainingName());
+        assertEquals(expectedResponse.getTrainingDate(), result.getTrainingDate());
+        assertEquals(expectedResponse.getTrainingDuration(), result.getTrainingDuration());
 
         verify(traineeDAO).findById(createRequest.getTraineeId());
         verify(trainerDAO).findById(createRequest.getTrainerId());
@@ -122,6 +96,8 @@ class TrainingServiceImplTest {
 
     @Test
     void create_ShouldThrowExceptionWhenTraineeNotFound() {
+        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+
         when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.empty());
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
 
@@ -141,6 +117,8 @@ class TrainingServiceImplTest {
 
     @Test
     void create_ShouldThrowExceptionWhenTrainerNotFound() {
+        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+
         when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(trainee));
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.empty());
 
@@ -160,6 +138,8 @@ class TrainingServiceImplTest {
 
     @Test
     void create_ShouldThrowExceptionWhenBothTraineeAndTrainerNotFound() {
+        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+
         when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.empty());
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.empty());
 
@@ -179,25 +159,27 @@ class TrainingServiceImplTest {
 
     @Test
     void findById_ShouldReturnTrainingWhenExists() {
-        Long trainingId = 1L;
-        when(trainingDAO.findById(trainingId)).thenReturn(Optional.of(training));
-        when(trainingMapper.toResponse(training)).thenReturn(trainingResponse);
+        TrainingResponse expectedResponse = GymTestObjects.buildTrainingResponse();
 
-        Optional<TrainingResponse> result = trainingService.findById(trainingId);
+        when(trainingDAO.findById(TRAINING_ID)).thenReturn(Optional.of(training));
+        when(trainingMapper.toResponse(training)).thenReturn(expectedResponse);
+
+        Optional<TrainingResponse> result = trainingService.findById(TRAINING_ID);
 
         assertTrue(result.isPresent());
-        assertEquals(trainingResponse.getId(), result.get().getId());
-        assertEquals(trainingResponse.getTraineeUsername(), result.get().getTraineeUsername());
-        assertEquals(trainingResponse.getTrainerUsername(), result.get().getTrainerUsername());
-        assertEquals(trainingResponse.getTrainingName(), result.get().getTrainingName());
+        assertEquals(expectedResponse.getId(), result.get().getId());
+        assertEquals(expectedResponse.getTraineeUsername(), result.get().getTraineeUsername());
+        assertEquals(expectedResponse.getTrainerUsername(), result.get().getTrainerUsername());
+        assertEquals(expectedResponse.getTrainingName(), result.get().getTrainingName());
 
-        verify(trainingDAO).findById(trainingId);
+        verify(trainingDAO).findById(TRAINING_ID);
         verify(trainingMapper).toResponse(training);
     }
 
     @Test
     void findById_ShouldReturnEmptyWhenNotExists() {
         Long trainingId = 999L;
+
         when(trainingDAO.findById(trainingId)).thenReturn(Optional.empty());
 
         Optional<TrainingResponse> result = trainingService.findById(trainingId);
@@ -212,6 +194,8 @@ class TrainingServiceImplTest {
     void create_ShouldSetCorrectUserIds() {
         Long traineeUserId = 100L;
         Long trainerUserId = 200L;
+        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+        TrainingResponse expectedResponse = GymTestObjects.buildTrainingResponse();
 
         trainee.setUserId(traineeUserId);
         trainer.setUserId(trainerUserId);
@@ -220,7 +204,7 @@ class TrainingServiceImplTest {
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
         when(trainingDAO.create(training)).thenReturn(training);
-        when(trainingMapper.toResponse(training)).thenReturn(trainingResponse);
+        when(trainingMapper.toResponse(training)).thenReturn(expectedResponse);
 
         trainingService.create(createRequest);
 
@@ -228,5 +212,41 @@ class TrainingServiceImplTest {
         assertEquals(trainerUserId, training.getTrainerId());
 
         verify(trainingDAO).create(training);
+    }
+
+    private Training buildTraining() {
+        Training training = new Training();
+        training.setTraineeId(TRAINEE_ID);
+        training.setTrainerId(TRAINER_ID);
+        training.setTrainingName(TRAINING_NAME);
+        training.setTrainingDate(TRAINING_DATE);
+        training.setDuration(TRAINING_DURATION);
+        training.setTrainingType(new TrainingType(FITNESS_TYPE));
+        return training;
+    }
+
+    private Trainee buildTrainee() {
+        Trainee trainee = new Trainee();
+        trainee.setUserId(TRAINEE_ID);
+        trainee.setFirstName(FIRST_NAME);
+        trainee.setLastName(LAST_NAME);
+        trainee.setUsername(USERNAME);
+        trainee.setPassword("password123");
+        trainee.setIsActive(true);
+        trainee.setDateOfBirth(LocalDate.of(1990, 5, 15));
+        trainee.setAddress("123 Main St");
+        return trainee;
+    }
+
+    private Trainer buildTrainer() {
+        Trainer trainer = new Trainer();
+        trainer.setUserId(TRAINER_ID);
+        trainer.setFirstName(TRAINER_FIRST_NAME);
+        trainer.setLastName(TRAINER_LAST_NAME);
+        trainer.setUsername(TRAINER_USERNAME);
+        trainer.setPassword("password123");
+        trainer.setIsActive(true);
+        trainer.setSpecialization(new TrainingType(FITNESS_TYPE));
+        return trainer;
     }
 }

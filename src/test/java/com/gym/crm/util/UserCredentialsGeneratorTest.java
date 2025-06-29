@@ -1,6 +1,5 @@
-package util;
+package com.gym.crm.util;
 
-import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +23,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
 class UserCredentialsGeneratorTest {
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
+    private static final String EXPECTED_USERNAME = "John.Doe";
+    private static final String EXPECTED_USERNAME_WITH_SUFFIX = "John.Doe1";
+    private static final int PASSWORD_LENGTH = 10;
+    private static final Pattern VALID_CHARACTERS_PATTERN = Pattern.compile("^[A-Za-z0-9]+$");
+
     private UserCredentialsGenerator userCredentialsGenerator;
 
     @BeforeEach
@@ -35,61 +41,44 @@ class UserCredentialsGeneratorTest {
     @MethodSource("usernameGenerationProvider")
     void generateUsername_ShouldGenerateExpectedUsername(String firstName, String lastName, List<String> existing, String expectedUsername) {
         String actualUsername = userCredentialsGenerator.generateUsername(firstName, lastName, existing);
-        assertEquals(expectedUsername, actualUsername);
-    }
 
-    static Stream<Arguments> usernameGenerationProvider() {
-        return Stream.of(
-                Arguments.of("John", "Doe", List.of(), "John.Doe"),
-                Arguments.of("John", "Doe", List.of("John.Doe"), "John.Doe1"),
-                Arguments.of("John", "Doe", List.of("John.Doe", "John.Doe1", "John.Doe2"), "John.Doe3")
-        );
+        assertEquals(expectedUsername, actualUsername);
     }
 
     @Test
     void generateUsername_ShouldHandleLargeNumberOfConflicts() {
-        String firstName = "Jane";
-        String lastName = "Smith";
         List<String> existingUsernames = Arrays.asList(
                 "Jane.Smith", "Jane.Smith1", "Jane.Smith2", "Jane.Smith3", "Jane.Smith4",
                 "Jane.Smith5", "Jane.Smith6", "Jane.Smith7", "Jane.Smith8", "Jane.Smith9"
         );
 
-        String result = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
+        String result = userCredentialsGenerator.generateUsername("Jane", "Smith", existingUsernames);
 
         assertEquals("Jane.Smith10", result);
     }
 
     @Test
     void generateUsername_ShouldWorkWithSpecialCharactersInNames() {
-        String firstName = "Jean-Pierre";
-        String lastName = "O'Connor";
         List<String> existingUsernames = Collections.emptyList();
 
-        String result = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
+        String result = userCredentialsGenerator.generateUsername("Jean-Pierre", "O'Connor", existingUsernames);
 
         assertEquals("Jean-Pierre.O'Connor", result);
     }
 
     @Test
     void generateUsername_ShouldHandleEmptyExistingUsernames() {
-        String firstName = "Test";
-        String lastName = "User";
         List<String> existingUsernames = Collections.emptyList();
 
-        String result = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
+        String result = userCredentialsGenerator.generateUsername("Test", "User", existingUsernames);
 
         assertEquals("Test.User", result);
     }
 
     @Test
     void generateUsername_ShouldHandleNullValues() {
-        String firstName = "Test";
-        String lastName = "User";
-        List<String> existingUsernames = null;
-
         assertThrows(NullPointerException.class, () ->
-                userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames));
+                userCredentialsGenerator.generateUsername("Test", "User", null));
     }
 
     @Test
@@ -97,16 +86,14 @@ class UserCredentialsGeneratorTest {
         String password = userCredentialsGenerator.generatePassword();
 
         assertNotNull(password);
-        assertEquals(10, password.length());
+        assertEquals(PASSWORD_LENGTH, password.length());
     }
 
     @Test
     void generatePassword_ShouldGeneratePasswordWithValidCharacters() {
-        Pattern validCharactersPattern = Pattern.compile("^[A-Za-z0-9]+$");
-
         String password = userCredentialsGenerator.generatePassword();
 
-        assertTrue(validCharactersPattern.matcher(password).matches());
+        assertTrue(VALID_CHARACTERS_PATTERN.matcher(password).matches());
     }
 
     @Test
@@ -165,14 +152,20 @@ class UserCredentialsGeneratorTest {
 
     @Test
     void generateUsername_ShouldBeConsistentForSameInputs() {
-        String firstName = "John";
-        String lastName = "Doe";
-        List<String> existingUsernames = Arrays.asList("John.Doe", "John.Doe1");
+        List<String> existingUsernames = List.of("John.Doe", "John.Doe1");
 
-        String result1 = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
-        String result2 = userCredentialsGenerator.generateUsername(firstName, lastName, existingUsernames);
+        String result1 = userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
+        String result2 = userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
 
         assertEquals(result1, result2);
         assertEquals("John.Doe2", result1);
+    }
+
+    static Stream<Arguments> usernameGenerationProvider() {
+        return Stream.of(
+                Arguments.of(FIRST_NAME, LAST_NAME, List.of(), EXPECTED_USERNAME),
+                Arguments.of(FIRST_NAME, LAST_NAME, List.of(EXPECTED_USERNAME), EXPECTED_USERNAME_WITH_SUFFIX),
+                Arguments.of(FIRST_NAME, LAST_NAME, List.of(EXPECTED_USERNAME, EXPECTED_USERNAME_WITH_SUFFIX, "John.Doe2"), "John.Doe3")
+        );
     }
 }

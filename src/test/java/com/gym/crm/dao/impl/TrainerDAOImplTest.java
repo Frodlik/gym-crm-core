@@ -1,6 +1,5 @@
-package dao;
+package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.impl.TrainerDAOImpl;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.InMemoryStorage;
@@ -13,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,95 +29,87 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainerDAOImplTest {
+    private static final Long TRAINER_ID = 1L;
+    private static final String FIRST_NAME = "Jane";
+    private static final String LAST_NAME = "Smith";
+    private static final String USERNAME = "jane.smith";
+    private static final String PASSWORD = "password456";
+    private static final TrainingType DEFAULT_SPECIALIZATION = new TrainingType("Yoga");
+
     @Mock
     private InMemoryStorage inMemoryStorage;
     @Mock
     private TrainerStorage trainerStorage;
     @InjectMocks
-    private TrainerDAOImpl trainerDAO;
+    private TrainerDAOImpl dao;
 
     @BeforeEach
     void setUp() {
         when(inMemoryStorage.getTrainerStorage()).thenReturn(trainerStorage);
-        trainerDAO.setStorage(inMemoryStorage);
+        dao.setStorage(inMemoryStorage);
     }
 
     @Test
     void testCreate_ShouldCreateTrainerWithGeneratedId() {
-        TrainingType specialization = new TrainingType("Yoga");
-        Trainer trainer = new Trainer();
-        trainer.setFirstName("Jane");
-        trainer.setLastName("Smith");
-        trainer.setUsername("jane.smith");
-        trainer.setPassword("password456");
-        trainer.setIsActive(true);
-        trainer.setSpecialization(specialization);
+        Trainer trainer = createTrainer();
 
-        when(trainerStorage.getNextId()).thenReturn(1L);
+        when(trainerStorage.getNextId()).thenReturn(TRAINER_ID);
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainer result = trainerDAO.create(trainer);
+        Trainer result = dao.create(trainer);
 
         assertNotNull(result);
-        assertEquals(1L, result.getUserId());
-        assertEquals("Jane", result.getFirstName());
-        assertEquals("Smith", result.getLastName());
-        assertEquals("jane.smith", result.getUsername());
-        assertEquals("password456", result.getPassword());
+        assertEquals(TRAINER_ID, result.getUserId());
+        assertEquals(FIRST_NAME, result.getFirstName());
+        assertEquals(LAST_NAME, result.getLastName());
+        assertEquals(USERNAME, result.getUsername());
+        assertEquals(PASSWORD, result.getPassword());
         assertTrue(result.getIsActive());
-        assertEquals(specialization, result.getSpecialization());
-
-        verify(trainerStorage).getNextId();
-        verify(trainerStorage, times(1)).getTrainers();
+        assertEquals(DEFAULT_SPECIALIZATION, result.getSpecialization());
     }
 
     @Test
     void testCreate_ShouldCreateTrainerWithNullSpecialization() {
-        Trainer trainer = new Trainer();
-        trainer.setFirstName("Bob");
-        trainer.setLastName("Johnson");
-        trainer.setUsername("bob.johnson");
-        trainer.setPassword("password789");
-        trainer.setIsActive(false);
+        Trainer trainer = createTrainer(null, false);
 
         when(trainerStorage.getNextId()).thenReturn(2L);
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Trainer result = trainerDAO.create(trainer);
+        Trainer result = dao.create(trainer);
 
         assertNotNull(result);
         assertEquals(2L, result.getUserId());
-        assertEquals("Bob", result.getFirstName());
-        assertEquals("Johnson", result.getLastName());
-        assertEquals("bob.johnson", result.getUsername());
-        assertEquals("password789", result.getPassword());
+        assertEquals(FIRST_NAME, result.getFirstName());
+        assertEquals(LAST_NAME, result.getLastName());
+        assertEquals(USERNAME, result.getUsername());
+        assertEquals(PASSWORD, result.getPassword());
         assertFalse(result.getIsActive());
         assertNull(result.getSpecialization());
     }
 
     @Test
     void testFindById_ShouldReturnTrainerWhenExists() {
-        Long id = 1L;
-        Trainer trainer = createSampleTrainer(id);
+        Trainer trainer = createTrainerWithId(TRAINER_ID);
+        Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
+        trainersMap.put(TRAINER_ID, trainer);
 
-        java.util.Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
-        trainersMap.put(id, trainer);
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        Optional<Trainer> result = trainerDAO.findById(id);
+        Optional<Trainer> result = dao.findById(TRAINER_ID);
 
         assertTrue(result.isPresent());
         assertEquals(trainer, result.get());
-        assertEquals(id, result.get().getUserId());
+        assertEquals(TRAINER_ID, result.get().getUserId());
         verify(trainerStorage).getTrainers();
     }
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         Long id = 999L;
+
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        Optional<Trainer> result = trainerDAO.findById(id);
+        Optional<Trainer> result = dao.findById(id);
 
         assertFalse(result.isPresent());
         verify(trainerStorage).getTrainers();
@@ -125,18 +117,19 @@ class TrainerDAOImplTest {
 
     @Test
     void testFindAll_ShouldReturnAllTrainers() {
-        Trainer trainer1 = createSampleTrainer(1L);
-        Trainer trainer2 = createSampleTrainer(2L);
+        Trainer trainer1 = createTrainerWithId(1L);
+        Trainer trainer2 = createTrainerWithId(2L);
         trainer2.setFirstName("Bob");
         trainer2.setUsername("bob.smith");
         trainer2.setSpecialization(new TrainingType("Pilates"));
 
-        java.util.Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
+        Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
         trainersMap.put(1L, trainer1);
         trainersMap.put(2L, trainer2);
+
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        List<Trainer> result = trainerDAO.findAll();
+        List<Trainer> result = dao.findAll();
 
         assertEquals(2, result.size());
         assertTrue(result.contains(trainer1));
@@ -148,7 +141,7 @@ class TrainerDAOImplTest {
     void testFindAll_ShouldReturnEmptyListWhenNoTrainers() {
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        List<Trainer> result = trainerDAO.findAll();
+        List<Trainer> result = dao.findAll();
 
         assertTrue(result.isEmpty());
         verify(trainerStorage).getTrainers();
@@ -156,19 +149,18 @@ class TrainerDAOImplTest {
 
     @Test
     void testUpdate_ShouldUpdateExistingTrainer() {
-        Long id = 1L;
-        Trainer existingTrainer = createSampleTrainer(id);
+        Trainer existingTrainer = createTrainerWithId(TRAINER_ID);
+        Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
+        trainersMap.put(TRAINER_ID, existingTrainer);
 
-        java.util.Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
-        trainersMap.put(id, existingTrainer);
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        Trainer updatedTrainer = createSampleTrainer(id);
+        Trainer updatedTrainer = createTrainerWithId(TRAINER_ID);
         updatedTrainer.setFirstName("Jane Updated");
         updatedTrainer.setIsActive(false);
         updatedTrainer.setSpecialization(new TrainingType("Pilates"));
 
-        Trainer result = trainerDAO.update(updatedTrainer);
+        Trainer result = dao.update(updatedTrainer);
 
         assertEquals(updatedTrainer, result);
         assertEquals("Jane Updated", result.getFirstName());
@@ -179,12 +171,13 @@ class TrainerDAOImplTest {
 
     @Test
     void testUpdate_ShouldThrowExceptionWhenTrainerNotExists() {
-        Trainer trainer = createSampleTrainer(999L);
+        Trainer trainer = createTrainerWithId(999L);
+
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
         IllegalArgumentException exception = assertThrows(
                 IllegalArgumentException.class,
-                () -> trainerDAO.update(trainer)
+                () -> dao.update(trainer)
         );
 
         assertEquals("Trainer not found with ID: 999", exception.getMessage());
@@ -195,22 +188,33 @@ class TrainerDAOImplTest {
     void testSetStorage_ShouldInitializeTrainerStorage() {
         InMemoryStorage newStorage = mock(InMemoryStorage.class);
         TrainerStorage newTrainerStorage = mock(TrainerStorage.class);
+
         when(newStorage.getTrainerStorage()).thenReturn(newTrainerStorage);
 
-        trainerDAO.setStorage(newStorage);
+        dao.setStorage(newStorage);
 
         verify(newStorage).getTrainerStorage();
     }
 
-    private Trainer createSampleTrainer(Long id) {
+    private Trainer createTrainer() {
+        return createTrainer(DEFAULT_SPECIALIZATION, true);
+    }
+
+    private Trainer createTrainer(TrainingType specialization, boolean isActive) {
         Trainer trainer = new Trainer();
+        trainer.setFirstName(FIRST_NAME);
+        trainer.setLastName(LAST_NAME);
+        trainer.setUsername(USERNAME);
+        trainer.setPassword(PASSWORD);
+        trainer.setIsActive(isActive);
+        trainer.setSpecialization(specialization);
+        return trainer;
+    }
+
+    private Trainer createTrainerWithId(Long id) {
+        Trainer trainer = createTrainer();
         trainer.setUserId(id);
-        trainer.setFirstName("Jane");
-        trainer.setLastName("Smith");
-        trainer.setUsername("jane.smith");
-        trainer.setPassword("password456");
-        trainer.setIsActive(true);
-        trainer.setSpecialization(new TrainingType("Yoga"));
+
         return trainer;
     }
 }

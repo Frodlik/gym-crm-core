@@ -1,6 +1,5 @@
-package dao;
+package com.gym.crm.dao.impl;
 
-import com.gym.crm.dao.impl.TrainingDAOImpl;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.InMemoryStorage;
@@ -14,7 +13,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,12 +23,18 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TrainingDAOImplTest {
+    private static final Long TRAINEE_ID = 1L;
+    private static final Long TRAINER_ID = 2L;
+    private static final String TRAINING_NAME = "Morning Yoga Session";
+    private static final TrainingType TRAINING_TYPE = new TrainingType("Yoga");
+    private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
+    private static final int DURATION = 60;
+
     @Mock
     private InMemoryStorage inMemoryStorage;
     @Mock
@@ -43,43 +50,32 @@ class TrainingDAOImplTest {
 
     @Test
     void testCreate_ShouldCreateTrainingWithGeneratedId() {
-        TrainingType trainingType = new TrainingType("Yoga");
-        Training training = new Training();
-        training.setTraineeId(1L);
-        training.setTrainerId(2L);
-        training.setTrainingName("Morning Yoga Session");
-        training.setTrainingType(trainingType);
-        training.setTrainingDate(LocalDate.of(2024, 1, 15));
-        training.setDuration(60);
+        Training training = createTraining(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE, TRAINING_DATE, DURATION);
 
         when(trainingStorage.getNextId()).thenReturn(1L);
-        when(trainingStorage.getTrainings()).thenReturn(new java.util.concurrent.ConcurrentHashMap<>());
+        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
         Training result = trainingDAO.create(training);
 
         assertNotNull(result);
-        assertEquals(1L, result.getTraineeId());
-        assertEquals(2L, result.getTrainerId());
-        assertEquals("Morning Yoga Session", result.getTrainingName());
-        assertEquals(trainingType, result.getTrainingType());
-        assertEquals(LocalDate.of(2024, 1, 15), result.getTrainingDate());
-        assertEquals(60, result.getDuration());
+        assertEquals(TRAINEE_ID, result.getTraineeId());
+        assertEquals(TRAINER_ID, result.getTrainerId());
+        assertEquals(TRAINING_NAME, result.getTrainingName());
+        assertEquals(TRAINING_TYPE, result.getTrainingType());
+        assertEquals(TRAINING_DATE, result.getTrainingDate());
+        assertEquals(DURATION, result.getDuration());
 
         verify(trainingStorage).getNextId();
-        verify(trainingStorage, times(1)).getTrainings();
+        verify(trainingStorage).getTrainings();
     }
 
     @Test
     void testCreate_ShouldCreateTrainingWithNullTrainingType() {
-        Training training = new Training();
-        training.setTraineeId(3L);
-        training.setTrainerId(4L);
-        training.setTrainingName("General Training");
-        training.setTrainingDate(LocalDate.of(2024, 2, 20));
-        training.setDuration(90);
+        Training training = createTraining(3L, 4L, "General Training", null,
+                LocalDate.of(2024, 2, 20), 90);
 
         when(trainingStorage.getNextId()).thenReturn(2L);
-        when(trainingStorage.getTrainings()).thenReturn(new java.util.concurrent.ConcurrentHashMap<>());
+        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
         Training result = trainingDAO.create(training);
 
@@ -96,9 +92,9 @@ class TrainingDAOImplTest {
     void testFindById_ShouldReturnTrainingWhenExists() {
         Long id = 1L;
         Training training = createSampleTraining();
-
-        java.util.Map<Long, Training> trainingsMap = new java.util.concurrent.ConcurrentHashMap<>();
+        Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
         trainingsMap.put(id, training);
+
         when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
 
         Optional<Training> result = trainingDAO.findById(id);
@@ -110,10 +106,9 @@ class TrainingDAOImplTest {
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
-        Long id = 999L;
-        when(trainingStorage.getTrainings()).thenReturn(new java.util.concurrent.ConcurrentHashMap<>());
+        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
-        Optional<Training> result = trainingDAO.findById(id);
+        Optional<Training> result = trainingDAO.findById(999L);
 
         assertFalse(result.isPresent());
         verify(trainingStorage).getTrainings();
@@ -122,14 +117,14 @@ class TrainingDAOImplTest {
     @Test
     void testFindAll_ShouldReturnAllTrainings() {
         Training training1 = createSampleTraining();
-        Training training2 = createSampleTraining();
-        training2.setTrainingName("Evening Pilates");
-        training2.setTrainingType(new TrainingType("Pilates"));
-        training2.setDuration(75);
+        Training training2 = createTraining(3L, 4L, "Evening Pilates", new TrainingType("Pilates"),
+                TRAINING_DATE, 75);
 
-        java.util.Map<Long, Training> trainingsMap = new java.util.concurrent.ConcurrentHashMap<>();
+
+        Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
         trainingsMap.put(1L, training1);
         trainingsMap.put(2L, training2);
+
         when(trainingStorage.getTrainings()).thenReturn(trainingsMap);
 
         List<Training> result = trainingDAO.findAll();
@@ -142,7 +137,7 @@ class TrainingDAOImplTest {
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainings() {
-        when(trainingStorage.getTrainings()).thenReturn(new java.util.concurrent.ConcurrentHashMap<>());
+        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
         List<Training> result = trainingDAO.findAll();
 
@@ -152,15 +147,11 @@ class TrainingDAOImplTest {
 
     @Test
     void testCreate_ShouldHandleTrainingWithMinimalData() {
-        Training training = new Training();
-        training.setTraineeId(5L);
-        training.setTrainerId(6L);
-        training.setTrainingName("Quick Session");
-        training.setTrainingDate(LocalDate.now());
-        training.setDuration(30);
+        LocalDate today = LocalDate.now();
+        Training training = createTraining(5L, 6L, "Quick Session", null, today, 30);
 
         when(trainingStorage.getNextId()).thenReturn(3L);
-        when(trainingStorage.getTrainings()).thenReturn(new java.util.concurrent.ConcurrentHashMap<>());
+        when(trainingStorage.getTrainings()).thenReturn(new ConcurrentHashMap<>());
 
         Training result = trainingDAO.create(training);
 
@@ -168,7 +159,7 @@ class TrainingDAOImplTest {
         assertEquals(5L, result.getTraineeId());
         assertEquals(6L, result.getTrainerId());
         assertEquals("Quick Session", result.getTrainingName());
-        assertEquals(LocalDate.now(), result.getTrainingDate());
+        assertEquals(today, result.getTrainingDate());
         assertEquals(30, result.getDuration());
         assertNull(result.getTrainingType());
     }
@@ -177,6 +168,7 @@ class TrainingDAOImplTest {
     void testSetStorage_ShouldInitializeTrainingStorage() {
         InMemoryStorage newStorage = mock(InMemoryStorage.class);
         TrainingStorage newTrainingStorage = mock(TrainingStorage.class);
+
         when(newStorage.getTrainingStorage()).thenReturn(newTrainingStorage);
 
         trainingDAO.setStorage(newStorage);
@@ -185,13 +177,17 @@ class TrainingDAOImplTest {
     }
 
     private Training createSampleTraining() {
+        return createTraining(TRAINEE_ID, TRAINER_ID, TRAINING_NAME, TRAINING_TYPE, TRAINING_DATE, DURATION);
+    }
+
+    private Training createTraining(Long traineeId, Long trainerId, String name, TrainingType type, LocalDate date, int duration) {
         Training training = new Training();
-        training.setTraineeId(1L);
-        training.setTrainerId(2L);
-        training.setTrainingName("Morning Yoga Session");
-        training.setTrainingType(new TrainingType("Yoga"));
-        training.setTrainingDate(LocalDate.of(2024, 1, 15));
-        training.setDuration(60);
+        training.setTraineeId(traineeId);
+        training.setTrainerId(trainerId);
+        training.setTrainingName(name);
+        training.setTrainingType(type);
+        training.setTrainingDate(date);
+        training.setDuration(duration);
         return training;
     }
 }

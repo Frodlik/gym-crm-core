@@ -1,15 +1,14 @@
-package service;
+package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dto.trainee.TraineeCreateRequest;
 import com.gym.crm.dto.trainee.TraineeResponse;
 import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
+import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.service.impl.TraineeServiceImpl;
 import com.gym.crm.util.UserCredentialsGenerator;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -21,6 +20,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import static com.gym.crm.facade.GymTestObjects.buildTraineeResponse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -33,6 +33,15 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TraineeServiceImplTest {
+    private static final String FIRST_NAME = "John";
+    private static final String LAST_NAME = "Doe";
+    private static final String USERNAME = "john.doe";
+    private static final String PASSWORD = "password123";
+    private static final LocalDate BIRTH_DATE = LocalDate.of(1990, 1, 1);
+    private static final String ADDRESS = "123 Main St";
+    private static final Long TRAINEE_ID = 1L;
+    private static final String GENERATED_PASSWORD = "generatedPassword";
+
     @Mock
     private TraineeDAO traineeDAO;
     @Mock
@@ -42,93 +51,57 @@ class TraineeServiceImplTest {
     @InjectMocks
     private TraineeServiceImpl traineeService;
 
-    private Trainee trainee;
-    private TraineeCreateRequest createRequest;
-    private TraineeUpdateRequest updateRequest;
-    private TraineeResponse traineeResponse;
-
-    @BeforeEach
-    void setUp() {
-        trainee = new Trainee();
-        trainee.setUserId(1L);
-        trainee.setFirstName("John");
-        trainee.setLastName("Doe");
-        trainee.setUsername("john.doe");
-        trainee.setPassword("password123");
-        trainee.setIsActive(true);
-        trainee.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        trainee.setAddress("123 Main St");
-
-        createRequest = new TraineeCreateRequest();
-        createRequest.setFirstName("John");
-        createRequest.setLastName("Doe");
-        createRequest.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        createRequest.setAddress("123 Main St");
-
-        updateRequest = new TraineeUpdateRequest();
-        updateRequest.setId(1L);
-        updateRequest.setFirstName("Jane");
-        updateRequest.setLastName("Smith");
-        updateRequest.setIsActive(false);
-        updateRequest.setDateOfBirth(LocalDate.of(1985, 5, 15));
-        updateRequest.setAddress("456 Oak Ave");
-
-        traineeResponse = new TraineeResponse();
-        traineeResponse.setId(1L);
-        traineeResponse.setFirstName("John");
-        traineeResponse.setLastName("Doe");
-        traineeResponse.setUsername("john.doe");
-        traineeResponse.setActive(true);
-        traineeResponse.setDateOfBirth(LocalDate.of(1990, 1, 1));
-        traineeResponse.setAddress("123 Main St");
-    }
+    private final Trainee trainee = buildTrainee();
 
     @Test
     void create_ShouldCreateTraineeSuccessfully() {
+        TraineeCreateRequest createRequest = GymTestObjects.buildTraineeCreateRequest();
         List<Trainee> existingTrainees = Arrays.asList(
                 createTraineeWithUsername("existing.user1"),
                 createTraineeWithUsername("existing.user2")
         );
         List<String> existingUsernames = Arrays.asList("existing.user1", "existing.user2");
+        TraineeResponse expectedResponse = buildTraineeResponse();
 
         when(traineeMapper.toEntity(createRequest)).thenReturn(trainee);
         when(traineeDAO.findAll()).thenReturn(existingTrainees);
-        when(userCredentialsGenerator.generateUsername("John", "Doe", existingUsernames))
-                .thenReturn("john.doe");
-        when(userCredentialsGenerator.generatePassword()).thenReturn("generatedPassword");
+        when(userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames))
+                .thenReturn(USERNAME);
+        when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
         when(traineeDAO.create(trainee)).thenReturn(trainee);
-        when(traineeMapper.toResponse(trainee)).thenReturn(traineeResponse);
+        when(traineeMapper.toResponse(trainee)).thenReturn(expectedResponse);
 
         TraineeResponse result = traineeService.create(createRequest);
 
         assertNotNull(result);
-        assertEquals(traineeResponse.getId(), result.getId());
-        assertEquals(traineeResponse.getUsername(), result.getUsername());
+        assertEquals(expectedResponse.getId(), result.getId());
+        assertEquals(expectedResponse.getUsername(), result.getUsername());
 
         verify(traineeMapper).toEntity(createRequest);
         verify(traineeDAO).findAll();
-        verify(userCredentialsGenerator).generateUsername("John", "Doe", existingUsernames);
+        verify(userCredentialsGenerator).generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generatePassword();
         verify(traineeDAO).create(trainee);
         verify(traineeMapper).toResponse(trainee);
 
-        assertEquals("generatedPassword", trainee.getPassword());
-        assertEquals("john.doe", trainee.getUsername());
+        assertEquals(GENERATED_PASSWORD, trainee.getPassword());
+        assertEquals(USERNAME, trainee.getUsername());
     }
 
     @Test
     void findById_ShouldReturnTraineeWhenExists() {
-        Long traineeId = 1L;
-        when(traineeDAO.findById(traineeId)).thenReturn(Optional.of(trainee));
-        when(traineeMapper.toResponse(trainee)).thenReturn(traineeResponse);
+        TraineeResponse expectedResponse = GymTestObjects.buildTraineeResponse();
 
-        Optional<TraineeResponse> result = traineeService.findById(traineeId);
+        when(traineeDAO.findById(TRAINEE_ID)).thenReturn(Optional.of(trainee));
+        when(traineeMapper.toResponse(trainee)).thenReturn(expectedResponse);
+
+        Optional<TraineeResponse> result = traineeService.findById(TRAINEE_ID);
 
         assertTrue(result.isPresent());
-        assertEquals(traineeResponse.getId(), result.get().getId());
-        assertEquals(traineeResponse.getUsername(), result.get().getUsername());
+        assertEquals(expectedResponse.getId(), result.get().getId());
+        assertEquals(expectedResponse.getUsername(), result.get().getUsername());
 
-        verify(traineeDAO).findById(traineeId);
+        verify(traineeDAO).findById(TRAINEE_ID);
         verify(traineeMapper).toResponse(trainee);
     }
 
@@ -147,19 +120,9 @@ class TraineeServiceImplTest {
 
     @Test
     void update_ShouldUpdateTraineeSuccessfully() {
-        Trainee updatedTrainee = new Trainee();
-        updatedTrainee.setUserId(1L);
-        updatedTrainee.setFirstName("Jane");
-        updatedTrainee.setLastName("Smith");
-        updatedTrainee.setIsActive(false);
-        updatedTrainee.setDateOfBirth(LocalDate.of(1985, 5, 15));
-        updatedTrainee.setAddress("456 Oak Ave");
-
-        TraineeResponse updatedResponse = new TraineeResponse();
-        updatedResponse.setId(1L);
-        updatedResponse.setFirstName("Jane");
-        updatedResponse.setLastName("Smith");
-        updatedResponse.setActive(false);
+        TraineeUpdateRequest updateRequest = GymTestObjects.buildTraineeUpdateRequest();
+        Trainee updatedTrainee = buildUpdatedTrainee();
+        TraineeResponse updatedResponse = buildUpdatedResponse();
 
         when(traineeDAO.findById(updateRequest.getId())).thenReturn(Optional.of(trainee));
         when(traineeDAO.update(trainee)).thenReturn(updatedTrainee);
@@ -186,6 +149,8 @@ class TraineeServiceImplTest {
 
     @Test
     void update_ShouldThrowExceptionWhenTraineeNotFound() {
+        TraineeUpdateRequest updateRequest = GymTestObjects.buildTraineeUpdateRequest();
+
         when(traineeDAO.findById(updateRequest.getId())).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(
@@ -202,16 +167,51 @@ class TraineeServiceImplTest {
 
     @Test
     void delete_ShouldCallDAODelete() {
-        Long traineeId = 1L;
+        traineeService.delete(TRAINEE_ID);
 
-        traineeService.delete(traineeId);
+        verify(traineeDAO).delete(TRAINEE_ID);
+    }
 
-        verify(traineeDAO).delete(traineeId);
+    private Trainee buildTrainee() {
+        Trainee trainee = new Trainee();
+        trainee.setUserId(TRAINEE_ID);
+        trainee.setFirstName(FIRST_NAME);
+        trainee.setLastName(LAST_NAME);
+        trainee.setUsername(USERNAME);
+        trainee.setPassword(PASSWORD);
+        trainee.setIsActive(true);
+        trainee.setDateOfBirth(BIRTH_DATE);
+        trainee.setAddress(ADDRESS);
+
+        return trainee;
+    }
+
+    private Trainee buildUpdatedTrainee() {
+        Trainee trainee = new Trainee();
+        trainee.setUserId(TRAINEE_ID);
+        trainee.setFirstName("Jane");
+        trainee.setLastName("Smith");
+        trainee.setIsActive(false);
+        trainee.setDateOfBirth(LocalDate.of(1985, 5, 15));
+        trainee.setAddress("456 Oak Ave");
+
+        return trainee;
+    }
+
+    private TraineeResponse buildUpdatedResponse() {
+        TraineeResponse response = new TraineeResponse();
+        response.setId(TRAINEE_ID);
+        response.setFirstName("Jane");
+        response.setLastName("Smith");
+        response.setActive(false);
+
+        return response;
     }
 
     private Trainee createTraineeWithUsername(String username) {
         Trainee trainee = new Trainee();
         trainee.setUsername(username);
+
         return trainee;
     }
 }
