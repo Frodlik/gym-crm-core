@@ -8,7 +8,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -48,13 +47,13 @@ class UserCredentialsGeneratorTest {
 
     @Test
     void generateUsername_ShouldHandleLargeNumberOfConflicts() {
-        List<String> existingUsernames = Arrays.asList(
+        List<String> existingUsernames = List.of(
                 "Jane.Smith", "Jane.Smith1", "Jane.Smith2", "Jane.Smith3", "Jane.Smith4",
                 "Jane.Smith5", "Jane.Smith6", "Jane.Smith7", "Jane.Smith8", "Jane.Smith9"
         );
+        String expected = "Jane.Smith10";
 
         String actual = sut.generateUsername("Jane", "Smith", existingUsernames);
-        String expected = "Jane.Smith10";
 
         assertEquals(expected, actual);
     }
@@ -62,9 +61,9 @@ class UserCredentialsGeneratorTest {
     @Test
     void generateUsername_ShouldWorkWithSpecialCharactersInNames() {
         List<String> existingUsernames = Collections.emptyList();
+        String expected = "Jean-Pierre.O'Connor";
 
         String actual = sut.generateUsername("Jean-Pierre", "O'Connor", existingUsernames);
-        String expected = "Jean-Pierre.O'Connor";
 
         assertEquals(expected, actual);
     }
@@ -72,9 +71,9 @@ class UserCredentialsGeneratorTest {
     @Test
     void generateUsername_ShouldHandleEmptyExistingUsernames() {
         List<String> existingUsernames = Collections.emptyList();
+        String expected = "Test.User";
 
         String actual = sut.generateUsername("Test", "User", existingUsernames);
-        String expected = "Test.User";
 
         assertEquals(expected, actual);
     }
@@ -135,9 +134,9 @@ class UserCredentialsGeneratorTest {
         String firstName = "VeryLongFirstNameThatExceedsNormalLength";
         String lastName = "VeryLongLastNameThatExceedsNormalLength";
         List<String> existingUsernames = Collections.emptyList();
+        String expected = firstName + "." + lastName;
 
         String actual = sut.generateUsername(firstName, lastName, existingUsernames);
-        String expected = firstName + "." + lastName;
 
         assertEquals(expected, actual);
     }

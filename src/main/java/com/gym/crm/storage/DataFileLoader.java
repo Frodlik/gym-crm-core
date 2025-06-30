@@ -75,7 +75,7 @@ public class DataFileLoader {
     }
 
     private void loadDataSection(DataSection targetSection, Consumer<String> lineProcessor) {
-        try (InputStream inputStream = getInputStream();
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(initDataFilePath);
              BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
 
             String line;
@@ -100,10 +100,6 @@ public class DataFileLoader {
         } catch (IOException e) {
             logger.warn("Could not load {} data from file: {}", targetSection, initDataFilePath, e);
         }
-    }
-
-    InputStream getInputStream() throws IOException {
-        return getClass().getClassLoader().getResourceAsStream(initDataFilePath);
     }
 
     private boolean isInTargetSection(String sectionName, DataSection targetSection) {

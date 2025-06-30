@@ -40,6 +40,8 @@ class TrainerServiceImplTest {
     private static final Long TRAINER_ID = 1L;
     private static final String GENERATED_PASSWORD = "generatedPassword";
 
+    private final Trainer trainer = buildTrainer();
+
     @Mock
     private TrainerDAO trainerDAO;
     @Mock
@@ -48,8 +50,6 @@ class TrainerServiceImplTest {
     private TrainerMapper trainerMapper;
     @InjectMocks
     private TrainerServiceImpl service;
-
-    private final Trainer trainer = buildTrainer();
 
     @Test
     void create_ShouldCreateTrainerSuccessfully() {

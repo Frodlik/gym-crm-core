@@ -47,6 +47,10 @@ class TrainingServiceImplTest {
     private static final Long TRAINER_ID = 2L;
     private static final Long TRAINING_ID = 1L;
 
+    private final Training training = buildTraining();
+    private final Trainee trainee = buildTrainee();
+    private final Trainer trainer = buildTrainer();
+
     @Mock
     private TrainingDAO trainingDAO;
     @Mock
@@ -57,10 +61,6 @@ class TrainingServiceImplTest {
     private TrainingMapper trainingMapper;
     @InjectMocks
     private TrainingServiceImpl service;
-
-    private final Training training = buildTraining();
-    private final Trainee trainee = buildTrainee();
-    private final Trainer trainer = buildTrainer();
 
     @Test
     void create_ShouldCreateTrainingSuccessfully() {
