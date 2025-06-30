@@ -1,12 +1,12 @@
 package com.gym.crm.model;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@NoArgsConstructor
+@Getter
 @AllArgsConstructor
+@SuperBuilder(toBuilder = true)
 public class TrainingType {
-    private String trainingTypeName;
+    private final String trainingTypeName;
 }
