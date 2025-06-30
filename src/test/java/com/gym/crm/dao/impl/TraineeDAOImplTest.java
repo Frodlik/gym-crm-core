@@ -1,5 +1,6 @@
 package com.gym.crm.dao.impl;
 
+import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TraineeStorage;
@@ -126,8 +127,10 @@ class TraineeDAOImplTest {
     void testFindAll_ShouldReturnAllTrainees() {
         Trainee trainee1 = createSampleTrainee(1L);
         Trainee trainee2 = createSampleTrainee(2L);
-        trainee2.setFirstName("Jane");
-        trainee2.setUsername("jane.doe");
+        trainee2.toBuilder()
+                .firstName("Jane")
+                .username("jane.doe")
+                .build();
 
         Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
         traineesMap.put(1L, trainee1);
@@ -161,16 +164,18 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(traineesMap);
 
-        Trainee expected = createSampleTrainee(TRAINEE_ID);
-        expected.setFirstName("John Updated");
-        expected.setAddress("456 Oak Ave");
-        expected.setIsActive(false);
+        Trainee updatedTrainee = createSampleTrainee(TRAINEE_ID)
+                .toBuilder()
+                .firstName("John Updated")
+                .address("456 Oak Ave")
+                .isActive(false)
+                .build();
 
-        Trainee actual = dao.update(expected);
+        Trainee actual = dao.update(updatedTrainee);
 
-        assertEquals(expected, actual);
-        assertEquals(expected.getFirstName(), actual.getFirstName());
-        assertEquals(expected.getAddress(), actual.getAddress());
+        assertEquals(updatedTrainee, actual);
+        assertEquals("John Updated", actual.getFirstName());
+        assertEquals("456 Oak Ave", actual.getAddress());
         assertFalse(actual.getIsActive());
         verify(traineeStorage).getTrainees();
     }
@@ -181,7 +186,7 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.update(trainee));
+        DaoException exception = assertThrows(DaoException.class, () -> dao.update(trainee));
 
         assertEquals("Trainee not found with ID: 999", exception.getMessage());
         verify(traineeStorage).getTrainees();
@@ -226,30 +231,28 @@ class TraineeDAOImplTest {
     }
 
     private Trainee createSampleTrainee(Long id) {
-        Trainee trainee = new Trainee();
-        trainee.setUserId(id);
-        trainee.setFirstName(FIRST_NAME);
-        trainee.setLastName(LAST_NAME);
-        trainee.setUsername(USERNAME);
-        trainee.setPassword(PASSWORD);
-        trainee.setDateOfBirth(DATE_OF_BIRTH);
-        trainee.setAddress(ADDRESS);
-        trainee.setIsActive(true);
-
-        return trainee;
+        return Trainee.builder()
+                .userId(id)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .dateOfBirth(DATE_OF_BIRTH)
+                .address(ADDRESS)
+                .isActive(true)
+                .build();
     }
 
     private Trainee createTraineeWithoutId(String firstName, String lastName, String username,
                                            LocalDate dateOfBirth, String address, Boolean isActive) {
-        Trainee trainee = new Trainee();
-        trainee.setFirstName(firstName);
-        trainee.setLastName(lastName);
-        trainee.setUsername(username);
-        trainee.setPassword(PASSWORD);
-        trainee.setDateOfBirth(dateOfBirth);
-        trainee.setAddress(address);
-        trainee.setIsActive(isActive);
-
-        return trainee;
+        return Trainee.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .username(username)
+                .password(PASSWORD)
+                .dateOfBirth(dateOfBirth)
+                .address(address)
+                .isActive(isActive)
+                .build();
     }
 }

@@ -14,6 +14,7 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -70,7 +71,7 @@ class TrainingServiceImplTest {
         when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(trainee));
         when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
-        when(trainingDAO.create(training)).thenReturn(training);
+        when(trainingDAO.create(any(Training.class))).thenReturn(training);
         when(trainingMapper.toResponse(training)).thenReturn(expected);
 
         TrainingResponse actual = service.create(createRequest);
@@ -86,7 +87,6 @@ class TrainingServiceImplTest {
         verify(traineeDAO).findById(createRequest.getTraineeId());
         verify(trainerDAO).findById(createRequest.getTrainerId());
         verify(trainingMapper).toEntity(createRequest);
-        verify(trainingDAO).create(training);
         verify(trainingMapper).toResponse(training);
 
         assertEquals(trainee.getUserId(), training.getTraineeId());
@@ -188,59 +188,70 @@ class TrainingServiceImplTest {
         TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
         TrainingResponse expectedResponse = GymTestObjects.buildTrainingResponse();
 
-        trainee.setUserId(traineeUserId);
-        trainer.setUserId(trainerUserId);
+        Trainee updatedTrainee = trainee.toBuilder()
+                .userId(traineeUserId)
+                .build();
 
-        when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(trainee));
-        when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
+        Trainer updatedTrainer = trainer.toBuilder()
+                .userId(trainerUserId)
+                .build();
+
+        when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(updatedTrainee));
+        when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(updatedTrainer));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
-        when(trainingDAO.create(training)).thenReturn(training);
+        when(trainingDAO.create(any(Training.class))).thenReturn(training);
         when(trainingMapper.toResponse(training)).thenReturn(expectedResponse);
+
+        ArgumentCaptor<Training> captor = ArgumentCaptor.forClass(Training.class);
 
         service.create(createRequest);
 
-        assertEquals(traineeUserId, training.getTraineeId());
-        assertEquals(trainerUserId, training.getTrainerId());
+        verify(trainingDAO).create(captor.capture());
+        Training capturedTraining = captor.getValue();
 
-        verify(trainingDAO).create(training);
+        assertEquals(traineeUserId, capturedTraining.getTraineeId());
+        assertEquals(trainerUserId, capturedTraining.getTrainerId());
     }
 
     private Training buildTraining() {
-        Training training = new Training();
-        training.setTraineeId(TRAINEE_ID);
-        training.setTrainerId(TRAINER_ID);
-        training.setTrainingName(TRAINING_NAME);
-        training.setTrainingDate(TRAINING_DATE);
-        training.setDuration(TRAINING_DURATION);
-        training.setTrainingType(new TrainingType(FITNESS_TYPE));
-
-        return training;
+        return Training.builder()
+                .traineeId(TRAINEE_ID)
+                .trainerId(TRAINER_ID)
+                .trainingName(TRAINING_NAME)
+                .trainingDate(TRAINING_DATE)
+                .duration(TRAINING_DURATION)
+                .trainingType(buildFitnessTrainingType())
+                .build();
     }
 
     private Trainee buildTrainee() {
-        Trainee trainee = new Trainee();
-        trainee.setUserId(TRAINEE_ID);
-        trainee.setFirstName(FIRST_NAME);
-        trainee.setLastName(LAST_NAME);
-        trainee.setUsername(USERNAME);
-        trainee.setPassword("password123");
-        trainee.setIsActive(true);
-        trainee.setDateOfBirth(LocalDate.of(1990, 5, 15));
-        trainee.setAddress("123 Main St");
-
-        return trainee;
+        return Trainee.builder()
+                .userId(TRAINEE_ID)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password("password123")
+                .isActive(true)
+                .dateOfBirth(LocalDate.of(1990, 5, 15))
+                .address("123 Main St")
+                .build();
     }
 
     private Trainer buildTrainer() {
-        Trainer trainer = new Trainer();
-        trainer.setUserId(TRAINER_ID);
-        trainer.setFirstName(TRAINER_FIRST_NAME);
-        trainer.setLastName(TRAINER_LAST_NAME);
-        trainer.setUsername(TRAINER_USERNAME);
-        trainer.setPassword("password123");
-        trainer.setIsActive(true);
-        trainer.setSpecialization(new TrainingType(FITNESS_TYPE));
+        return Trainer.builder()
+                .userId(TRAINER_ID)
+                .firstName(TRAINER_FIRST_NAME)
+                .lastName(TRAINER_LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .password("password123")
+                .isActive(true)
+                .specialization(buildFitnessTrainingType())
+                .build();
+    }
 
-        return trainer;
+    private TrainingType buildFitnessTrainingType() {
+        return TrainingType.builder()
+                .trainingTypeName(FITNESS_TYPE)
+                .build();
     }
 }

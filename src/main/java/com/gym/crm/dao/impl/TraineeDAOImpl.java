@@ -1,6 +1,7 @@
 package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TraineeDAO;
+import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TraineeStorage;
@@ -27,14 +28,17 @@ public class TraineeDAOImpl implements TraineeDAO {
     @Override
     public Trainee create(Trainee trainee) {
         Long id = traineeStorage.getNextId();
-        trainee.setUserId(id);
+
+        Trainee created = trainee.toBuilder()
+                .userId(id)
+                .build();
 
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
-        trainees.put(id, trainee);
+        trainees.put(id, created);
 
         log.info("Created Trainee with id: {}", id);
 
-        return trainee;
+        return created;
     }
 
     @Override
@@ -62,7 +66,7 @@ public class TraineeDAOImpl implements TraineeDAO {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
 
         if (!trainees.containsKey(trainee.getUserId())) {
-            throw new IllegalArgumentException("Trainee not found with ID: " + trainee.getUserId());
+            throw new DaoException("Trainee not found with ID: " + trainee.getUserId());
         }
 
         trainees.put(trainee.getUserId(), trainee);

@@ -180,14 +180,13 @@ class TrainingDAOImplTest {
     }
 
     private Training createTraining(Long traineeId, Long trainerId, String name, TrainingType type, LocalDate date, int duration) {
-        Training training = new Training();
-        training.setTraineeId(traineeId);
-        training.setTrainerId(trainerId);
-        training.setTrainingName(name);
-        training.setTrainingType(type);
-        training.setTrainingDate(date);
-        training.setDuration(duration);
-
-        return training;
+        return Training.builder()
+                .traineeId(traineeId)
+                .trainerId(trainerId)
+                .trainingName(name)
+                .trainingType(type)
+                .trainingDate(date)
+                .duration(duration)
+                .build();
     }
 }

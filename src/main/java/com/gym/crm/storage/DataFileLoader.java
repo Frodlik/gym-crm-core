@@ -17,6 +17,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.function.Consumer;
 
+import static com.gym.crm.model.Trainee.*;
 import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINEES;
 import static com.gym.crm.storage.DataFileLoader.DataSection.TRAINERS;
 import static com.gym.crm.storage.DataFileLoader.DataSection.TRAININGS;
@@ -116,7 +117,9 @@ public class DataFileLoader {
         if (parts.length < 1) {
             return null;
         }
-        return new TrainingType(parts[0].trim());
+        return TrainingType.builder()
+                .trainingTypeName(parts[0].trim())
+                .build();
     }
 
     private Trainee parseTrainee(String line, Long id) {
@@ -126,20 +129,20 @@ public class DataFileLoader {
             return null;
         }
 
-        Trainee trainee = new Trainee();
-        trainee.setUserId(id);
-        trainee.setFirstName(parts[0].trim());
-        trainee.setLastName(parts[1].trim());
-        trainee.setUsername(parts[2].trim());
-        trainee.setPassword(parts[3].trim());
-        trainee.setIsActive(Boolean.parseBoolean(parts[4].trim()));
-        trainee.setDateOfBirth(LocalDate.parse(parts[5].trim(), DateTimeFormatter.ISO_LOCAL_DATE));
+        TraineeBuilder builder = builder()
+                .userId(id)
+                .firstName(parts[0].trim())
+                .lastName(parts[1].trim())
+                .username(parts[2].trim())
+                .password(parts[3].trim())
+                .isActive(Boolean.parseBoolean(parts[4].trim()))
+                .dateOfBirth(LocalDate.parse(parts[5].trim(), DateTimeFormatter.ISO_LOCAL_DATE));
 
         if (parts.length > 6 && !parts[6].trim().isEmpty()) {
-            trainee.setAddress(parts[6].trim());
+            builder.address(parts[6].trim());
         }
 
-        return trainee;
+        return builder.build();
     }
 
     private Trainer parseTrainer(String line, Long id, TrainingTypeStorage typeStorage) {
@@ -149,18 +152,18 @@ public class DataFileLoader {
             return null;
         }
 
-        Trainer trainer = new Trainer();
-        trainer.setUserId(id);
-        trainer.setFirstName(parts[0].trim());
-        trainer.setLastName(parts[1].trim());
-        trainer.setUsername(parts[2].trim());
-        trainer.setPassword(parts[3].trim());
-        trainer.setIsActive(Boolean.parseBoolean(parts[4].trim()));
-
         String specializationName = parts[5].trim();
-        trainer.setSpecialization(typeStorage.getTrainingTypes().get(specializationName));
+        TrainingType specialization = typeStorage.getTrainingTypes().get(specializationName);
 
-        return trainer;
+        return Trainer.builder()
+                .userId(id)
+                .firstName(parts[0].trim())
+                .lastName(parts[1].trim())
+                .username(parts[2].trim())
+                .password(parts[3].trim())
+                .isActive(Boolean.parseBoolean(parts[4].trim()))
+                .specialization(specialization)
+                .build();
     }
 
     private Training parseTraining(String line, Long id, TrainingTypeStorage typeStorage) {
@@ -170,16 +173,16 @@ public class DataFileLoader {
             return null;
         }
 
-        Training training = new Training();
-        training.setTraineeId(Long.parseLong(parts[0].trim()));
-        training.setTrainerId(Long.parseLong(parts[1].trim()));
-        training.setTrainingName(parts[2].trim());
-
         String trainingTypeName = parts[3].trim();
-        training.setTrainingType(typeStorage.getTrainingTypes().get(trainingTypeName));
-        training.setTrainingDate(LocalDate.parse(parts[4].trim(), DateTimeFormatter.ISO_LOCAL_DATE));
-        training.setDuration(Integer.parseInt(parts[5].trim()));
+        TrainingType trainingType = typeStorage.getTrainingTypes().get(trainingTypeName);
 
-        return training;
+        return Training.builder()
+                .traineeId(Long.parseLong(parts[0].trim()))
+                .trainerId(Long.parseLong(parts[1].trim()))
+                .trainingName(parts[2].trim())
+                .trainingType(trainingType)
+                .trainingDate(LocalDate.parse(parts[4].trim(), DateTimeFormatter.ISO_LOCAL_DATE))
+                .duration(Integer.parseInt(parts[5].trim()))
+                .build();
     }
 }

@@ -1,16 +1,14 @@
 package com.gym.crm.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
+@Getter
+@SuperBuilder(toBuilder = true)
 public abstract class User {
-    private String firstName;
-    private String lastName;
-    private String username;
-    private String password;
-    private Boolean isActive;
+    private final String firstName;
+    private final String lastName;
+    private final String username;
+    private final String password;
+    private final Boolean isActive;
 }
