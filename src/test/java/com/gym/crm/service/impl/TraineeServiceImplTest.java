@@ -11,6 +11,7 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -67,7 +68,7 @@ class TraineeServiceImplTest {
         when(userCredentialsGenerator.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames))
                 .thenReturn(USERNAME);
         when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
-        when(traineeDAO.create(trainee)).thenReturn(trainee);
+        when(traineeDAO.create(any(Trainee.class))).thenReturn(trainee);
         when(traineeMapper.toResponse(trainee)).thenReturn(expected);
 
         TraineeResponse actual = service.create(createRequest);
@@ -80,11 +81,15 @@ class TraineeServiceImplTest {
         verify(traineeDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generatePassword();
-        verify(traineeDAO).create(trainee);
-        verify(traineeMapper).toResponse(trainee);
+        verify(traineeDAO).create(any(Trainee.class));
+        verify(traineeMapper).toResponse(any(Trainee.class));
 
-        assertEquals(GENERATED_PASSWORD, trainee.getPassword());
-        assertEquals(USERNAME, trainee.getUsername());
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDAO).create(captor.capture());
+
+        Trainee captured = captor.getValue();
+        assertEquals(GENERATED_PASSWORD, captured.getPassword());
+        assertEquals(USERNAME, captured.getUsername());
     }
 
     @Test
@@ -124,8 +129,8 @@ class TraineeServiceImplTest {
         TraineeResponse expected = buildUpdatedResponse();
 
         when(traineeDAO.findById(updateRequest.getId())).thenReturn(Optional.of(trainee));
-        when(traineeDAO.update(trainee)).thenReturn(updatedTrainee);
-        when(traineeMapper.toResponse(updatedTrainee)).thenReturn(expected);
+        when(traineeDAO.update(any(Trainee.class))).thenReturn(updatedTrainee);
+        when(traineeMapper.toResponse(any(Trainee.class))).thenReturn(expected);
 
         TraineeResponse actual = service.update(updateRequest);
 
@@ -136,14 +141,18 @@ class TraineeServiceImplTest {
         assertEquals(expected.isActive(), actual.isActive());
 
         verify(traineeDAO).findById(updateRequest.getId());
-        verify(traineeDAO).update(trainee);
+        verify(traineeDAO).update(any(Trainee.class));
         verify(traineeMapper).toResponse(updatedTrainee);
 
-        assertEquals("Jane", trainee.getFirstName());
-        assertEquals("Smith", trainee.getLastName());
-        assertEquals(false, trainee.getIsActive());
-        assertEquals(LocalDate.of(1985, 5, 15), trainee.getDateOfBirth());
-        assertEquals("456 Oak Ave", trainee.getAddress());
+        ArgumentCaptor<Trainee> captor = ArgumentCaptor.forClass(Trainee.class);
+        verify(traineeDAO).update(captor.capture());
+
+        Trainee captured = captor.getValue();
+        assertEquals("Jane", captured.getFirstName());
+        assertEquals("Smith", captured.getLastName());
+        assertFalse(captured.getIsActive());
+        assertEquals(LocalDate.of(1985, 5, 15), captured.getDateOfBirth());
+        assertEquals("456 Oak Ave", captured.getAddress());
     }
 
     @Test
@@ -169,29 +178,26 @@ class TraineeServiceImplTest {
     }
 
     private Trainee buildTrainee() {
-        Trainee trainee = new Trainee();
-        trainee.setUserId(TRAINEE_ID);
-        trainee.setFirstName(FIRST_NAME);
-        trainee.setLastName(LAST_NAME);
-        trainee.setUsername(USERNAME);
-        trainee.setPassword(PASSWORD);
-        trainee.setIsActive(true);
-        trainee.setDateOfBirth(BIRTH_DATE);
-        trainee.setAddress(ADDRESS);
-
-        return trainee;
+        return Trainee.builder()
+                .userId(TRAINEE_ID)
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .isActive(true)
+                .dateOfBirth(BIRTH_DATE)
+                .address(ADDRESS)
+                .build();
     }
 
     private Trainee buildUpdatedTrainee() {
-        Trainee trainee = new Trainee();
-        trainee.setUserId(TRAINEE_ID);
-        trainee.setFirstName("Jane");
-        trainee.setLastName("Smith");
-        trainee.setIsActive(false);
-        trainee.setDateOfBirth(LocalDate.of(1985, 5, 15));
-        trainee.setAddress("456 Oak Ave");
-
-        return trainee;
+        return buildTrainee().toBuilder()
+                .firstName("Jane")
+                .lastName("Smith")
+                .isActive(false)
+                .dateOfBirth(LocalDate.of(1985, 5, 15))
+                .address("456 Oak Ave")
+                .build();
     }
 
     private TraineeResponse buildUpdatedResponse() {
@@ -205,9 +211,8 @@ class TraineeServiceImplTest {
     }
 
     private Trainee createTraineeWithUsername(String username) {
-        Trainee trainee = new Trainee();
-        trainee.setUsername(username);
-
-        return trainee;
+        return Trainee.builder()
+                .username(username)
+                .build();
     }
 }

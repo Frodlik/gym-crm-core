@@ -1,5 +1,6 @@
 package com.gym.crm.dao.impl;
 
+import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.InMemoryStorage;
@@ -119,9 +120,11 @@ class TrainerDAOImplTest {
     void testFindAll_ShouldReturnAllTrainers() {
         Trainer trainer1 = createTrainerWithId(1L);
         Trainer trainer2 = createTrainerWithId(2L);
-        trainer2.setFirstName("Bob");
-        trainer2.setUsername("bob.smith");
-        trainer2.setSpecialization(new TrainingType("Pilates"));
+        trainer2.toBuilder()
+                .firstName("Bob")
+                .username("bob.smith")
+                .specialization(new TrainingType("Pilates"))
+                .build();
 
         Map<Long, Trainer> trainersMap = new ConcurrentHashMap<>();
         trainersMap.put(1L, trainer1);
@@ -155,10 +158,11 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(trainersMap);
 
-        Trainer expected = createTrainerWithId(TRAINER_ID);
-        expected.setFirstName("Jane Updated");
-        expected.setIsActive(false);
-        expected.setSpecialization(new TrainingType("Pilates"));
+        Trainer expected = createTrainerWithId(TRAINER_ID).toBuilder()
+                .firstName("Jane Updated")
+                .isActive(false)
+                .specialization(new TrainingType("Pilates"))
+                .build();
 
         Trainer actual = dao.update(expected);
 
@@ -175,7 +179,7 @@ class TrainerDAOImplTest {
 
         when(trainerStorage.getTrainers()).thenReturn(new ConcurrentHashMap<>());
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> dao.update(trainer));
+        DaoException exception = assertThrows(DaoException.class, () -> dao.update(trainer));
 
         assertEquals("Trainer not found with ID: 999", exception.getMessage());
         verify(trainerStorage).getTrainers();
@@ -198,21 +202,21 @@ class TrainerDAOImplTest {
     }
 
     private Trainer createTrainer(TrainingType specialization, boolean isActive) {
-        Trainer trainer = new Trainer();
-        trainer.setFirstName(FIRST_NAME);
-        trainer.setLastName(LAST_NAME);
-        trainer.setUsername(USERNAME);
-        trainer.setPassword(PASSWORD);
-        trainer.setIsActive(isActive);
-        trainer.setSpecialization(specialization);
-
-        return trainer;
+        return Trainer.builder()
+                .firstName(FIRST_NAME)
+                .lastName(LAST_NAME)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .isActive(isActive)
+                .specialization(specialization)
+                .build();
     }
 
     private Trainer createTrainerWithId(Long id) {
         Trainer trainer = createTrainer();
-        trainer.setUserId(id);
 
-        return trainer;
+        return trainer.toBuilder()
+                .userId(id)
+                .build();
     }
 }

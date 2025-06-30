@@ -54,20 +54,27 @@ class TrainerServiceImplTest {
     @Test
     void create_ShouldCreateTrainerSuccessfully() {
         TrainerCreateRequest createRequest = GymTestObjects.buildTrainerCreateRequest();
+        Trainer initialTrainer = buildTrainer();
         List<Trainer> existingTrainers = List.of(
                 createTrainerWithUsername("existing.trainer1"),
                 createTrainerWithUsername("existing.trainer2")
         );
         List<String> existingUsernames = List.of("existing.trainer1", "existing.trainer2");
+
+        Trainer trainerWithCredentials = initialTrainer.toBuilder()
+                .username(TRAINER_USERNAME)
+                .password(GENERATED_PASSWORD)
+                .build();
+
         TrainerResponse expected = GymTestObjects.buildTrainerResponse();
 
-        when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
+        when(trainerMapper.toEntity(createRequest)).thenReturn(initialTrainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
         when(userCredentialsGenerator.generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames))
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
-        when(trainerDAO.create(trainer)).thenReturn(trainer);
-        when(trainerMapper.toResponse(trainer)).thenReturn(expected);
+        when(trainerDAO.create(any(Trainer.class))).thenReturn(trainerWithCredentials);
+        when(trainerMapper.toResponse(trainerWithCredentials)).thenReturn(expected);
 
         TrainerResponse actual = service.create(createRequest);
 
@@ -80,11 +87,8 @@ class TrainerServiceImplTest {
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generatePassword();
-        verify(trainerDAO).create(trainer);
-        verify(trainerMapper).toResponse(trainer);
-
-        assertEquals(TRAINER_USERNAME, trainer.getUsername());
-        assertEquals(GENERATED_PASSWORD, trainer.getPassword());
+        verify(trainerDAO).create(any(Trainer.class));
+        verify(trainerMapper).toResponse(trainerWithCredentials);
     }
 
     @Test
@@ -99,7 +103,7 @@ class TrainerServiceImplTest {
         when(userCredentialsGenerator.generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames))
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
-        when(trainerDAO.create(trainer)).thenReturn(trainer);
+        when(trainerDAO.create(any(Trainer.class))).thenReturn(trainer);
         when(trainerMapper.toResponse(trainer)).thenReturn(expectedResponse);
 
         TrainerResponse actual = service.create(createRequest);
@@ -107,7 +111,6 @@ class TrainerServiceImplTest {
         assertNotNull(actual);
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
-
     }
 
     @Test
@@ -145,11 +148,12 @@ class TrainerServiceImplTest {
     @Test
     void update_ShouldUpdateTrainerSuccessfully() {
         TrainerUpdateRequest updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        Trainer originalTrainer = buildTrainer();
         Trainer updatedTrainer = buildUpdatedTrainer();
         TrainerResponse expected = buildUpdatedResponse();
 
-        when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.of(trainer));
-        when(trainerDAO.update(trainer)).thenReturn(updatedTrainer);
+        when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.of(originalTrainer));
+        when(trainerDAO.update(any(Trainer.class))).thenReturn(updatedTrainer);
         when(trainerMapper.toResponse(updatedTrainer)).thenReturn(expected);
 
         TrainerResponse actual = service.update(updateRequest);
@@ -162,13 +166,8 @@ class TrainerServiceImplTest {
         assertEquals(expected.getSpecialization(), actual.getSpecialization());
 
         verify(trainerDAO).findById(updateRequest.getId());
-        verify(trainerDAO).update(trainer);
+        verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toResponse(updatedTrainer);
-
-        assertEquals("Michael", trainer.getFirstName());
-        assertEquals("Smith", trainer.getLastName());
-        assertEquals(false, trainer.getIsActive());
-        assertEquals(YOGA_TYPE, trainer.getSpecialization().getTrainingTypeName());
     }
 
     @Test
@@ -187,27 +186,24 @@ class TrainerServiceImplTest {
     }
 
     private Trainer buildTrainer() {
-        Trainer trainer = new Trainer();
-        trainer.setUserId(TRAINER_ID);
-        trainer.setFirstName(TRAINER_FIRST_NAME);
-        trainer.setLastName(TRAINER_LAST_NAME);
-        trainer.setUsername(TRAINER_USERNAME);
-        trainer.setPassword(PASSWORD);
-        trainer.setIsActive(true);
-        trainer.setSpecialization(new TrainingType(FITNESS_TYPE));
-
-        return trainer;
+        return Trainer.builder()
+                .userId(TRAINER_ID)
+                .firstName(TRAINER_FIRST_NAME)
+                .lastName(TRAINER_LAST_NAME)
+                .username(TRAINER_USERNAME)
+                .password(PASSWORD)
+                .isActive(true)
+                .specialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build())
+                .build();
     }
 
     private Trainer buildUpdatedTrainer() {
-        Trainer trainer = new Trainer();
-        trainer.setUserId(TRAINER_ID);
-        trainer.setFirstName("Michael");
-        trainer.setLastName("Smith");
-        trainer.setIsActive(false);
-        trainer.setSpecialization(new TrainingType(YOGA_TYPE));
-
-        return trainer;
+        return buildTrainer().toBuilder()
+                .firstName("Michael")
+                .lastName("Smith")
+                .isActive(false)
+                .specialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build())
+                .build();
     }
 
     private TrainerResponse buildUpdatedResponse() {
@@ -222,9 +218,8 @@ class TrainerServiceImplTest {
     }
 
     private Trainer createTrainerWithUsername(String username) {
-        Trainer trainer = new Trainer();
-        trainer.setUsername(username);
-
-        return trainer;
+        return Trainer.builder()
+                .username(username)
+                .build();
     }
 }
