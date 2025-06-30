@@ -54,8 +54,10 @@ public class TrainerServiceImpl implements TrainerService {
                 trainer.getFirstName(), trainer.getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        trainer.setUsername(username);
-        trainer.setPassword(password);
+        trainer = trainer.toBuilder()
+                .username(username)
+                .password(password)
+                .build();
 
         Trainer saved = trainerDAO.create(trainer);
 
@@ -83,10 +85,12 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer trainer = existingTrainer.get();
 
-        trainer.setFirstName(request.getFirstName());
-        trainer.setLastName(request.getLastName());
-        trainer.setIsActive(request.getIsActive());
-        trainer.setSpecialization(request.getSpecialization());
+        trainer = trainer.toBuilder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .isActive(request.getIsActive())
+                .specialization(request.getSpecialization())
+                .build();
 
         Trainer updatedTrainer = trainerDAO.update(trainer);
 

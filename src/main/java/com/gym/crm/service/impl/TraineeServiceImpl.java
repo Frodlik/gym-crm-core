@@ -54,8 +54,10 @@ public class TraineeServiceImpl implements TraineeService {
                 trainee.getFirstName(), trainee.getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        trainee.setPassword(password);
-        trainee.setUsername(username);
+        trainee = trainee.toBuilder()
+                .password(password)
+                .username(username)
+                .build();
 
         Trainee saved = traineeDAO.create(trainee);
 
@@ -83,11 +85,13 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee trainee = existingTrainee.get();
 
-        trainee.setFirstName(request.getFirstName());
-        trainee.setLastName(request.getLastName());
-        trainee.setIsActive(request.getIsActive());
-        trainee.setDateOfBirth(request.getDateOfBirth());
-        trainee.setAddress(request.getAddress());
+        trainee = trainee.toBuilder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
+                .isActive(request.getIsActive())
+                .dateOfBirth(request.getDateOfBirth())
+                .address(request.getAddress())
+                .build();
 
         Trainee updatedTrainee = traineeDAO.update(trainee);
 
