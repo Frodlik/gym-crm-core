@@ -1,10 +1,13 @@
 package com.gym.crm.config;
 
+import com.mysql.cj.jdbc.MysqlDataSource;
 import org.hibernate.SessionFactory;
 import org.hibernate.cfg.Configuration;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
+
+import javax.sql.DataSource;
 
 @org.springframework.context.annotation.Configuration
 @ComponentScan(basePackages = "com.gym.crm.model")
@@ -32,6 +35,16 @@ public class HibernateConfig {
 
     @Value("${hibernate.format_sql}")
     private String hibernateFormatSql;
+
+    @Bean
+    public DataSource dataSource() {
+        MysqlDataSource dataSource = new MysqlDataSource();
+        dataSource.setURL(dbUrl);
+        dataSource.setUser(dbUser);
+        dataSource.setPassword(dbPassword);
+
+        return dataSource;
+    }
 
     @Bean
     public SessionFactory sessionFactory() {
