@@ -5,3 +5,15 @@ storage:
   init:
     file:
       path: init-data.txt
+
+db:
+  driver: com.mysql.cj.jdbc.Driver
+  url: ${DB_URL}
+  username: ${DB_USERNAME}
+  password: ${DB_PASSWORD}
+
+hibernate:
+  dialect: org.hibernate.dialect.MySQLDialect
+  hbm2ddl-auto: create-drop
+  show_sql: true
+  format_sql: true
