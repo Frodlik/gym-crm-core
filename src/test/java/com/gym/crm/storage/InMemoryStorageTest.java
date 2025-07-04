@@ -10,13 +10,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class InMemoryStorageTest {
-    @Mock
-    private DataFileLoader dataFileLoader;
     @Mock
     private TraineeStorage traineeStorage;
     @Mock
@@ -30,20 +26,10 @@ class InMemoryStorageTest {
 
     @BeforeEach
     void setUp() {
-        storage.setDataFileLoader(dataFileLoader);
         storage.setTraineeStorage(traineeStorage);
         storage.setTrainerStorage(trainerStorage);
         storage.setTrainingStorage(trainingStorage);
         storage.setTrainingTypeStorage(trainingTypeStorage);
-    }
-
-    @Test
-    void setDataFileLoader_ShouldSetDataFileLoader() {
-        DataFileLoader newDataFileLoader = new DataFileLoader();
-
-        storage.setDataFileLoader(newDataFileLoader);
-
-        assertEquals(newDataFileLoader, storage.getDataFileLoader());
     }
 
     @Test
@@ -121,52 +107,9 @@ class InMemoryStorageTest {
     }
 
     @Test
-    void initializeData_ShouldCallDataFileLoaderMethods() {
-        when(dataFileLoader.loadTrainingTypesFromFile(trainingTypeStorage))
-                .thenReturn(trainingTypeStorage);
-        when(dataFileLoader.loadTraineesFromFile(traineeStorage))
-                .thenReturn(traineeStorage);
-        when(dataFileLoader.loadTrainersFromFile(trainerStorage, trainingTypeStorage))
-                .thenReturn(trainerStorage);
-        when(dataFileLoader.loadTrainingsFromFile(trainingStorage, trainingTypeStorage))
-                .thenReturn(trainingStorage);
-
-        storage.initializeData();
-
-        verify(dataFileLoader).loadTrainingTypesFromFile(trainingTypeStorage);
-        verify(dataFileLoader).loadTraineesFromFile(traineeStorage);
-        verify(dataFileLoader).loadTrainersFromFile(trainerStorage, trainingTypeStorage);
-        verify(dataFileLoader).loadTrainingsFromFile(trainingStorage, trainingTypeStorage);
-    }
-
-    @Test
-    void initializeData_ShouldLoadDataInCorrectOrder() {
-        when(dataFileLoader.loadTrainingTypesFromFile(trainingTypeStorage))
-                .thenReturn(trainingTypeStorage);
-        when(dataFileLoader.loadTraineesFromFile(traineeStorage))
-                .thenReturn(traineeStorage);
-        when(dataFileLoader.loadTrainersFromFile(trainerStorage, trainingTypeStorage))
-                .thenReturn(trainerStorage);
-        when(dataFileLoader.loadTrainingsFromFile(trainingStorage, trainingTypeStorage))
-                .thenReturn(trainingStorage);
-
-        storage.initializeData();
-
-        verify(dataFileLoader).loadTrainingTypesFromFile(trainingTypeStorage);
-        verify(dataFileLoader).loadTraineesFromFile(traineeStorage);
-        verify(dataFileLoader).loadTrainersFromFile(trainerStorage, trainingTypeStorage);
-        verify(dataFileLoader).loadTrainingsFromFile(trainingStorage, trainingTypeStorage);
-    }
-
-    @Test
     void getStorages_ShouldReturnStoragesMap() {
         assertNotNull(storage.getStorages());
         assertEquals(4, storage.getStorages().size());
-    }
-
-    @Test
-    void getDataFileLoader_ShouldReturnDataFileLoader() {
-        assertEquals(dataFileLoader, storage.getDataFileLoader());
     }
 
     @Test
