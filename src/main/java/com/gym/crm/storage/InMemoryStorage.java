@@ -1,6 +1,5 @@
 package com.gym.crm.storage;
 
-import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +23,7 @@ public class InMemoryStorage {
         TRAINEE, TRAINER, TRAINING, TRAINING_TYPE
     }
 
-    private DataFileLoader dataFileLoader;
     private Map<EntityName, Object> storages = new HashMap<>();
-
-    @Autowired
-    public void setDataFileLoader(DataFileLoader dataFileLoader) {
-        this.dataFileLoader = dataFileLoader;
-    }
 
     @Autowired
     public void setTraineeStorage(TraineeStorage traineeStorage) {
@@ -78,18 +71,4 @@ public class InMemoryStorage {
         logger.error("Storage type mismatch for entity: {}. Expected: {}", entityName, storageType.getSimpleName());
         throw new IllegalStateException("Invalid storage type for '%s'".formatted(entityName.name().toLowerCase()));
     }
-
-    @PostConstruct
-    public void initializeData() {
-        TrainingTypeStorage trainingTypeStorage = getTrainingTypeStorage();
-        TraineeStorage traineeStorage = getTraineeStorage();
-        TrainerStorage trainerStorage = getTrainerStorage();
-        TrainingStorage trainingStorage = getTrainingStorage();
-
-        dataFileLoader.loadTrainingTypesFromFile(trainingTypeStorage);
-        dataFileLoader.loadTraineesFromFile(traineeStorage);
-        dataFileLoader.loadTrainersFromFile(trainerStorage, trainingTypeStorage);
-        dataFileLoader.loadTrainingsFromFile(trainingStorage, trainingTypeStorage);
-    }
-
 }

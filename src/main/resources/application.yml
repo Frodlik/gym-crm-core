@@ -1,11 +1,6 @@
 server:
   port: 8080
 
-storage:
-  init:
-    file:
-      path: init-data.txt
-
 db:
   driver: com.mysql.cj.jdbc.Driver
   url: ${DB_URL}
