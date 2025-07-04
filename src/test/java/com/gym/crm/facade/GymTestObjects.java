@@ -69,7 +69,7 @@ public class GymTestObjects {
         TrainerCreateRequest request = new TrainerCreateRequest();
         request.setFirstName(TRAINER_FIRST_NAME);
         request.setLastName(TRAINER_LAST_NAME);
-        request.setSpecialization(new TrainingType(FITNESS_TYPE));
+        request.setSpecialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
 
         return request;
     }
@@ -80,7 +80,7 @@ public class GymTestObjects {
         request.setFirstName("Michael");
         request.setLastName("Smith");
         request.setIsActive(false);
-        request.setSpecialization(new TrainingType(YOGA_TYPE));
+        request.setSpecialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build());
 
         return request;
     }
@@ -92,7 +92,7 @@ public class GymTestObjects {
         response.setLastName(TRAINER_LAST_NAME);
         response.setUsername(TRAINER_USERNAME);
         response.setActive(true);
-        response.setSpecialization(new TrainingType(FITNESS_TYPE));
+        response.setSpecialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
 
         return response;
     }
@@ -114,7 +114,7 @@ public class GymTestObjects {
         response.setTraineeUsername(USERNAME);
         response.setTrainerUsername(TRAINER_USERNAME);
         response.setTrainingName(TRAINING_NAME);
-        response.setTrainingType(new TrainingType(FITNESS_TYPE));
+        response.setTrainingType(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
         response.setTrainingDate(TRAINING_DATE);
         response.setTrainingDuration(TRAINING_DURATION);
 

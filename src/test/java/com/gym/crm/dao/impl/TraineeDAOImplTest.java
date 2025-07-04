@@ -2,6 +2,7 @@ package com.gym.crm.dao.impl;
 
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.User;
 import com.gym.crm.storage.InMemoryStorage;
 import com.gym.crm.storage.TraineeStorage;
 import org.junit.jupiter.api.BeforeEach;
@@ -61,14 +62,14 @@ class TraineeDAOImplTest {
         Trainee actual = dao.create(trainee);
 
         assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getUserId());
-        assertEquals(FIRST_NAME, actual.getFirstName());
-        assertEquals(LAST_NAME, actual.getLastName());
-        assertEquals(USERNAME, actual.getUsername());
-        assertEquals(PASSWORD, actual.getPassword());
+        assertEquals(TRAINEE_ID, actual.getId());
+        assertEquals(FIRST_NAME, actual.getUser().getFirstName());
+        assertEquals(LAST_NAME, actual.getUser().getLastName());
+        assertEquals(USERNAME, actual.getUser().getUsername());
+        assertEquals(PASSWORD, actual.getUser().getPassword());
         assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
         assertEquals(ADDRESS, actual.getAddress());
-        assertTrue(actual.getIsActive());
+        assertTrue(actual.getUser().getIsActive());
 
         verify(traineeStorage).getNextId();
         verify(traineeStorage).getTrainees();
@@ -85,14 +86,14 @@ class TraineeDAOImplTest {
         Trainee actual = dao.create(trainee);
 
         assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getUserId());
-        assertEquals(FIRST_NAME, actual.getFirstName());
-        assertEquals(LAST_NAME, actual.getLastName());
-        assertEquals(USERNAME, actual.getUsername());
-        assertEquals(PASSWORD, actual.getPassword());
+        assertEquals(TRAINEE_ID, actual.getId());
+        assertEquals(FIRST_NAME, actual.getUser().getFirstName());
+        assertEquals(LAST_NAME, actual.getUser().getLastName());
+        assertEquals(USERNAME, actual.getUser().getUsername());
+        assertEquals(PASSWORD, actual.getUser().getPassword());
         assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
         assertNull(actual.getAddress());
-        assertFalse(actual.getIsActive());
+        assertFalse(actual.getUser().getIsActive());
     }
 
     @Test
@@ -107,7 +108,7 @@ class TraineeDAOImplTest {
 
         assertTrue(actual.isPresent());
         assertEquals(expected, actual.get());
-        assertEquals(TRAINEE_ID, actual.get().getUserId());
+        assertEquals(TRAINEE_ID, actual.get().getId());
         verify(traineeStorage).getTrainees();
     }
 
@@ -127,9 +128,12 @@ class TraineeDAOImplTest {
     void testFindAll_ShouldReturnAllTrainees() {
         Trainee trainee1 = createSampleTrainee(1L);
         Trainee trainee2 = createSampleTrainee(2L);
-        trainee2.toBuilder()
+        User saved = trainee2.getUser().toBuilder()
                 .firstName("Jane")
                 .username("jane.doe")
+                .build();
+        trainee2.toBuilder()
+                .user(saved)
                 .build();
 
         Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
@@ -164,19 +168,21 @@ class TraineeDAOImplTest {
 
         when(traineeStorage.getTrainees()).thenReturn(traineesMap);
 
-        Trainee updatedTrainee = createSampleTrainee(TRAINEE_ID)
-                .toBuilder()
+        User updatedUser = existingTrainee.getUser().toBuilder()
                 .firstName("John Updated")
-                .address("456 Oak Ave")
                 .isActive(false)
+                .build();
+
+        Trainee updatedTrainee = existingTrainee.toBuilder()
+                .user(updatedUser)
+                .address("456 Oak Ave")
                 .build();
 
         Trainee actual = dao.update(updatedTrainee);
 
-        assertEquals(updatedTrainee, actual);
-        assertEquals("John Updated", actual.getFirstName());
+        assertEquals("John Updated", actual.getUser().getFirstName());
         assertEquals("456 Oak Ave", actual.getAddress());
-        assertFalse(actual.getIsActive());
+        assertFalse(actual.getUser().getIsActive());
         verify(traineeStorage).getTrainees();
     }
 
@@ -231,28 +237,37 @@ class TraineeDAOImplTest {
     }
 
     private Trainee createSampleTrainee(Long id) {
-        return Trainee.builder()
-                .userId(id)
+        User user = User.builder()
+                .id(1000L)
                 .firstName(FIRST_NAME)
                 .lastName(LAST_NAME)
                 .username(USERNAME)
                 .password(PASSWORD)
+                .isActive(true)
+                .build();
+
+        return Trainee.builder()
+                .id(id)
+                .user(user)
                 .dateOfBirth(DATE_OF_BIRTH)
                 .address(ADDRESS)
-                .isActive(true)
                 .build();
     }
 
     private Trainee createTraineeWithoutId(String firstName, String lastName, String username,
                                            LocalDate dateOfBirth, String address, Boolean isActive) {
-        return Trainee.builder()
+        User user = User.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .username(username)
                 .password(PASSWORD)
+                .isActive(isActive)
+                .build();
+
+        return Trainee.builder()
+                .user(user)
                 .dateOfBirth(dateOfBirth)
                 .address(address)
-                .isActive(isActive)
                 .build();
     }
 }

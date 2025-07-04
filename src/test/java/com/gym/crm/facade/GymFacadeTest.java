@@ -268,7 +268,7 @@ class GymFacadeTest {
         response.setId(TRAINER_ID);
         response.setFirstName("Michael");
         response.setLastName("Smith");
-        response.setSpecialization(new TrainingType(YOGA_TYPE));
+        response.setSpecialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build());
 
         return response;
     }

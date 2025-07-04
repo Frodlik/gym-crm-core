@@ -1,5 +1,7 @@
 package com.gym.crm.dao.impl;
 
+import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.storage.InMemoryStorage;
@@ -31,7 +33,7 @@ class TrainingDAOImplTest {
     private static final Long TRAINEE_ID = 1L;
     private static final Long TRAINER_ID = 2L;
     private static final String TRAINING_NAME = "Morning Yoga Session";
-    private static final TrainingType TRAINING_TYPE = new TrainingType("Yoga");
+    private static final TrainingType TRAINING_TYPE = TrainingType.builder().trainingTypeName("Yoga").build();
     private static final LocalDate TRAINING_DATE = LocalDate.of(2024, 1, 15);
     private static final int DURATION = 60;
 
@@ -58,12 +60,12 @@ class TrainingDAOImplTest {
         Training actual = dao.create(training);
 
         assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getTraineeId());
-        assertEquals(TRAINER_ID, actual.getTrainerId());
+        assertEquals(TRAINEE_ID, actual.getTrainee().getId());
+        assertEquals(TRAINER_ID, actual.getTrainer().getId());
         assertEquals(TRAINING_NAME, actual.getTrainingName());
         assertEquals(TRAINING_TYPE, actual.getTrainingType());
         assertEquals(TRAINING_DATE, actual.getTrainingDate());
-        assertEquals(DURATION, actual.getDuration());
+        assertEquals(DURATION, actual.getTrainingDuration());
 
         verify(trainingStorage).getNextId();
         verify(trainingStorage).getTrainings();
@@ -80,12 +82,12 @@ class TrainingDAOImplTest {
         Training actual = dao.create(training);
 
         assertNotNull(actual);
-        assertEquals(3L, actual.getTraineeId());
-        assertEquals(4L, actual.getTrainerId());
+        assertEquals(3L, actual.getTrainee().getId());
+        assertEquals(4L, actual.getTrainer().getId());
         assertEquals("General Training", actual.getTrainingName());
         assertNull(actual.getTrainingType());
         assertEquals(LocalDate.of(2024, 2, 20), actual.getTrainingDate());
-        assertEquals(90, actual.getDuration());
+        assertEquals(90, actual.getTrainingDuration());
     }
 
     @Test
@@ -117,7 +119,7 @@ class TrainingDAOImplTest {
     @Test
     void testFindAll_ShouldReturnAllTrainings() {
         Training training1 = createSampleTraining();
-        Training training2 = createTraining(3L, 4L, "Evening Pilates", new TrainingType("Pilates"),
+        Training training2 = createTraining(3L, 4L, "Evening Pilates", TrainingType.builder().trainingTypeName("Pilates").build(),
                 TRAINING_DATE, 75);
 
         Map<Long, Training> trainingsMap = new ConcurrentHashMap<>();
@@ -155,11 +157,11 @@ class TrainingDAOImplTest {
         Training actual = dao.create(expected);
 
         assertNotNull(actual);
-        assertEquals(expected.getTraineeId(), actual.getTraineeId());
-        assertEquals(expected.getTrainerId(), actual.getTrainerId());
+        assertEquals(expected.getTrainee().getId(), actual.getTrainee().getId());
+        assertEquals(expected.getTrainer().getId(), actual.getTrainer().getId());
         assertEquals(expected.getTrainingName(), actual.getTrainingName());
         assertEquals(today, actual.getTrainingDate());
-        assertEquals(expected.getDuration(), actual.getDuration());
+        assertEquals(expected.getTrainingDuration(), actual.getTrainingDuration());
         assertNull(actual.getTrainingType());
     }
 
@@ -180,13 +182,21 @@ class TrainingDAOImplTest {
     }
 
     private Training createTraining(Long traineeId, Long trainerId, String name, TrainingType type, LocalDate date, int duration) {
+        Trainee trainee = Trainee.builder()
+                .id(traineeId)
+                .build();
+
+        Trainer trainer = Trainer.builder()
+                .id(trainerId)
+                .build();
+
         return Training.builder()
-                .traineeId(traineeId)
-                .trainerId(trainerId)
+                .trainee(trainee)
+                .trainer(trainer)
                 .trainingName(name)
                 .trainingType(type)
                 .trainingDate(date)
-                .duration(duration)
+                .trainingDuration(duration)
                 .build();
     }
 }
