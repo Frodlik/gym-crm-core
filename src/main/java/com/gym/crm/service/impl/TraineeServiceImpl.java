@@ -7,6 +7,7 @@ import com.gym.crm.dto.trainee.TraineeUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.User;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.slf4j.Logger;
@@ -47,21 +48,25 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = traineeMapper.toEntity(request);
 
         List<String> existingUsernames = traineeDAO.findAll().stream()
-                .map(Trainee::getUsername)
+                .map(t -> t.getUser().getUsername())
                 .toList();
 
         String username = userCredentialsGenerator.generateUsername(
-                trainee.getFirstName(), trainee.getLastName(), existingUsernames);
+                trainee.getUser().getFirstName(), trainee.getUser().getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        trainee = trainee.toBuilder()
-                .password(password)
+        User updatedUser = trainee.getUser().toBuilder()
                 .username(username)
+                .password(password)
+                .build();
+
+        trainee = trainee.toBuilder()
+                .user(updatedUser)
                 .build();
 
         Trainee saved = traineeDAO.create(trainee);
 
-        logger.info("Successfully created trainee with ID: {} and username: {}", saved.getUserId(), saved.getUsername());
+        logger.info("Successfully created trainee with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
         return traineeMapper.toResponse(saved);
     }
@@ -85,10 +90,14 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee trainee = existingTrainee.get();
 
-        trainee = trainee.toBuilder()
+        User updatedUser = trainee.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .isActive(request.getIsActive())
+                .build();
+
+        trainee = trainee.toBuilder()
+                .user(updatedUser)
                 .dateOfBirth(request.getDateOfBirth())
                 .address(request.getAddress())
                 .build();

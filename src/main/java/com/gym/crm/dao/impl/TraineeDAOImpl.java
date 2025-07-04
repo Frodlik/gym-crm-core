@@ -30,7 +30,7 @@ public class TraineeDAOImpl implements TraineeDAO {
         Long id = traineeStorage.getNextId();
 
         Trainee created = trainee.toBuilder()
-                .userId(id)
+                .id(id)
                 .build();
 
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
@@ -65,13 +65,13 @@ public class TraineeDAOImpl implements TraineeDAO {
     public Trainee update(Trainee trainee) {
         Map<Long, Trainee> trainees = traineeStorage.getTrainees();
 
-        if (!trainees.containsKey(trainee.getUserId())) {
-            throw new DaoException("Trainee not found with ID: " + trainee.getUserId());
+        if (!trainees.containsKey(trainee.getId())) {
+            throw new DaoException("Trainee not found with ID: " + trainee.getId());
         }
 
-        trainees.put(trainee.getUserId(), trainee);
+        trainees.put(trainee.getId(), trainee);
 
-        log.info("Trainee updated with ID: {}", trainee.getUserId());
+        log.info("Trainee updated with ID: {}", trainee.getId());
 
         return trainee;
     }

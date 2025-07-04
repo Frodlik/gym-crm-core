@@ -1,14 +1,38 @@
 package com.gym.crm.model;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+@Entity
+@Table(name = "users")
 @Getter
+@NoArgsConstructor
 @SuperBuilder(toBuilder = true)
-public abstract class User {
-    private final String firstName;
-    private final String lastName;
-    private final String username;
-    private final String password;
-    private final Boolean isActive;
+public class User {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Long id;
+
+    @Column(name = "first_name", nullable = false)
+    private String firstName;
+
+    @Column(name = "last_name", nullable = false)
+    private String lastName;
+
+    @Column(name = "username", nullable = false)
+    private String username;
+
+    @Column(name = "password", nullable = false)
+    private String password;
+
+    @Column(name = "isActive", nullable = false)
+    private Boolean isActive;
 }
