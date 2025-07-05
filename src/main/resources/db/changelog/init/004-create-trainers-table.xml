@@ -24,7 +24,6 @@
                 baseColumnNames="user_id"
                 referencedTableName="users"
                 referencedColumnNames="id"/>
-
         <addForeignKeyConstraint
                 constraintName="fk_trainers_specialization"
                 baseTableName="trainers"

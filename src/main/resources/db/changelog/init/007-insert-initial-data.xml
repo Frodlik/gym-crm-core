@@ -6,7 +6,6 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="007-insert-initial-data" author="Vadym Zakletskyi">
-
         <insert tableName="training_types">
             <column name="training_type_name" value="Cardio"/>
         </insert>
@@ -246,7 +245,6 @@
             <column name="trainer_id" value="3"/>
             <column name="training_type_id" value="1"/>
         </insert>
-
     </changeSet>
 
 </databaseChangeLog>

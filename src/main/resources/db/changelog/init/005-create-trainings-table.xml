@@ -36,14 +36,12 @@
                 baseColumnNames="trainee_id"
                 referencedTableName="trainees"
                 referencedColumnNames="id"/>
-
         <addForeignKeyConstraint
                 constraintName="fk_trainings_trainer_id"
                 baseTableName="trainings"
                 baseColumnNames="trainer_id"
                 referencedTableName="trainers"
                 referencedColumnNames="id"/>
-
         <addForeignKeyConstraint
                 constraintName="fk_trainings_training_type_id"
                 baseTableName="trainings"
