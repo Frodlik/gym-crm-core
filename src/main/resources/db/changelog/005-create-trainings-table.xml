@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="005-create-trainings-table" author="Vadym Zakletskyi">
+        <createTable tableName="trainings">
+            <column name="id" type="bigint" autoIncrement="true">
+                <constraints primaryKey="true" primaryKeyName="pk_trainings"/>
+            </column>
+            <column name="training_name" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="training_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="training_duration" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trainee_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trainer_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="training_type_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addForeignKeyConstraint
+                constraintName="fk_trainings_trainee_id"
+                baseTableName="trainings"
+                baseColumnNames="trainee_id"
+                referencedTableName="trainees"
+                referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_trainings_trainer_id"
+                baseTableName="trainings"
+                baseColumnNames="trainer_id"
+                referencedTableName="trainers"
+                referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_trainings_training_type_id"
+                baseTableName="trainings"
+                baseColumnNames="training_type_id"
+                referencedTableName="training_types"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="006-create-trainees-trainers-table" author="Vadym Zakletskyi">
+        <createTable tableName="trainees_trainers">
+            <column name="trainee_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+            <column name="trainer_id" type="bigint">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+
+        <addPrimaryKey
+                tableName="trainees_trainers"
+                columnNames="trainee_id, trainer_id"
+                constraintName="pk_trainees_trainers"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_trainees_trainers_trainee_id"
+                baseTableName="trainees_trainers"
+                baseColumnNames="trainee_id"
+                referencedTableName="trainees"
+                referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint
+                constraintName="fk_trainees_trainers_trainer_id"
+                baseTableName="trainees_trainers"
+                baseColumnNames="trainer_id"
+                referencedTableName="trainers"
+                referencedColumnNames="id"/>
+    </changeSet>
+
+</databaseChangeLog>

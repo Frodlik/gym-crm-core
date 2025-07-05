@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+
+    <changeSet id="007-insert-initial-data" author="Vadym Zakletskyi">
+
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Cardio"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Strength Training"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Yoga"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Pilates"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="CrossFit"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Swimming"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Boxing"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Dance"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Personal Training"/>
+        </insert>
+        <insert tableName="training_types">
+            <column name="training_type_name" value="Martial Arts"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="first_name" value="John"/>
+            <column name="last_name" value="Smith"/>
+            <column name="username" value="john.smith"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="Sarah"/>
+            <column name="last_name" value="Johnson"/>
+            <column name="username" value="sarah.johnson"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="Michael"/>
+            <column name="last_name" value="Brown"/>
+            <column name="username" value="michael.brown"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="Emily"/>
+            <column name="last_name" value="Davis"/>
+            <column name="username" value="emily.davis"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="David"/>
+            <column name="last_name" value="Wilson"/>
+            <column name="username" value="david.wilson"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="users">
+            <column name="first_name" value="Emma"/>
+            <column name="last_name" value="Miller"/>
+            <column name="username" value="emma.miller"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="James"/>
+            <column name="last_name" value="Garcia"/>
+            <column name="username" value="james.garcia"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="Olivia"/>
+            <column name="last_name" value="Martinez"/>
+            <column name="username" value="olivia.martinez"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="William"/>
+            <column name="last_name" value="Anderson"/>
+            <column name="username" value="william.anderson"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+        <insert tableName="users">
+            <column name="first_name" value="Sophia"/>
+            <column name="last_name" value="Taylor"/>
+            <column name="username" value="sophia.taylor"/>
+            <column name="password" value="$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy"/>
+            <column name="isActive" valueBoolean="true"/>
+        </insert>
+
+        <insert tableName="trainers">
+            <column name="user_id" value="1"/>
+            <column name="specialization" value="2"/>
+        </insert>
+        <insert tableName="trainers">
+            <column name="user_id" value="2"/>
+            <column name="specialization" value="3"/>
+        </insert>
+        <insert tableName="trainers">
+            <column name="user_id" value="3"/>
+            <column name="specialization" value="1"/>
+        </insert>
+        <insert tableName="trainers">
+            <column name="user_id" value="4"/>
+            <column name="specialization" value="4"/>
+        </insert>
+        <insert tableName="trainers">
+            <column name="user_id" value="5"/>
+            <column name="specialization" value="5"/>
+        </insert>
+
+        <insert tableName="trainees">
+            <column name="user_id" value="6"/>
+            <column name="date_of_birth" value="1995-03-15"/>
+            <column name="address" value="123 Main St, New York, NY 10001"/>
+        </insert>
+        <insert tableName="trainees">
+            <column name="user_id" value="7"/>
+            <column name="date_of_birth" value="1988-07-22"/>
+            <column name="address" value="456 Oak Ave, Los Angeles, CA 90210"/>
+        </insert>
+        <insert tableName="trainees">
+            <column name="user_id" value="8"/>
+            <column name="date_of_birth" value="1992-11-08"/>
+            <column name="address" value="789 Pine Rd, Chicago, IL 60601"/>
+        </insert>
+        <insert tableName="trainees">
+            <column name="user_id" value="9"/>
+            <column name="date_of_birth" value="1985-01-30"/>
+            <column name="address" value="321 Elm St, Houston, TX 77001"/>
+        </insert>
+        <insert tableName="trainees">
+            <column name="user_id" value="10"/>
+            <column name="date_of_birth" value="1990-05-12"/>
+            <column name="address" value="654 Maple Dr, Phoenix, AZ 85001"/>
+        </insert>
+
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="1"/>
+            <column name="trainer_id" value="1"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="1"/>
+            <column name="trainer_id" value="2"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="2"/>
+            <column name="trainer_id" value="3"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="3"/>
+            <column name="trainer_id" value="2"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="3"/>
+            <column name="trainer_id" value="4"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="4"/>
+            <column name="trainer_id" value="5"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="5"/>
+            <column name="trainer_id" value="1"/>
+        </insert>
+        <insert tableName="trainees_trainers">
+            <column name="trainee_id" value="5"/>
+            <column name="trainer_id" value="3"/>
+        </insert>
+
+        <insert tableName="trainings">
+            <column name="training_name" value="Morning Strength Session"/>
+            <column name="training_date" value="2024-01-15"/>
+            <column name="training_duration" value="60"/>
+            <column name="trainee_id" value="1"/>
+            <column name="trainer_id" value="1"/>
+            <column name="training_type_id" value="2"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="Relaxing Yoga Flow"/>
+            <column name="training_date" value="2024-01-16"/>
+            <column name="training_duration" value="45"/>
+            <column name="trainee_id" value="1"/>
+            <column name="trainer_id" value="2"/>
+            <column name="training_type_id" value="3"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="High-Intensity Cardio"/>
+            <column name="training_date" value="2024-01-17"/>
+            <column name="training_duration" value="30"/>
+            <column name="trainee_id" value="2"/>
+            <column name="trainer_id" value="3"/>
+            <column name="training_type_id" value="1"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="Core Pilates"/>
+            <column name="training_date" value="2024-01-18"/>
+            <column name="training_duration" value="50"/>
+            <column name="trainee_id" value="3"/>
+            <column name="trainer_id" value="4"/>
+            <column name="training_type_id" value="4"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="CrossFit WOD"/>
+            <column name="training_date" value="2024-01-19"/>
+            <column name="training_duration" value="45"/>
+            <column name="trainee_id" value="4"/>
+            <column name="trainer_id" value="5"/>
+            <column name="training_type_id" value="5"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="Evening Strength Training"/>
+            <column name="training_date" value="2024-01-20"/>
+            <column name="training_duration" value="75"/>
+            <column name="trainee_id" value="5"/>
+            <column name="trainer_id" value="1"/>
+            <column name="training_type_id" value="2"/>
+        </insert>
+        <insert tableName="trainings">
+            <column name="training_name" value="Cardio Burn"/>
+            <column name="training_date" value="2024-01-21"/>
+            <column name="training_duration" value="40"/>
+            <column name="trainee_id" value="5"/>
+            <column name="trainer_id" value="3"/>
+            <column name="training_type_id" value="1"/>
+        </insert>
+
+    </changeSet>
+
+</databaseChangeLog>

@@ -5,4 +5,12 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
+    <include file="db/changelog/001-create-users-table.xml"/>
+    <include file="db/changelog/002-create-training-types-table.xml"/>
+    <include file="db/changelog/003-create-trainees-table.xml"/>
+    <include file="db/changelog/004-create-trainers-table.xml"/>
+    <include file="db/changelog/005-create-trainings-table.xml"/>
+    <include file="db/changelog/006-create-trainees-trainers-table.xml"/>
+    <include file="db/changelog/007-insert-initial-data.xml"/>
+
 </databaseChangeLog>
