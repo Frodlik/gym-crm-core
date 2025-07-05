@@ -3,48 +3,41 @@ package com.gym.crm.dao.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
-import com.gym.crm.storage.InMemoryStorage;
-import com.gym.crm.storage.TraineeStorage;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 @Repository
 public class TraineeDAOImpl implements TraineeDAO {
     private static final Logger log = LoggerFactory.getLogger(TraineeDAOImpl.class);
 
-    private TraineeStorage traineeStorage;
+    private final SessionFactory sessionFactory;
 
     @Autowired
-    public void setStorage(InMemoryStorage inMemoryStorage) {
-        this.traineeStorage = inMemoryStorage.getTraineeStorage();
+    public TraineeDAOImpl(SessionFactory sessionFactory) {
+        this.sessionFactory = sessionFactory;
     }
 
     @Override
     public Trainee create(Trainee trainee) {
-        Long id = traineeStorage.getNextId();
+        Session session = sessionFactory.getCurrentSession();
+        session.persist(trainee);
 
-        Trainee created = trainee.toBuilder()
-                .id(id)
-                .build();
+        log.info("Created Trainee with ID: {}", trainee.getId());
 
-        Map<Long, Trainee> trainees = traineeStorage.getTrainees();
-        trainees.put(id, created);
-
-        log.info("Created Trainee with id: {}", id);
-
-        return created;
+        return trainee;
     }
 
     @Override
     public Optional<Trainee> findById(Long id) {
-        Map<Long, Trainee> trainees = traineeStorage.getTrainees();
-        Trainee trainee = trainees.get(id);
+        Session session = sessionFactory.getCurrentSession();
+        Trainee trainee = session.get(Trainee.class, id);
 
         log.debug("Found trainee with ID: {}", id);
 
@@ -53,36 +46,43 @@ public class TraineeDAOImpl implements TraineeDAO {
 
     @Override
     public List<Trainee> findAll() {
-        Map<Long, Trainee> trainees = traineeStorage.getTrainees();
+        Session session = sessionFactory.getCurrentSession();
+        List<Trainee> trainees = session.createQuery("FROM Trainee", Trainee.class).getResultList();
 
         log.debug("Retrieved all trainees. Count: {}", trainees.size());
 
-        return trainees.values().stream()
-                .toList();
+        return trainees;
     }
 
     @Override
     public Trainee update(Trainee trainee) {
-        Map<Long, Trainee> trainees = traineeStorage.getTrainees();
+        Session session = sessionFactory.getCurrentSession();
 
-        if (!trainees.containsKey(trainee.getId())) {
+        Trainee existingTrainee = session.get(Trainee.class, trainee.getId());
+        if (existingTrainee == null) {
             throw new DaoException("Trainee not found with ID: " + trainee.getId());
         }
 
-        trainees.put(trainee.getId(), trainee);
+        Trainee updatedTrainee = session.merge(trainee);
 
         log.info("Trainee updated with ID: {}", trainee.getId());
 
-        return trainee;
+        return updatedTrainee;
     }
 
     @Override
     public boolean delete(Long id) {
-        Map<Long, Trainee> trainees = traineeStorage.getTrainees();
-        Trainee removed = trainees.remove(id);
+        Session session = sessionFactory.getCurrentSession();
+        Trainee trainee = session.get(Trainee.class, id);
 
-        log.info("Trainee deleted with ID: {}", id);
+        if (trainee != null) {
+            session.remove(trainee);
+            log.info("Trainee deleted with ID: {}", id);
+            return true;
+        }
 
-        return removed != null;
+        log.warn("Trainee not found for deletion with ID: {}", id);
+
+        return false;
     }
 }

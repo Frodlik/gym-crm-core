@@ -3,8 +3,9 @@ package com.gym.crm.dao.impl;
 import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.User;
-import com.gym.crm.storage.InMemoryStorage;
-import com.gym.crm.storage.TraineeStorage;
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.query.Query;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,18 +14,18 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,40 +40,27 @@ class TraineeDAOImplTest {
     private static final String ADDRESS = "123 Main St";
 
     @Mock
-    private InMemoryStorage inMemoryStorage;
+    private SessionFactory sessionFactory;
     @Mock
-    private TraineeStorage traineeStorage;
+    private Session session;
+    @Mock
+    private Query<Trainee> query;
     @InjectMocks
     private TraineeDAOImpl dao;
 
     @BeforeEach
     void setUp() {
-        when(inMemoryStorage.getTraineeStorage()).thenReturn(traineeStorage);
-        dao.setStorage(inMemoryStorage);
+        when(sessionFactory.getCurrentSession()).thenReturn(session);
     }
 
     @Test
-    void testCreate_ShouldCreateTraineeWithGeneratedId() {
+    void testCreate_ShouldCreateTrainee() {
         Trainee trainee = createTraineeWithoutId(FIRST_NAME, LAST_NAME, USERNAME,
                 DATE_OF_BIRTH, ADDRESS, true);
 
-        when(traineeStorage.getNextId()).thenReturn(TRAINEE_ID);
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        dao.create(trainee);
 
-        Trainee actual = dao.create(trainee);
-
-        assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getId());
-        assertEquals(FIRST_NAME, actual.getUser().getFirstName());
-        assertEquals(LAST_NAME, actual.getUser().getLastName());
-        assertEquals(USERNAME, actual.getUser().getUsername());
-        assertEquals(PASSWORD, actual.getUser().getPassword());
-        assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
-        assertEquals(ADDRESS, actual.getAddress());
-        assertTrue(actual.getUser().getIsActive());
-
-        verify(traineeStorage).getNextId();
-        verify(traineeStorage).getTrainees();
+        verify(session).persist(trainee);
     }
 
     @Test
@@ -80,160 +68,127 @@ class TraineeDAOImplTest {
         Trainee trainee = createTraineeWithoutId(FIRST_NAME, LAST_NAME, USERNAME,
                 DATE_OF_BIRTH, null, false);
 
-        when(traineeStorage.getNextId()).thenReturn(TRAINEE_ID);
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        dao.create(trainee);
 
-        Trainee actual = dao.create(trainee);
-
-        assertNotNull(actual);
-        assertEquals(TRAINEE_ID, actual.getId());
-        assertEquals(FIRST_NAME, actual.getUser().getFirstName());
-        assertEquals(LAST_NAME, actual.getUser().getLastName());
-        assertEquals(USERNAME, actual.getUser().getUsername());
-        assertEquals(PASSWORD, actual.getUser().getPassword());
-        assertEquals(DATE_OF_BIRTH, actual.getDateOfBirth());
-        assertNull(actual.getAddress());
-        assertFalse(actual.getUser().getIsActive());
+        verify(session).persist(trainee);
+        assertNull(trainee.getAddress());
+        assertFalse(trainee.getUser().getIsActive());
     }
 
     @Test
     void testFindById_ShouldReturnTraineeWhenExists() {
         Trainee expected = createSampleTrainee(TRAINEE_ID);
-        Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
-        traineesMap.put(TRAINEE_ID, expected);
 
-        when(traineeStorage.getTrainees()).thenReturn(traineesMap);
+        when(session.get(Trainee.class, TRAINEE_ID)).thenReturn(expected);
 
         Optional<Trainee> actual = dao.findById(TRAINEE_ID);
 
         assertTrue(actual.isPresent());
         assertEquals(expected, actual.get());
-        assertEquals(TRAINEE_ID, actual.get().getId());
-        verify(traineeStorage).getTrainees();
+        verify(session).get(Trainee.class, TRAINEE_ID);
     }
 
     @Test
     void testFindById_ShouldReturnEmptyWhenNotExists() {
         Long id = 999L;
 
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        when(session.get(Trainee.class, id)).thenReturn(null);
 
         Optional<Trainee> actual = dao.findById(id);
 
         assertFalse(actual.isPresent());
-        verify(traineeStorage).getTrainees();
+        verify(session).get(Trainee.class, id);
     }
 
     @Test
     void testFindAll_ShouldReturnAllTrainees() {
         Trainee trainee1 = createSampleTrainee(1L);
         Trainee trainee2 = createSampleTrainee(2L);
-        User saved = trainee2.getUser().toBuilder()
-                .firstName("Jane")
-                .username("jane.doe")
-                .build();
-        trainee2.toBuilder()
-                .user(saved)
-                .build();
+        List<Trainee> expectedList = Arrays.asList(trainee1, trainee2);
 
-        Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
-        traineesMap.put(1L, trainee1);
-        traineesMap.put(2L, trainee2);
-
-        when(traineeStorage.getTrainees()).thenReturn(traineesMap);
+        when(session.createQuery("FROM Trainee", Trainee.class)).thenReturn(query);
+        when(query.getResultList()).thenReturn(expectedList);
 
         List<Trainee> actual = dao.findAll();
 
         assertEquals(2, actual.size());
         assertTrue(actual.contains(trainee1));
         assertTrue(actual.contains(trainee2));
-        verify(traineeStorage).getTrainees();
+        verify(session).createQuery("FROM Trainee", Trainee.class);
+        verify(query).getResultList();
     }
 
     @Test
     void testFindAll_ShouldReturnEmptyListWhenNoTrainees() {
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        when(session.createQuery("FROM Trainee", Trainee.class)).thenReturn(query);
+        when(query.getResultList()).thenReturn(Collections.emptyList());
 
         List<Trainee> actual = dao.findAll();
 
         assertTrue(actual.isEmpty());
-        verify(traineeStorage).getTrainees();
+        verify(session).createQuery("FROM Trainee", Trainee.class);
+        verify(query).getResultList();
     }
 
     @Test
     void testUpdate_ShouldUpdateExistingTrainee() {
         Trainee existingTrainee = createSampleTrainee(TRAINEE_ID);
-        Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
-        traineesMap.put(TRAINEE_ID, existingTrainee);
-
-        when(traineeStorage.getTrainees()).thenReturn(traineesMap);
-
         User updatedUser = existingTrainee.getUser().toBuilder()
                 .firstName("John Updated")
                 .isActive(false)
                 .build();
-
         Trainee updatedTrainee = existingTrainee.toBuilder()
                 .user(updatedUser)
                 .address("456 Oak Ave")
                 .build();
 
+        when(session.get(Trainee.class, TRAINEE_ID)).thenReturn(existingTrainee);
+        when(session.merge(updatedTrainee)).thenReturn(updatedTrainee);
+
         Trainee actual = dao.update(updatedTrainee);
 
-        assertEquals("John Updated", actual.getUser().getFirstName());
-        assertEquals("456 Oak Ave", actual.getAddress());
-        assertFalse(actual.getUser().getIsActive());
-        verify(traineeStorage).getTrainees();
+        assertEquals(updatedTrainee, actual);
+        verify(session).get(Trainee.class, TRAINEE_ID);
+        verify(session).merge(updatedTrainee);
     }
 
     @Test
     void testUpdate_ShouldThrowExceptionWhenTraineeNotExists() {
         Trainee trainee = createSampleTrainee(999L);
 
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        when(session.get(Trainee.class, 999L)).thenReturn(null);
 
         DaoException exception = assertThrows(DaoException.class, () -> dao.update(trainee));
 
         assertEquals("Trainee not found with ID: 999", exception.getMessage());
-        verify(traineeStorage).getTrainees();
+        verify(session).get(Trainee.class, 999L);
+        verify(session, never()).merge(any());
     }
 
     @Test
     void testDelete_ShouldReturnTrueWhenTraineeExists() {
         Trainee trainee = createSampleTrainee(TRAINEE_ID);
-        Map<Long, Trainee> traineesMap = new ConcurrentHashMap<>();
-        traineesMap.put(TRAINEE_ID, trainee);
 
-        when(traineeStorage.getTrainees()).thenReturn(traineesMap);
+        when(session.get(Trainee.class, TRAINEE_ID)).thenReturn(trainee);
 
         boolean result = dao.delete(TRAINEE_ID);
 
         assertTrue(result);
-        verify(traineeStorage).getTrainees();
+        verify(session).get(Trainee.class, TRAINEE_ID);
+        verify(session).remove(trainee);
     }
 
     @Test
     void testDelete_ShouldReturnFalseWhenTraineeNotExists() {
         Long id = 999L;
 
-        when(traineeStorage.getTrainees()).thenReturn(new ConcurrentHashMap<>());
+        when(session.get(Trainee.class, id)).thenReturn(null);
 
         boolean result = dao.delete(id);
 
         assertFalse(result);
-        verify(traineeStorage).getTrainees();
-    }
-
-    @Test
-    void testSetStorage_ShouldInitializeTraineeStorage() {
-        InMemoryStorage newStorage = mock(InMemoryStorage.class);
-        TraineeStorage newTraineeStorage = mock(TraineeStorage.class);
-
-        when(newStorage.getTraineeStorage()).thenReturn(newTraineeStorage);
-
-        dao.setStorage(newStorage);
-
-        verify(newStorage).getTraineeStorage();
+        verify(session).get(Trainee.class, id);
+        verify(session, never()).remove(any());
     }
 
     private Trainee createSampleTrainee(Long id) {
