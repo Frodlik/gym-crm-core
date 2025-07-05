@@ -31,10 +31,10 @@ public class Trainee {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "date_of_birth")
+    @Column(name = "date_of_birth", nullable = true)
     private LocalDate dateOfBirth;
 
-    @Column(name = "address")
+    @Column(name = "address", nullable = true, length = 200)
     private String address;
 
     @OneToOne

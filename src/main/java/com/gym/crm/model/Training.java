@@ -25,7 +25,7 @@ public class Training {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "training_name", nullable = false)
+    @Column(name = "training_name", nullable = false, length = 100)
     private String trainingName;
 
     @Column(name = "training_date", nullable = false)

@@ -205,7 +205,6 @@ class TrainingServiceImplTest {
         service.create(createRequest);
 
         verify(trainingDAO).create(captor.capture());
-        Training capturedTraining = captor.getValue();
     }
 
     private Training buildTraining() {
