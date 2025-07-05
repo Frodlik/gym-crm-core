@@ -9,6 +9,7 @@ import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
+import com.gym.crm.model.User;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -61,9 +62,13 @@ class TrainerServiceImplTest {
         );
         List<String> existingUsernames = List.of("existing.trainer1", "existing.trainer2");
 
-        Trainer trainerWithCredentials = initialTrainer.toBuilder()
+        User userWithCredentials = initialTrainer.getUser().toBuilder()
                 .username(TRAINER_USERNAME)
                 .password(GENERATED_PASSWORD)
+                .build();
+
+        Trainer trainerWithCredentials = initialTrainer.toBuilder()
+                .user(userWithCredentials)
                 .build();
 
         TrainerResponse expected = GymTestObjects.buildTrainerResponse();
@@ -186,22 +191,31 @@ class TrainerServiceImplTest {
     }
 
     private Trainer buildTrainer() {
-        return Trainer.builder()
-                .userId(TRAINER_ID)
+        User user = User.builder()
+                .id(999L)
                 .firstName(TRAINER_FIRST_NAME)
                 .lastName(TRAINER_LAST_NAME)
                 .username(TRAINER_USERNAME)
                 .password(PASSWORD)
                 .isActive(true)
+                .build();
+
+        return Trainer.builder()
+                .id(TRAINER_ID)
+                .user(user)
                 .specialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build())
                 .build();
     }
 
     private Trainer buildUpdatedTrainer() {
-        return buildTrainer().toBuilder()
+        User user = buildTrainer().getUser().toBuilder()
                 .firstName("Michael")
                 .lastName("Smith")
                 .isActive(false)
+                .build();
+
+        return buildTrainer().toBuilder()
+                .user(user)
                 .specialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build())
                 .build();
     }
@@ -212,14 +226,18 @@ class TrainerServiceImplTest {
         response.setFirstName("Michael");
         response.setLastName("Smith");
         response.setActive(false);
-        response.setSpecialization(new TrainingType(YOGA_TYPE));
+        response.setSpecialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build());
 
         return response;
     }
 
     private Trainer createTrainerWithUsername(String username) {
-        return Trainer.builder()
+        User user = User.builder()
                 .username(username)
+                .build();
+
+        return Trainer.builder()
+                .user(user)
                 .build();
     }
 }

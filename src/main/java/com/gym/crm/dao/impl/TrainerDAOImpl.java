@@ -30,7 +30,7 @@ public class TrainerDAOImpl implements TrainerDAO {
         Long id = trainerStorage.getNextId();
 
         Trainer created = trainer.toBuilder()
-                .userId(id)
+                .id(id)
                 .build();
 
         Map<Long, Trainer> trainers = trainerStorage.getTrainers();
@@ -65,13 +65,13 @@ public class TrainerDAOImpl implements TrainerDAO {
     public Trainer update(Trainer trainer) {
         Map<Long, Trainer> trainers = trainerStorage.getTrainers();
 
-        if (!trainers.containsKey(trainer.getUserId())) {
-            throw new DaoException("Trainer not found with ID: " + trainer.getUserId());
+        if (!trainers.containsKey(trainer.getId())) {
+            throw new DaoException("Trainer not found with ID: " + trainer.getId());
         }
 
-        trainers.put(trainer.getUserId(), trainer);
+        trainers.put(trainer.getId(), trainer);
 
-        log.info("Trainer updated with ID: {}", trainer.getUserId());
+        log.info("Trainer updated with ID: {}", trainer.getId());
 
         return trainer;
     }

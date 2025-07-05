@@ -7,6 +7,7 @@ import com.gym.crm.dto.trainer.TrainerUpdateRequest;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
+import com.gym.crm.model.User;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.slf4j.Logger;
@@ -47,21 +48,29 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerMapper.toEntity(request);
 
         List<String> existingUsernames = trainerDAO.findAll().stream()
-                .map(Trainer::getUsername)
+                .map(t -> t.getUser().getUsername())
                 .toList();
 
         String username = userCredentialsGenerator.generateUsername(
-                trainer.getFirstName(), trainer.getLastName(), existingUsernames);
+                trainer.getUser().getFirstName(), trainer.getUser().getLastName(), existingUsernames);
         String password = userCredentialsGenerator.generatePassword();
 
-        trainer = trainer.toBuilder()
+        User user = User.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .username(username)
                 .password(password)
+                .isActive(true)
+                .build();
+
+        trainer = Trainer.builder()
+                .user(user)
+                .specialization(request.getSpecialization())
                 .build();
 
         Trainer saved = trainerDAO.create(trainer);
 
-        logger.info("Successfully created trainer with ID: {} and username: {}", saved.getUserId(), saved.getUsername());
+        logger.info("Successfully created trainer with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
         return trainerMapper.toResponse(saved);
     }
@@ -85,10 +94,14 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer trainer = existingTrainer.get();
 
-        trainer = trainer.toBuilder()
+        User updatedUser = trainer.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .isActive(request.getIsActive())
+                .build();
+
+        trainer = trainer.toBuilder()
+                .user(updatedUser)
                 .specialization(request.getSpecialization())
                 .build();
 

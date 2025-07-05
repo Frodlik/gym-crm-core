@@ -68,6 +68,12 @@ public class HibernateConfig {
         configuration.setProperty("hibernate.connection.pool_size", "10");
         configuration.setProperty("hibernate.current_session_context_class", "thread");
 
+        configuration.addAnnotatedClass(com.gym.crm.model.User.class);
+        configuration.addAnnotatedClass(com.gym.crm.model.Trainee.class);
+        configuration.addAnnotatedClass(com.gym.crm.model.Trainer.class);
+        configuration.addAnnotatedClass(com.gym.crm.model.Training.class);
+        configuration.addAnnotatedClass(com.gym.crm.model.TrainingType.class);
+
         return configuration.buildSessionFactory();
     }
 }

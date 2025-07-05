@@ -8,6 +8,7 @@ import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.User;
 import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -88,8 +89,8 @@ class TraineeServiceImplTest {
         verify(traineeDAO).create(captor.capture());
 
         Trainee captured = captor.getValue();
-        assertEquals(GENERATED_PASSWORD, captured.getPassword());
-        assertEquals(USERNAME, captured.getUsername());
+        assertEquals(GENERATED_PASSWORD, captured.getUser().getPassword());
+        assertEquals(USERNAME, captured.getUser().getUsername());
     }
 
     @Test
@@ -148,9 +149,9 @@ class TraineeServiceImplTest {
         verify(traineeDAO).update(captor.capture());
 
         Trainee captured = captor.getValue();
-        assertEquals("Jane", captured.getFirstName());
-        assertEquals("Smith", captured.getLastName());
-        assertFalse(captured.getIsActive());
+        assertEquals("Jane", captured.getUser().getFirstName());
+        assertEquals("Smith", captured.getUser().getLastName());
+        assertFalse(captured.getUser().getIsActive());
         assertEquals(LocalDate.of(1985, 5, 15), captured.getDateOfBirth());
         assertEquals("456 Oak Ave", captured.getAddress());
     }
@@ -178,23 +179,32 @@ class TraineeServiceImplTest {
     }
 
     private Trainee buildTrainee() {
-        return Trainee.builder()
-                .userId(TRAINEE_ID)
+        User user = User.builder()
+                .id(999L)
                 .firstName(FIRST_NAME)
                 .lastName(LAST_NAME)
                 .username(USERNAME)
                 .password(PASSWORD)
                 .isActive(true)
+                .build();
+
+        return Trainee.builder()
+                .id(TRAINEE_ID)
+                .user(user)
                 .dateOfBirth(BIRTH_DATE)
                 .address(ADDRESS)
                 .build();
     }
 
     private Trainee buildUpdatedTrainee() {
-        return buildTrainee().toBuilder()
+        User user = buildTrainee().getUser().toBuilder()
                 .firstName("Jane")
                 .lastName("Smith")
                 .isActive(false)
+                .build();
+
+        return buildTrainee().toBuilder()
+                .user(user)
                 .dateOfBirth(LocalDate.of(1985, 5, 15))
                 .address("456 Oak Ave")
                 .build();
@@ -211,8 +221,12 @@ class TraineeServiceImplTest {
     }
 
     private Trainee createTraineeWithUsername(String username) {
-        return Trainee.builder()
+        User user = User.builder()
                 .username(username)
+                .build();
+
+        return Trainee.builder()
+                .user(user)
                 .build();
     }
 }

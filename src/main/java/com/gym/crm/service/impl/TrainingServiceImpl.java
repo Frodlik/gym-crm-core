@@ -61,8 +61,8 @@ public class TrainingServiceImpl implements TrainingService {
         Training training = trainingMapper.toEntity(request);
 
         training = training.toBuilder()
-                .traineeId(trainee.get().getUserId())
-                .trainerId(trainer.get().getUserId())
+                .trainee(trainee.get())
+                .trainer(trainer.get())
                 .build();
 
         Training saved = trainingDAO.create(training);
