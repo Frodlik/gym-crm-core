@@ -46,8 +46,8 @@ public class TrainerDAOImpl implements TrainerDAO {
     public Optional<Trainer> findByUsername(String username) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             try {
-                Trainer trainer = entityManager.createQuery(
-                                "SELECT t FROM Trainer t WHERE t.user.username = :username", Trainer.class)
+                Trainer trainer = entityManager.createQuery("SELECT t FROM Trainer t JOIN FETCH t.user u " +
+                                        "JOIN FETCH t.specialization s WHERE u.username = :username", Trainer.class)
                         .setParameter("username", username)
                         .getSingleResult();
 

@@ -5,6 +5,7 @@ import io.micrometer.common.lang.Nullable;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.Fetch;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
@@ -22,12 +23,12 @@ public class TrainingCriteriaBuilder {
     private static final String TRAINEE = "trainee";
     private static final String TRAINER = "trainer";
     private static final String USER = "user";
-    private static final String TRAINING_TYPE = "trainingType";
+    private static final String SPECIALIZATION = "specialization";
     private static final String USERNAME = "username";
     private static final String FIRST_NAME = "firstName";
     private static final String LAST_NAME = "lastName";
     private static final String TRAINING_DATE = "trainingDate";
-    private static final String TRAINING_TYPE_NAME = "trainingTypeName";
+    private static final String TYPE_NAME = "typeName";
 
     public List<Training> findTrainingsByCriteria(
             EntityManager entityManager,
@@ -61,14 +62,29 @@ public class TrainingCriteriaBuilder {
         CriteriaQuery<Training> query = cb.createQuery(Training.class);
         Root<Training> root = query.from(Training.class);
 
+        TrainingFetches fetches = createFetches(root);
         TrainingJoins joins = createJoins(root, trainingType);
+
         List<Predicate> predicates = buildPredicates(cb, root, joins, userUsername, userRole,
                 fromDate, toDate, nameFilter, isSearchingByTrainer, trainingType);
 
-        query.where(predicates.toArray(new Predicate[0]));
-        query.orderBy(cb.desc(root.get(TRAINING_DATE)));
+        query.select(root)
+                .distinct(true)
+                .where(predicates.toArray(new Predicate[0]))
+                .orderBy(cb.desc(root.get(TRAINING_DATE)));
 
         return query;
+    }
+
+    private TrainingFetches createFetches(Root<Training> root) {
+        Fetch<Object, Object> trainerFetch = root.fetch(TRAINER, JoinType.LEFT);
+        Fetch<Object, Object> trainerUserFetch = trainerFetch.fetch(USER, JoinType.LEFT);
+        Fetch<Object, Object> trainerSpecializationFetch = trainerFetch.fetch(SPECIALIZATION, JoinType.LEFT);
+
+        Fetch<Object, Object> traineeFetch = root.fetch(TRAINEE, JoinType.LEFT);
+        Fetch<Object, Object> traineeUserFetch = traineeFetch.fetch(USER, JoinType.LEFT);
+
+        return new TrainingFetches(trainerUserFetch, traineeUserFetch, trainerSpecializationFetch);
     }
 
     private TrainingJoins createJoins(Root<Training> root, @Nullable String trainingType) {
@@ -77,12 +93,12 @@ public class TrainingCriteriaBuilder {
         Join<Object, Object> traineeJoin = root.join(TRAINEE, JoinType.LEFT);
         Join<Object, Object> traineeUserJoin = traineeJoin.join(USER, JoinType.LEFT);
 
-        Join<Object, Object> trainingTypeJoin = null;
+        Join<Object, Object> specializationJoin = null;
         if (trainingType != null) {
-            trainingTypeJoin = root.join(TRAINING_TYPE, JoinType.LEFT);
+            specializationJoin = trainerJoin.join(SPECIALIZATION, JoinType.LEFT);
         }
 
-        return new TrainingJoins(trainerUserJoin, traineeUserJoin, trainingTypeJoin);
+        return new TrainingJoins(trainerUserJoin, traineeUserJoin, specializationJoin);
     }
 
     private List<Predicate> buildPredicates(
@@ -170,12 +186,12 @@ public class TrainingCriteriaBuilder {
             TrainingJoins joins,
             @Nullable String trainingType
     ) {
-        if (trainingType == null || trainingType.trim().isEmpty() || joins.trainingTypeJoin() == null) {
+        if (trainingType == null || trainingType.trim().isEmpty() || joins.specializationJoin() == null) {
             return;
         }
 
         predicates.add(cb.like(
-                cb.lower(joins.trainingTypeJoin().get(TRAINING_TYPE_NAME)),
+                cb.lower(joins.specializationJoin().get(TYPE_NAME)),
                 "%" + trainingType.toLowerCase() + "%"
         ));
     }
@@ -183,6 +199,12 @@ public class TrainingCriteriaBuilder {
     private record TrainingJoins(
             Join<Object, Object> trainerUserJoin,
             Join<Object, Object> traineeUserJoin,
-            @Nullable Join<Object, Object> trainingTypeJoin
+            @Nullable Join<Object, Object> specializationJoin
+    ) {}
+
+    private record TrainingFetches(
+            Fetch<Object, Object> trainerUserFetch,
+            Fetch<Object, Object> traineeUserFetch,
+            Fetch<Object, Object> trainerSpecializationFetch
     ) {}
 }

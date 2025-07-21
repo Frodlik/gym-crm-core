@@ -29,26 +29,28 @@ public class UserCredentialsGenerator {
         return findUniqueUsername(baseUsername, normalizedUsernames);
     }
 
-    public String generatePassword() {
-        StringBuilder rawPassword = generateRawPassword();
-        List<Character> characters = rawPassword.chars()
+    public String generateRawPassword() {
+        StringBuilder password = generatePasswordContent();
+        List<Character> characters = password.chars()
                 .mapToObj(c -> (char) c)
                 .collect(Collectors.toList());
 
         Collections.shuffle(characters, random);
 
-        String password = characters.stream()
+        return characters.stream()
                 .map(String::valueOf)
                 .collect(Collectors.joining());
+    }
 
-        return passwordEncoder.encode(password);
+    public String encodePassword(String rawPassword) {
+        return passwordEncoder.encode(rawPassword);
     }
 
     public boolean matches(String rawPassword, String encodedPassword) {
         return passwordEncoder.matches(rawPassword, encodedPassword);
     }
 
-    private StringBuilder generateRawPassword() {
+    private StringBuilder generatePasswordContent() {
         StringBuilder password = new StringBuilder(PASSWORD_LENGTH);
         String all = UPPER + LOWER + DIGITS;
 
@@ -68,7 +70,7 @@ public class UserCredentialsGenerator {
     }
 
     private String buildBaseUsername(String firstName, String lastName) {
-        return firstName + "." + lastName;
+        return (firstName + "." + lastName).toLowerCase();
     }
 
     private List<String> normalizeUsernames(List<String> usernames) {

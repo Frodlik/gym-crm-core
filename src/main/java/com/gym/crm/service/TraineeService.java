@@ -1,27 +1,30 @@
 package com.gym.crm.service;
 
 import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.trainee.TraineeCreateRequest;
-import com.gym.crm.dto.trainee.TraineeResponse;
-import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequest;
-import com.gym.crm.dto.trainee.TraineeUpdateRequest;
+import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
+import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
+import com.gym.crm.dto.trainee.TraineeGetResponseDto;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
+import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
+import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 
 import java.util.Optional;
 
 public interface TraineeService {
-    TraineeResponse create(TraineeCreateRequest request);
+    TraineeCreateResponseDto create(TraineeCreateRequestDto request);
 
-    Optional<TraineeResponse> findById(Long id);
+    Optional<TraineeGetResponseDto> findById(Long id);
 
-    Optional<TraineeResponse> findByUsername(String username);
+    TraineeGetResponseDto findByUsername(String username);
 
-    TraineeResponse update(TraineeUpdateRequest request);
+    TraineeUpdateResponseDto update(TraineeUpdateRequestDto request, String username);
 
-    TraineeResponse updateTraineeTrainersList(TraineeTrainersUpdateRequest request);
+    TraineeTrainersUpdateResponseDto updateTraineeTrainersList(TraineeTrainersUpdateRequestDto request, String username);
 
     void deleteByUsername(String username);
 
     void changePassword(PasswordChangeRequest request);
 
-    TraineeResponse toggleTraineeActivation(String username);
+    void toggleTraineeActivation(String username, boolean isActive);
 }
