@@ -13,8 +13,8 @@ import java.time.LocalDate;
 @SuperBuilder(toBuilder = true)
 public class TrainingResponse {
     private Long id;
-    private String traineeUsername;
-    private String trainerUsername;
+    private String traineeName;
+    private String trainerName;
     private String trainingName;
     private String trainingTypeName;
     private LocalDate trainingDate;

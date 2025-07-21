@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TraineeTrainingCriteriaRequest {
+public class TraineeTrainingCriteriaRequestDto {
     private String traineeUsername;
 
     @DateTimeFormat(pattern = "yyyy-MM-dd")
