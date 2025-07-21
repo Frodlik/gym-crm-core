@@ -472,9 +472,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/TraineeAssignedTrainersUpdateResponse'
+                $ref: '#/components/schemas/TraineeAssignedTrainersUpdateResponse'
         '400':
           description: Invalid input data or trainer not found
           content:
@@ -791,7 +789,9 @@ components:
         firstName: "Billy"
         lastName: "Herrington"
     TraineeCreateRequest:
-      $ref: '#/components/schemas/Trainee'
+      description: Trainee Create Request
+      allOf:
+        - $ref: '#/components/schemas/Trainee'
     TraineeCreateResponse:
       description: Trainee Create Response
       allOf:
@@ -805,7 +805,10 @@ components:
               type: boolean
               description: Indicates if the trainee is active
             trainers:
-              $ref: '#/components/schemas/Trainer'
+              type: array
+              description: List of assigned trainers
+              items:
+                $ref: '#/components/schemas/Trainer'
       example:
         firstName: "Billy"
         lastName: "Herrington"
@@ -893,8 +896,15 @@ components:
           example: ["ricardo.milos"]
           minItems: 1
     TraineeAssignedTrainersUpdateResponse:
-      allOf:
-        - $ref: '#/components/schemas/Trainer'
+      type: object
+      description: List of updated trainers
+      properties:
+        trainers:
+          type: array
+          items:
+            type: object
+            allOf:
+              - $ref: '#/components/schemas/Trainer'
     TrainerKeys:
       allOf:
         - $ref: '#/components/schemas/User'
@@ -907,7 +917,9 @@ components:
               description: Trainer's specialization (training type)
               example: "Yoga"
     TrainerCreateRequest:
-      $ref: '#/components/schemas/TrainerKeys'
+      description: Trainer create Request
+      allOf:
+        - $ref: '#/components/schemas/TrainerKeys'
     TrainerCreateResponse:
       description: Trainer Create Response
       allOf:
