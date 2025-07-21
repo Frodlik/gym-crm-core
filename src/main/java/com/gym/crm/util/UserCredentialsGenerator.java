@@ -70,7 +70,7 @@ public class UserCredentialsGenerator {
     }
 
     private String buildBaseUsername(String firstName, String lastName) {
-        return (firstName + "." + lastName).toLowerCase();
+        return String.format("%s.%s", firstName, lastName).toLowerCase();
     }
 
     private List<String> normalizeUsernames(List<String> usernames) {

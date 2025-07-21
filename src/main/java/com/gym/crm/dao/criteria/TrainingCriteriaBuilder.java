@@ -17,6 +17,8 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.apache.commons.lang3.StringUtils.isBlank;
+
 @Component
 @RequiredArgsConstructor
 public class TrainingCriteriaBuilder {
@@ -186,7 +188,7 @@ public class TrainingCriteriaBuilder {
             TrainingJoins joins,
             @Nullable String trainingType
     ) {
-        if (trainingType == null || trainingType.trim().isEmpty() || joins.specializationJoin() == null) {
+        if (isBlank(trainingType) || joins.specializationJoin() == null) {
             return;
         }
 
