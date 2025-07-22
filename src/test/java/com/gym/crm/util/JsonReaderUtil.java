@@ -8,16 +8,11 @@ import java.io.IOException;
 import java.io.InputStream;
 
 public class JsonReaderUtil {
-    private static final ObjectMapper objectMapper = new ObjectMapper()
-            .registerModule(new JavaTimeModule());
+    private static final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     public static <T> T readFromJson(String filePath, TypeReference<T> typeReference) {
-        try (InputStream inputStream = JsonReaderUtil.class.getClassLoader()
-                .getResourceAsStream(filePath)) {
-
-            if (inputStream == null) {
-                throw new RuntimeException("JSON file not found: " + filePath);
-            }
+        try (InputStream inputStream = JsonReaderUtil.class.getClassLoader().getResourceAsStream(filePath)) {
+            validatePath(inputStream, filePath);
 
             return objectMapper.readValue(inputStream, typeReference);
         } catch (IOException e) {
@@ -26,16 +21,18 @@ public class JsonReaderUtil {
     }
 
     public static <T> T readFromJson(String filePath, Class<T> clazz) {
-        try (InputStream inputStream = JsonReaderUtil.class.getClassLoader()
-                .getResourceAsStream(filePath)) {
-
-            if (inputStream == null) {
-                throw new RuntimeException("JSON file not found: " + filePath);
-            }
+        try (InputStream inputStream = JsonReaderUtil.class.getClassLoader().getResourceAsStream(filePath)) {
+            validatePath(inputStream, filePath);
 
             return objectMapper.readValue(inputStream, clazz);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read JSON file: " + filePath, e);
+        }
+    }
+
+    private static void validatePath(InputStream inputStream, String filePath) {
+        if (inputStream == null) {
+            throw new RuntimeException("JSON file not found: " + filePath);
         }
     }
 }

@@ -49,8 +49,6 @@ import static com.gym.crm.facade.GymTestObjects.LAST_NAME;
 import static com.gym.crm.facade.GymTestObjects.PASSWORD;
 import static com.gym.crm.facade.GymTestObjects.TRAINEE_ID;
 import static com.gym.crm.facade.GymTestObjects.TRAINER_FIRST_NAME;
-import static com.gym.crm.facade.GymTestObjects.TRAINER_ID;
-import static com.gym.crm.facade.GymTestObjects.TRAINER_LAST_NAME;
 import static com.gym.crm.facade.GymTestObjects.TRAINER_USERNAME;
 import static com.gym.crm.facade.GymTestObjects.TRAINING_ID;
 import static com.gym.crm.facade.GymTestObjects.USERNAME;
@@ -197,13 +195,8 @@ class GymFacadeTest {
 
         assertThat(actual)
                 .isNotNull()
-                .satisfies(response -> {
-                    assertThat(response.getId()).isEqualTo(TRAINER_ID);
-                    assertThat(response.getFirstName()).isEqualTo(TRAINER_FIRST_NAME);
-                    assertThat(response.getLastName()).isEqualTo(TRAINER_LAST_NAME);
-                    assertThat(response.getUsername()).isEqualTo(TRAINER_USERNAME);
-                    assertThat(response.getSpecialization().getTrainingTypeName()).isEqualTo(FITNESS_TYPE);
-                });
+                .isEqualTo(expectedResponse);
+
         verify(trainerService).create(request);
     }
 
@@ -448,6 +441,7 @@ class GymFacadeTest {
 
         TraineeTrainersUpdateResponseDto response = new TraineeTrainersUpdateResponseDto();
         response.setTrainers(List.of(trainer));
+
         return response;
     }
 }
