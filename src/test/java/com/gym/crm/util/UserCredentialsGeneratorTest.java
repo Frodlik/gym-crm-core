@@ -24,8 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class UserCredentialsGeneratorTest {
     private static final String FIRST_NAME = "John";
     private static final String LAST_NAME = "Doe";
-    private static final String EXPECTED_USERNAME = "John.Doe";
-    private static final String EXPECTED_USERNAME_WITH_SUFFIX = "John.Doe1";
+    private static final String EXPECTED_USERNAME = "john.doe";
+    private static final String EXPECTED_USERNAME_WITH_SUFFIX = "john.doe1";
 
     private UserCredentialsGenerator sut;
 
@@ -45,10 +45,10 @@ class UserCredentialsGeneratorTest {
     @Test
     void generateUsername_ShouldHandleLargeNumberOfConflicts() {
         List<String> existingUsernames = List.of(
-                "Jane.Smith", "Jane.Smith1", "Jane.Smith2", "Jane.Smith3", "Jane.Smith4",
-                "Jane.Smith5", "Jane.Smith6", "Jane.Smith7", "Jane.Smith8", "Jane.Smith9"
+                "Jane.Smith", "jane.smith1", "jane.smith2", "jane.smith3", "jane.smith4",
+                "jane.smith5", "jane.smith6", "jane.smith7", "jane.smith8", "jane.smith9"
         );
-        String expected = "Jane.Smith10";
+        String expected = "jane.smith10";
 
         String actual = sut.generateUsername("Jane", "Smith", existingUsernames);
 
@@ -58,7 +58,7 @@ class UserCredentialsGeneratorTest {
     @Test
     void generateUsername_ShouldWorkWithSpecialCharactersInNames() {
         List<String> existingUsernames = Collections.emptyList();
-        String expected = "Jean-Pierre.O'Connor";
+        String expected = "jean-pierre.o'connor";
 
         String actual = sut.generateUsername("Jean-Pierre", "O'Connor", existingUsernames);
 
@@ -68,7 +68,7 @@ class UserCredentialsGeneratorTest {
     @Test
     void generateUsername_ShouldHandleEmptyExistingUsernames() {
         List<String> existingUsernames = Collections.emptyList();
-        String expected = "Test.User";
+        String expected = "test.user";
 
         String actual = sut.generateUsername("Test", "User", existingUsernames);
 
@@ -82,40 +82,38 @@ class UserCredentialsGeneratorTest {
     }
 
     @Test
-    void generatePassword_ShouldReturnValidBCryptHash() {
-        String hashedPassword = sut.generatePassword();
+    void generateUsername_ShouldHandleCaseInsensitiveComparison() {
+        List<String> existingUsernames = List.of("JOHN.DOE", "John.Doe1");
+        String expected = "john.doe2";
 
-        assertNotNull(hashedPassword);
-        assertFalse(hashedPassword.isBlank());
-        assertTrue(hashedPassword.startsWith("$2"));
-        assertTrue(hashedPassword.length() >= 60);
+        String actual = sut.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
+
+        assertEquals(expected, actual);
     }
 
     @Test
-    void generatePassword_ShouldBeDifferentEachTime() {
-        String hash1 = sut.generatePassword();
-        String hash2 = sut.generatePassword();
-        String hash3 = sut.generatePassword();
+    void generateRawPassword_ShouldReturnValidPassword() {
+        String rawPassword = sut.generateRawPassword();
 
-        assertNotEquals(hash1, hash2);
-        assertNotEquals(hash2, hash3);
-        assertNotEquals(hash1, hash3);
+        assertNotNull(rawPassword);
+        assertFalse(rawPassword.isBlank());
+        assertEquals(10, rawPassword.length());
     }
 
     @Test
-    void generatePassword_ShouldGenerateDifferentPasswords() {
-        String first = sut.generatePassword();
-        String second = sut.generatePassword();
-        String third = sut.generatePassword();
+    void generateRawPassword_ShouldBeDifferentEachTime() {
+        String password1 = sut.generateRawPassword();
+        String password2 = sut.generateRawPassword();
+        String password3 = sut.generateRawPassword();
 
-        assertNotEquals(first, second);
-        assertNotEquals(second, third);
-        assertNotEquals(first, third);
+        assertNotEquals(password1, password2);
+        assertNotEquals(password2, password3);
+        assertNotEquals(password1, password3);
     }
 
     @Test
-    void generatePassword_ShouldNotReturnNullOrEmpty() {
-        String actual = sut.generatePassword();
+    void generateRawPassword_ShouldNotReturnNullOrEmpty() {
+        String actual = sut.generateRawPassword();
 
         assertNotNull(actual);
         assertFalse(actual.isEmpty());
@@ -123,8 +121,8 @@ class UserCredentialsGeneratorTest {
     }
 
     @Test
-    void generatePassword_ShouldUseAllAvailableCharacters() {
-        String actual = sut.generatePassword();
+    void generateRawPassword_ShouldContainRequiredCharacterTypes() {
+        String actual = sut.generateRawPassword();
 
         assertAll("Password must contain required character types",
                 () -> assertTrue(actual.chars().anyMatch(Character::isUpperCase), "Must contain uppercase letter"),
@@ -133,11 +131,51 @@ class UserCredentialsGeneratorTest {
     }
 
     @Test
+    void encodePassword_ShouldReturnValidBCryptHash() {
+        String rawPassword = "testPassword123";
+        String hashedPassword = sut.encodePassword(rawPassword);
+
+        assertNotNull(hashedPassword);
+        assertFalse(hashedPassword.isBlank());
+        assertTrue(hashedPassword.startsWith("$2"));
+        assertTrue(hashedPassword.length() >= 60);
+    }
+
+    @Test
+    void encodePassword_ShouldBeDifferentForSamePassword() {
+        String rawPassword = "testPassword123";
+        String hash1 = sut.encodePassword(rawPassword);
+        String hash2 = sut.encodePassword(rawPassword);
+        String hash3 = sut.encodePassword(rawPassword);
+
+        assertNotEquals(hash1, hash2);
+        assertNotEquals(hash2, hash3);
+        assertNotEquals(hash1, hash3);
+    }
+
+    @Test
+    void matches_ShouldReturnTrueForCorrectPassword() {
+        String rawPassword = "testPassword123";
+        String encodedPassword = sut.encodePassword(rawPassword);
+
+        assertTrue(sut.matches(rawPassword, encodedPassword));
+    }
+
+    @Test
+    void matches_ShouldReturnFalseForIncorrectPassword() {
+        String rawPassword = "testPassword123";
+        String wrongPassword = "wrongPassword456";
+        String encodedPassword = sut.encodePassword(rawPassword);
+
+        assertFalse(sut.matches(wrongPassword, encodedPassword));
+    }
+
+    @Test
     void generateUsername_ShouldHandleVeryLongNames() {
         String firstName = "VeryLongFirstNameThatExceedsNormalLength";
         String lastName = "VeryLongLastNameThatExceedsNormalLength";
         List<String> existingUsernames = Collections.emptyList();
-        String expected = firstName + "." + lastName;
+        String expected = (firstName + "." + lastName).toLowerCase();
 
         String actual = sut.generateUsername(firstName, lastName, existingUsernames);
 
@@ -146,20 +184,32 @@ class UserCredentialsGeneratorTest {
 
     @Test
     void generateUsername_ShouldBeConsistentForSameInputs() {
-        List<String> existingUsernames = List.of("John.Doe", "John.Doe1");
+        List<String> existingUsernames = List.of("john.doe", "john.doe1");
 
         String result1 = sut.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
         String result2 = sut.generateUsername(FIRST_NAME, LAST_NAME, existingUsernames);
 
         assertEquals(result1, result2);
-        assertEquals("John.Doe2", result1);
+        assertEquals("john.doe2", result1);
+    }
+
+    @Test
+    void fullPasswordWorkflow_ShouldWorkCorrectly() {
+        String rawPassword = sut.generateRawPassword();
+
+        String encodedPassword = sut.encodePassword(rawPassword);
+        String wrongPassword = sut.generateRawPassword();
+
+        assertTrue(sut.matches(rawPassword, encodedPassword));
+        assertFalse(sut.matches(wrongPassword, encodedPassword));
     }
 
     static Stream<Arguments> usernameGenerationProvider() {
         return Stream.of(
                 Arguments.of(FIRST_NAME, LAST_NAME, List.of(), EXPECTED_USERNAME),
-                Arguments.of(FIRST_NAME, LAST_NAME, List.of(EXPECTED_USERNAME), EXPECTED_USERNAME_WITH_SUFFIX),
-                Arguments.of(FIRST_NAME, LAST_NAME, List.of(EXPECTED_USERNAME, EXPECTED_USERNAME_WITH_SUFFIX, "John.Doe2"), "John.Doe3")
+                Arguments.of(FIRST_NAME, LAST_NAME, List.of("john.doe"), EXPECTED_USERNAME_WITH_SUFFIX),
+                Arguments.of(FIRST_NAME, LAST_NAME, List.of("john.doe", "john.doe1", "john.doe2"), "john.doe3"),
+                Arguments.of("Test", "User", List.of("TEST.USER"), "test.user1")
         );
     }
 }

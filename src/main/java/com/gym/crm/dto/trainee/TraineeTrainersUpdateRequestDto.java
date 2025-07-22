@@ -13,10 +13,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class TraineeTrainersUpdateRequest {
-    @NotNull(message = "Trainee username cannot be null")
-    private String traineeUsername;
-
+public class TraineeTrainersUpdateRequestDto {
     @NotNull(message = "Trainer usernames list cannot be null")
     @NotEmpty(message = "Trainer usernames list cannot be empty")
     private List<String> trainerUsernames;

@@ -1,16 +1,59 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.trainee.TraineeCreateRequest;
-import com.gym.crm.dto.trainee.TraineeResponse;
-import com.gym.crm.dto.trainee.TraineeUpdateRequest;
+import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
+import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
+import com.gym.crm.dto.trainee.TraineeGetResponseDto;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
+import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
+import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
+import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
+import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
+import com.gym.crm.openapi.model.TraineeCreateRequest;
+import com.gym.crm.openapi.model.TraineeCreateResponse;
+import com.gym.crm.openapi.model.TraineeGetResponse;
+import com.gym.crm.openapi.model.TraineeUpdateRequest;
+import com.gym.crm.openapi.model.TraineeUpdateResponse;
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = TrainerMapper.class)
 public interface TraineeMapper {
-    Trainee toEntity(TraineeCreateRequest request);
+    Trainee toEntity(TraineeCreateRequestDto request);
 
-    Trainee toEntity(TraineeUpdateRequest request);
+    Trainee toEntity(TraineeUpdateRequestDto request);
 
-    TraineeResponse toResponse(Trainee trainee);
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "isActive", source = "user.isActive")
+    @Mapping(target = "trainers", source = "trainers")
+    TraineeGetResponseDto toResponse(Trainee trainee);
+
+    TraineeCreateRequestDto toCreateRequest(TraineeCreateRequest request);
+
+    TraineeUpdateRequestDto toUpdateRequest(TraineeUpdateRequest request);
+
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    @Mapping(target = "isActive", source = "user.isActive")
+    @Mapping(target = "trainers", source = "trainers")
+    TraineeUpdateResponseDto toUpdateResponseDto(Trainee trainee);
+
+    TraineeTrainersUpdateRequestDto toTrainersUpdateRequest(TraineeAssignedTrainersUpdateRequest request);
+
+    TraineeTrainersUpdateResponseDto toTrainersUpdateResponse(Trainee trainee);
+
+    @Mapping(target = "isActive", source = "active")
+    TraineeGetResponse toRestGetResponse(TraineeGetResponseDto response);
+
+    TraineeCreateResponse toRestCreateResponse(TraineeCreateResponseDto responseDto);
+
+    @Mapping(target = "isActive", source = "active")
+    TraineeUpdateResponse toRestUpdateResponse(TraineeUpdateResponseDto responseDto);
+
+    @Mapping(target = "trainers", source = "trainers")
+    TraineeAssignedTrainersUpdateResponse toRestTrainersUpdateResponse(TraineeTrainersUpdateResponseDto dto);
 }

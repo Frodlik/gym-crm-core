@@ -19,6 +19,8 @@ import java.util.Optional;
 public class TraineeDAOImpl implements TraineeDAO {
     private static final Logger log = LoggerFactory.getLogger(TraineeDAOImpl.class);
 
+    private static final String USERNAME_PARAM = "username";
+
     private final TransactionHandler transactionHandler;
 
     @Override
@@ -47,9 +49,11 @@ public class TraineeDAOImpl implements TraineeDAO {
     public Optional<Trainee> findByUsername(String username) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             try {
-                Trainee trainee = entityManager.createQuery(
-                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
-                        .setParameter("username", username)
+                Trainee trainee = entityManager.createQuery("SELECT t FROM Trainee t JOIN FETCH t.user u" +
+                                " LEFT JOIN FETCH t.trainers tr LEFT JOIN FETCH tr.user usr" +
+                                " LEFT JOIN FETCH tr.specialization LEFT JOIN FETCH t.trainings " +
+                                "WHERE u.username = :username ", Trainee.class)
+                        .setParameter(USERNAME_PARAM, username)
                         .getSingleResult();
 
                 log.debug("Found trainee with username: {}", username);
@@ -66,7 +70,7 @@ public class TraineeDAOImpl implements TraineeDAO {
     @Override
     public List<Trainee> findAll() {
         return transactionHandler.performReturningWithinSession(entityManager -> {
-            List<Trainee> trainees = entityManager.createQuery("FROM Trainee", Trainee.class)
+            List<Trainee> trainees = entityManager.createQuery("SELECT DISTINCT t FROM Trainee t JOIN FETCH t.user", Trainee.class)
                     .getResultList();
 
             log.debug("Retrieved all trainees. Count: {}", trainees.size());
@@ -97,8 +101,9 @@ public class TraineeDAOImpl implements TraineeDAO {
             Trainee trainee;
             try {
                 trainee = entityManager.createQuery(
-                                "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
-                        .setParameter("username", traineeUsername)
+                                "SELECT t FROM Trainee t LEFT JOIN FETCH t.trainers tr LEFT JOIN FETCH tr.user " +
+                                        "LEFT JOIN FETCH tr.specialization WHERE t.user.username = :username", Trainee.class)
+                        .setParameter(USERNAME_PARAM, traineeUsername)
                         .getSingleResult();
             } catch (NoResultException e) {
                 throw new DaoException("Trainee not found with username: " + traineeUsername);
@@ -108,8 +113,9 @@ public class TraineeDAOImpl implements TraineeDAO {
                     .map(username -> {
                         try {
                             return entityManager.createQuery(
-                                            "SELECT t FROM Trainer t WHERE t.user.username = :username", Trainer.class)
-                                    .setParameter("username", username)
+                                            "SELECT t FROM Trainer t JOIN FETCH t.user LEFT JOIN FETCH t.specialization " +
+                                                    "WHERE t.user.username = :username", Trainer.class)
+                                    .setParameter(USERNAME_PARAM, username)
                                     .getSingleResult();
                         } catch (NoResultException e) {
                             throw new DaoException("Trainer not found with username: " + username);
@@ -135,7 +141,7 @@ public class TraineeDAOImpl implements TraineeDAO {
             try {
                 Trainee trainee = entityManager.createQuery(
                                 "SELECT t FROM Trainee t WHERE t.user.username = :username", Trainee.class)
-                        .setParameter("username", username)
+                        .setParameter(USERNAME_PARAM, username)
                         .getSingleResult();
 
                 entityManager.remove(trainee);

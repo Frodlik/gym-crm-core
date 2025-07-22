@@ -2,6 +2,7 @@ package com.gym.crm.dao.impl;
 
 import com.gym.crm.dao.TrainingDAO;
 import com.gym.crm.dao.criteria.TrainingCriteriaBuilder;
+import com.gym.crm.dao.criteria.TrainingSearchCriteria;
 import com.gym.crm.dao.hibernate.TransactionHandler;
 import com.gym.crm.model.Training;
 import lombok.RequiredArgsConstructor;
@@ -59,17 +60,24 @@ public class TrainingDAOImpl implements TrainingDAO {
     }
 
     @Override
-    public List<Training> findTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
-                                                         String trainerName, String trainingType) {
+    public List<Training> findTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate,
+                                                         LocalDate toDate, String trainerName,
+                                                         String trainingType) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             log.debug("Finding trainee trainings for username: {}, from: {}, to: {}, trainer: {}, type: {}",
                     traineeUsername, fromDate, toDate, trainerName, trainingType);
 
-            List<Training> results = criteriaBuilder.findTrainingsByCriteria(
-                    entityManager, traineeUsername, TRAINEE, fromDate, toDate,
-                    trainerName, false, trainingType
-            );
+            TrainingSearchCriteria criteria = TrainingSearchCriteria.builder()
+                    .userUsername(traineeUsername)
+                    .userRole(TRAINEE)
+                    .fromDate(fromDate)
+                    .toDate(toDate)
+                    .nameFilter(trainerName)
+                    .isSearchingByTrainer(false)
+                    .trainingType(trainingType)
+                    .build();
 
+            List<Training> results = criteriaBuilder.findTrainingsByCriteria(entityManager, criteria);
             log.debug("Found {} trainings for trainee", results.size());
 
             return results;
@@ -77,17 +85,22 @@ public class TrainingDAOImpl implements TrainingDAO {
     }
 
     @Override
-    public List<Training> findTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
-                                                         String traineeName) {
+    public List<Training> findTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate,
+                                                         LocalDate toDate, String traineeName) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             log.debug("Finding trainer trainings for username: {}, from: {}, to: {}, trainee: {}",
                     trainerUsername, fromDate, toDate, traineeName);
 
-            List<Training> results = criteriaBuilder.findTrainingsByCriteria(
-                    entityManager, trainerUsername, TRAINER, fromDate, toDate,
-                    traineeName, true, null
-            );
+            TrainingSearchCriteria criteria = TrainingSearchCriteria.builder()
+                    .userUsername(trainerUsername)
+                    .userRole(TRAINER)
+                    .fromDate(fromDate)
+                    .toDate(toDate)
+                    .nameFilter(traineeName)
+                    .isSearchingByTrainer(true)
+                    .build();
 
+            List<Training> results = criteriaBuilder.findTrainingsByCriteria(entityManager, criteria);
             log.debug("Found {} trainings for trainer", results.size());
 
             return results;

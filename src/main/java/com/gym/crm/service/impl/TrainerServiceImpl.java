@@ -64,13 +64,14 @@ public class TrainerServiceImpl implements TrainerService {
 
         String username = userCredentialsGenerator.generateUsername(
                 trainer.getUser().getFirstName(), trainer.getUser().getLastName(), existingUsernames);
-        String password = userCredentialsGenerator.generatePassword();
+        String rawPassword = userCredentialsGenerator.generateRawPassword();
+        String encodedPassword = userCredentialsGenerator.encodePassword(rawPassword);
 
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .username(username)
-                .password(password)
+                .password(encodedPassword)
                 .isActive(true)
                 .build();
         trainer = Trainer.builder()

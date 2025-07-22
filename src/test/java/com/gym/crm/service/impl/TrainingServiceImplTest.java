@@ -81,8 +81,8 @@ class TrainingServiceImplTest {
 
         assertNotNull(actual);
         assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getTraineeUsername(), actual.getTraineeUsername());
-        assertEquals(expected.getTrainerUsername(), actual.getTrainerUsername());
+        assertEquals(expected.getTraineeName(), actual.getTraineeName());
+        assertEquals(expected.getTrainerName(), actual.getTrainerName());
         assertEquals(expected.getTrainingName(), actual.getTrainingName());
         assertEquals(expected.getTrainingDate(), actual.getTrainingDate());
         assertEquals(expected.getTrainingDuration(), actual.getTrainingDuration());
@@ -103,7 +103,6 @@ class TrainingServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(actual));
 
         assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-
         verify(traineeDAO).findById(actual.getTraineeId());
         verify(trainerDAO).findById(actual.getTrainerId());
         verify(trainingMapper, never()).toEntity(any());
@@ -121,7 +120,6 @@ class TrainingServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(actual));
 
         assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-
         verify(traineeDAO).findById(actual.getTraineeId());
         verify(trainerDAO).findById(actual.getTrainerId());
         verify(trainingMapper, never()).toEntity(any());
@@ -140,7 +138,6 @@ class TrainingServiceImplTest {
                 () -> service.create(createRequest));
 
         assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-
         verify(traineeDAO).findById(createRequest.getTraineeId());
         verify(trainerDAO).findById(createRequest.getTrainerId());
         verify(trainingMapper, never()).toEntity(any());
@@ -159,8 +156,8 @@ class TrainingServiceImplTest {
 
         assertTrue(actual.isPresent());
         assertEquals(expected.getId(), actual.get().getId());
-        assertEquals(expected.getTraineeUsername(), actual.get().getTraineeUsername());
-        assertEquals(expected.getTrainerUsername(), actual.get().getTrainerUsername());
+        assertEquals(expected.getTraineeName(), actual.get().getTraineeName());
+        assertEquals(expected.getTrainerName(), actual.get().getTrainerName());
         assertEquals(expected.getTrainingName(), actual.get().getTrainingName());
 
         verify(trainingDAO).findById(TRAINING_ID);
@@ -176,7 +173,6 @@ class TrainingServiceImplTest {
         Optional<TrainingResponse> result = service.findById(trainingId);
 
         assertFalse(result.isPresent());
-
         verify(trainingDAO).findById(trainingId);
         verify(trainingMapper, never()).toResponse(any());
     }
@@ -230,7 +226,6 @@ class TrainingServiceImplTest {
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
-
         verify(traineeDAO).findByUsername(traineeUsername);
         verify(trainingDAO).findTraineeTrainingsByCriteria(traineeUsername, from, to, trainerName, trainingType);
         verify(trainingMapper).toResponse(training);
@@ -279,7 +274,6 @@ class TrainingServiceImplTest {
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
-
         verify(trainerDAO).findByUsername(trainerUsername);
         verify(trainingDAO).findTrainerTrainingsByCriteria(trainerUsername, from, to, traineeName);
         verify(trainingMapper).toResponse(training);

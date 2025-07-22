@@ -163,10 +163,26 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.hamcrest</groupId>
+            <artifactId>hamcrest</artifactId>
+            <version>2.2</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.jayway.jsonpath</groupId>
+            <artifactId>json-path</artifactId>
+            <version>2.9.0</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.database-rider</groupId>
             <artifactId>rider-core</artifactId>
             <version>1.44.0</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>3.26.3</version>
         </dependency>
         <dependency>
             <groupId>com.github.database-rider</groupId>
@@ -263,6 +279,7 @@
                         <exclude>**/dto/**</exclude>
                         <exclude>**/model/**</exclude>
                         <exclude>**/config/**</exclude>
+                        <exclude>**/openapi/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>
