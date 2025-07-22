@@ -1,0 +1,14 @@
+[
+  {
+    "trainingName": "Medical Ninjutsu",
+    "trainingDate": "2025-07-15",
+    "trainerName": "Sakura",
+    "trainingDuration": 120
+  },
+  {
+    "trainingName": "Sharingan Training",
+    "trainingDate": "2025-07-20",
+    "trainerName": "Sasuke",
+    "trainingDuration": 90
+  }
+]

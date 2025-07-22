@@ -17,6 +17,7 @@ import com.gym.crm.util.UserCredentialsGenerator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -41,12 +42,15 @@ class TrainerServiceImplTest {
     private static final String TRAINER_LAST_NAME = "Johnson";
     private static final String TRAINER_USERNAME = "mike.johnson";
     private static final String PASSWORD = "password123";
+    private static final String ENCODED_PASSWORD = "encodedPassword123";
     private static final String FITNESS_TYPE = "Fitness";
     private static final String YOGA_TYPE = "YOGA";
     private static final Long TRAINER_ID = 1L;
-    private static final String GENERATED_PASSWORD = "generatedPassword";
+    private static final String RAW_PASSWORD = "rawPassword123";
 
     private final Trainer trainer = buildTrainer();
+    @Captor
+    private ArgumentCaptor<Trainer> captor;
 
     @Mock
     private TrainerDAO trainerDAO;
@@ -69,13 +73,19 @@ class TrainerServiceImplTest {
         );
         List<String> existingUsernames = List.of("existing.trainer1", "existing.trainer2");
 
-        User userWithCredentials = initialTrainer.getUser().toBuilder()
+        User userWithCredentials = User.builder()
+                .firstName(TRAINER_FIRST_NAME)
+                .lastName(TRAINER_LAST_NAME)
                 .username(TRAINER_USERNAME)
-                .password(GENERATED_PASSWORD)
+                .password(ENCODED_PASSWORD)
+                .isActive(true)
                 .build();
-
-        Trainer trainerWithCredentials = initialTrainer.toBuilder()
+        Trainer trainerWithCredentials = Trainer.builder()
                 .user(userWithCredentials)
+                .specialization(createRequest.getSpecialization())
+                .build();
+        Trainer savedTrainer = trainerWithCredentials.toBuilder()
+                .id(TRAINER_ID)
                 .build();
 
         TrainerResponse expected = buildTrainerResponse();
@@ -84,9 +94,10 @@ class TrainerServiceImplTest {
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
         when(userCredentialsGenerator.generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames))
                 .thenReturn(TRAINER_USERNAME);
-        when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
-        when(trainerDAO.create(any(Trainer.class))).thenReturn(trainerWithCredentials);
-        when(trainerMapper.toResponse(trainerWithCredentials)).thenReturn(expected);
+        when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
+        when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
+        when(trainerMapper.toResponse(savedTrainer)).thenReturn(expected);
 
         TrainerResponse actual = service.create(createRequest);
 
@@ -98,9 +109,10 @@ class TrainerServiceImplTest {
         verify(trainerMapper).toEntity(createRequest);
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
-        verify(userCredentialsGenerator).generatePassword();
+        verify(userCredentialsGenerator).generateRawPassword();
+        verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
         verify(trainerDAO).create(any(Trainer.class));
-        verify(trainerMapper).toResponse(trainerWithCredentials);
+        verify(trainerMapper).toResponse(savedTrainer);
     }
 
     @Test
@@ -110,19 +122,26 @@ class TrainerServiceImplTest {
         List<String> existingUsernames = List.of();
         TrainerResponse expectedResponse = buildTrainerResponse();
 
+        Trainer savedTrainer = trainer.toBuilder()
+                .id(TRAINER_ID)
+                .build();
+
         when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
         when(userCredentialsGenerator.generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames))
                 .thenReturn(TRAINER_USERNAME);
-        when(userCredentialsGenerator.generatePassword()).thenReturn(GENERATED_PASSWORD);
-        when(trainerDAO.create(any(Trainer.class))).thenReturn(trainer);
-        when(trainerMapper.toResponse(trainer)).thenReturn(expectedResponse);
+        when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
+        when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
+        when(trainerMapper.toResponse(savedTrainer)).thenReturn(expectedResponse);
 
         TrainerResponse actual = service.create(createRequest);
 
         assertNotNull(actual);
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
+        verify(userCredentialsGenerator).generateRawPassword();
+        verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
     }
 
     @Test
@@ -138,7 +157,6 @@ class TrainerServiceImplTest {
         assertEquals(expected.getId(), actual.get().getId());
         assertEquals(expected.getUsername(), actual.get().getUsername());
         assertEquals(expected.getSpecialization(), actual.get().getSpecialization());
-
         verify(trainerDAO).findById(TRAINER_ID);
         verify(trainerMapper).toResponse(trainer);
     }
@@ -152,7 +170,6 @@ class TrainerServiceImplTest {
         Optional<TrainerResponse> result = service.findById(trainerId);
 
         assertFalse(result.isPresent());
-
         verify(trainerDAO).findById(trainerId);
         verify(trainerMapper, never()).toResponse(any());
     }
@@ -170,7 +187,6 @@ class TrainerServiceImplTest {
         assertTrue(actual.isPresent());
         assertEquals(expected.getId(), actual.get().getId());
         assertEquals(expected.getUsername(), actual.get().getUsername());
-
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerMapper).toResponse(buildTrainer);
     }
@@ -220,7 +236,6 @@ class TrainerServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.update(updateRequest));
 
         assertEquals("Trainer not found with id: " + updateRequest.getId(), exception.getMessage());
-
         verify(trainerDAO).findById(updateRequest.getId());
         verify(trainerDAO, never()).update(any());
         verify(trainerMapper, never()).toResponse(any());
@@ -233,7 +248,6 @@ class TrainerServiceImplTest {
         request.setOldPassword(PASSWORD);
         request.setNewPassword("newSecurePassword");
 
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
 
         service.changePassword(request);
@@ -257,7 +271,6 @@ class TrainerServiceImplTest {
                 .build();
         TrainerResponse expected = buildTrainerResponse();
         expected.setActive(false);
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
 
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
         when(trainerDAO.update(any(Trainer.class))).thenReturn(inactiveTrainer);
@@ -270,8 +283,8 @@ class TrainerServiceImplTest {
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toResponse(inactiveTrainer);
-
         verify(trainerDAO).update(captor.capture());
+
         Trainer captured = captor.getValue();
         assertFalse(captured.getUser().getIsActive());
     }
@@ -305,9 +318,8 @@ class TrainerServiceImplTest {
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toResponse(activeTrainer);
-
-        ArgumentCaptor<Trainer> captor = ArgumentCaptor.forClass(Trainer.class);
         verify(trainerDAO).update(captor.capture());
+
         Trainer captured = captor.getValue();
         assertTrue(captured.getUser().getIsActive());
     }
