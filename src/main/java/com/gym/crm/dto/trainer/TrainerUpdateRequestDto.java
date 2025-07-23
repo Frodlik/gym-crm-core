@@ -13,7 +13,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
-public class TrainerCreateRequest {
+public class TrainerUpdateRequestDto {
     @NotBlank(message = "First name is required")
     @Size(max = 50, message = "First name must be at most 50 characters")
     private String firstName;
@@ -24,4 +24,7 @@ public class TrainerCreateRequest {
 
     @NotNull(message = "Specialization is required")
     private TrainingType specialization;
+
+    @NotNull(message = "Active status is required")
+    private Boolean isActive;
 }

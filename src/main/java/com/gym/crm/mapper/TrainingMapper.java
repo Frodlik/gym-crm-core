@@ -4,6 +4,7 @@ import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.model.Training;
 import com.gym.crm.openapi.model.TraineeTrainingGetResponse;
+import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -18,5 +19,9 @@ public interface TrainingMapper {
 
     @Mapping(target = "trainingType", source = "trainingTypeName")
     @Mapping(target = "trainerName", source = "trainerName")
-    TraineeTrainingGetResponse toRestTrainingGetResponse(TrainingResponse response);
+    TraineeTrainingGetResponse toRestTraineeTrainingGetResponse(TrainingResponse response);
+
+    @Mapping(target = "trainingType", source = "trainingTypeName")
+    @Mapping(target = "traineeName", source = "traineeName")
+    TrainerTrainingGetResponse toRestTrainerTrainingGetResponse(TrainingResponse response);
 }
