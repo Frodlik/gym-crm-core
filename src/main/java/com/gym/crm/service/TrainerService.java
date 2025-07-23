@@ -1,25 +1,28 @@
 package com.gym.crm.service;
 
 import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
+import com.gym.crm.dto.trainer.TrainerGetResponseDto;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
+import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TrainerService {
-    TrainerResponse create(TrainerCreateRequest request);
+    TrainerCreateResponseDto create(TrainerCreateRequestDto request);
 
-    Optional<TrainerResponse> findById(Long id);
+    Optional<TrainerGetResponseDto> findById(Long id);
 
-    Optional<TrainerResponse> findByUsername(String username);
+    TrainerGetResponseDto findByUsername(String username);
 
-    List<TrainerResponse> findTrainersNotAssignedToTrainee(String traineeUsername);
+    List<AvailableTrainerResponseDto> findTrainersNotAssignedToTrainee(String traineeUsername);
 
-    TrainerResponse update(TrainerUpdateRequest request);
+    TrainerUpdateResponseDto update(TrainerUpdateRequestDto request, String username);
 
     void changePassword(PasswordChangeRequest request);
 
-    TrainerResponse toggleTrainerActivation(String username);
+    void toggleTrainerActivation(String username, boolean isActive);
 }

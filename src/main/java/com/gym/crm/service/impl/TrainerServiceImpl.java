@@ -2,13 +2,18 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dao.TrainingTypeDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
+import com.gym.crm.dto.trainer.TrainerGetResponseDto;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
+import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
+import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.transaction.PersistenceTx;
@@ -26,8 +31,11 @@ import java.util.Optional;
 public class TrainerServiceImpl implements TrainerService {
     private static final Logger logger = LoggerFactory.getLogger(TrainerServiceImpl.class);
 
+    private static final String TRAINER_NOT_FOUND_MSG = "Trainer not found with username: ";
+
     private TrainerDAO trainerDAO;
     private TraineeDAO traineeDAO;
+    private TrainingTypeDAO trainingTypeDAO;
     private UserCredentialsGenerator userCredentialsGenerator;
     private TrainerMapper trainerMapper;
 
@@ -51,9 +59,14 @@ public class TrainerServiceImpl implements TrainerService {
         this.traineeDAO = traineeDAO;
     }
 
+    @Autowired
+    public void setTrainingTypeDAO(TrainingTypeDAO trainingTypeDAO) {
+        this.trainingTypeDAO = trainingTypeDAO;
+    }
+
     @Override
     @PersistenceTx
-    public TrainerResponse create(@Valid TrainerCreateRequest request) {
+    public TrainerCreateResponseDto create(@Valid TrainerCreateRequestDto request) {
         logger.debug("Creating trainer: {} {}", request.getFirstName(), request.getLastName());
 
         Trainer trainer = trainerMapper.toEntity(request);
@@ -63,9 +76,12 @@ public class TrainerServiceImpl implements TrainerService {
                 .toList();
 
         String username = userCredentialsGenerator.generateUsername(
-                trainer.getUser().getFirstName(), trainer.getUser().getLastName(), existingUsernames);
+                request.getFirstName(), request.getLastName(), existingUsernames);
         String rawPassword = userCredentialsGenerator.generateRawPassword();
         String encodedPassword = userCredentialsGenerator.encodePassword(rawPassword);
+
+        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+                .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User user = User.builder()
                 .firstName(request.getFirstName())
@@ -74,20 +90,23 @@ public class TrainerServiceImpl implements TrainerService {
                 .password(encodedPassword)
                 .isActive(true)
                 .build();
-        trainer = Trainer.builder()
+        trainer = trainer.toBuilder()
                 .user(user)
-                .specialization(request.getSpecialization())
+                .specialization(specialization)
                 .build();
 
         Trainer saved = trainerDAO.create(trainer);
 
         logger.info("Successfully created trainer with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
-        return trainerMapper.toResponse(saved);
+        return TrainerCreateResponseDto.builder()
+                .username(username)
+                .password(rawPassword)
+                .build();
     }
 
     @Override
-    public Optional<TrainerResponse> findById(Long id) {
+    public Optional<TrainerGetResponseDto> findById(Long id) {
         logger.debug("Finding trainer by ID: {}", id);
 
         return trainerDAO.findById(id)
@@ -95,15 +114,17 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    public Optional<TrainerResponse> findByUsername(String username) {
+    public TrainerGetResponseDto findByUsername(String username) {
         logger.debug("Finding trainer by username: {}", username);
 
-        return trainerDAO.findByUsername(username)
-                .map(trainerMapper::toResponse);
+        Trainer trainer = trainerDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
+
+        return trainerMapper.toResponse(trainer);
     }
 
     @Override
-    public List<TrainerResponse> findTrainersNotAssignedToTrainee(String traineeUsername) {
+    public List<AvailableTrainerResponseDto> findTrainersNotAssignedToTrainee(String traineeUsername) {
         logger.debug("Finding trainers not assigned to trainee with username: {}", traineeUsername);
 
         traineeDAO.findByUsername(traineeUsername)
@@ -114,38 +135,36 @@ public class TrainerServiceImpl implements TrainerService {
         logger.info("Found {} trainers not assigned to trainee: {}", trainers.size(), traineeUsername);
 
         return trainers.stream()
-                .map(trainerMapper::toResponse)
+                .map(trainerMapper::toAvailableTrainerResponseDto)
                 .toList();
     }
 
     @Override
     @PersistenceTx
-    public TrainerResponse update(@Valid TrainerUpdateRequest request) {
-        logger.debug("Updating trainer with ID: {}", request.getId());
+    public TrainerUpdateResponseDto update(@Valid TrainerUpdateRequestDto request, String username) {
+        logger.debug("Updating trainer with username: {}", username);
 
-        Optional<Trainer> existingTrainer = trainerDAO.findById(request.getId());
-        if (existingTrainer.isEmpty()) {
-            throw new CoreServiceException("Trainer not found with id: " + request.getId());
-        }
+        Trainer existingTrainer = trainerDAO.findByUsername(username)
+                .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
-        Trainer trainer = existingTrainer.get();
+        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+                .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
-        User updatedUser = trainer.getUser().toBuilder()
+        User updatedUser = existingTrainer.getUser().toBuilder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
-                .username(request.getUsername())
                 .isActive(request.getIsActive())
                 .build();
-        trainer = trainer.toBuilder()
+        Trainer trainer = existingTrainer.toBuilder()
                 .user(updatedUser)
-                .specialization(request.getSpecialization())
+                .specialization(specialization)
                 .build();
 
         Trainer updatedTrainer = trainerDAO.update(trainer);
 
-        logger.info("Successfully updated trainer with ID: {}", request.getId());
+        logger.info("Successfully updated trainer with username: {}", username);
 
-        return trainerMapper.toResponse(updatedTrainer);
+        return trainerMapper.toUpdateResponseDto(updatedTrainer);
     }
 
     @Override
@@ -173,13 +192,11 @@ public class TrainerServiceImpl implements TrainerService {
 
     @Override
     @PersistenceTx
-    public TrainerResponse toggleTrainerActivation(String username) {
+    public void toggleTrainerActivation(String username, boolean isActive) {
         logger.debug("Toggling activation for trainer with username: {}", username);
 
         Trainer trainer = trainerDAO.findByUsername(username)
-                .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + username));
-
-        boolean isActive = !trainer.getUser().getIsActive();
+                .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
         User updatedUser = trainer.getUser().toBuilder()
                 .isActive(isActive)
@@ -188,11 +205,8 @@ public class TrainerServiceImpl implements TrainerService {
                 .user(updatedUser)
                 .build();
 
-        Trainer savedTrainer = trainerDAO.update(updatedTrainer);
+        trainerDAO.update(updatedTrainer);
 
-        logger.info("Successfully toggled activation for trainer with username: {} to {}",
-                username, isActive ? "active" : "inactive");
-
-        return trainerMapper.toResponse(savedTrainer);
+        logger.info("Successfully set activation for trainer with username: {} to {}", username, isActive ? "active" : "inactive");
     }
 }

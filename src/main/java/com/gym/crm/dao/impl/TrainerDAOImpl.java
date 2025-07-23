@@ -6,6 +6,7 @@ import com.gym.crm.exception.DaoException;
 import com.gym.crm.model.Trainer;
 import jakarta.persistence.NoResultException;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
@@ -46,8 +47,9 @@ public class TrainerDAOImpl implements TrainerDAO {
     public Optional<Trainer> findByUsername(String username) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             try {
-                Trainer trainer = entityManager.createQuery("SELECT t FROM Trainer t JOIN FETCH t.user u " +
-                                        "JOIN FETCH t.specialization s WHERE u.username = :username", Trainer.class)
+                Trainer trainer = entityManager.createQuery("SELECT DISTINCT t FROM Trainer t JOIN FETCH t.user u " +
+                                "JOIN FETCH t.specialization s LEFT JOIN FETCH t.trainees tr LEFT JOIN FETCH tr.user " +
+                                "WHERE u.username = :username", Trainer.class)
                         .setParameter("username", username)
                         .getSingleResult();
 
@@ -100,6 +102,7 @@ public class TrainerDAOImpl implements TrainerDAO {
             }
 
             Trainer updatedTrainer = entityManager.merge(trainer);
+            Hibernate.initialize(updatedTrainer.getSpecialization());
 
             log.info("Trainer updated with ID: {}", trainer.getId());
 

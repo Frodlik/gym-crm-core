@@ -5,10 +5,9 @@ import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.mapper.TraineeMapper;
@@ -23,6 +22,12 @@ import com.gym.crm.openapi.model.TraineeGetResponse;
 import com.gym.crm.openapi.model.TraineeTrainingGetResponse;
 import com.gym.crm.openapi.model.TraineeUpdateRequest;
 import com.gym.crm.openapi.model.TraineeUpdateResponse;
+import com.gym.crm.openapi.model.TrainerCreateRequest;
+import com.gym.crm.openapi.model.TrainerCreateResponse;
+import com.gym.crm.openapi.model.TrainerGetResponse;
+import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
+import com.gym.crm.openapi.model.TrainerUpdateRequest;
+import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -103,16 +108,18 @@ public class GymFacade {
         traineeService.toggleTraineeActivation(targetUsername, isActive);
     }
 
-    public TrainerResponse createTrainer(TrainerCreateRequest request) {
+    public TrainerCreateResponse createTrainer(TrainerCreateRequest request) {
         logger.info("Facade: Creating trainer");
 
-        return trainerService.create(request);
+        TrainerCreateRequestDto createRequestDto = trainerMapper.toCreateRequestDto(request);
+
+        return trainerMapper.toRestCreateResponse(trainerService.create(createRequestDto));
     }
 
-    public Optional<TrainerResponse> getTrainerByUsername(String targetUsername) {
+    public TrainerGetResponse getTrainerByUsername(String targetUsername) {
         logger.debug("Facade: Getting trainer by username: {}", targetUsername);
 
-        return trainerService.findByUsername(targetUsername);
+        return trainerMapper.toRestGetResponse(trainerService.findByUsername(targetUsername));
     }
 
     public List<AvailableTrainerGetResponse> getTrainersNotAssignedToTrainee(String traineeUsername) {
@@ -123,10 +130,12 @@ public class GymFacade {
                 .toList();
     }
 
-    public TrainerResponse updateTrainer(TrainerUpdateRequest request) {
-        logger.info("Facade: Updating trainer with ID: {}", request.getId());
+    public TrainerUpdateResponse updateTrainer(String username, TrainerUpdateRequest request) {
+        logger.info("Facade: Updating trainer with username: {}", username);
 
-        return trainerService.update(request);
+        TrainerUpdateRequestDto updateRequestDto = trainerMapper.toUpdateRequestDto(request);
+
+        return trainerMapper.toRestUpdateResponse(trainerService.update(updateRequestDto, username));
     }
 
     public void changeTrainerPassword(PasswordChangeRequest request) {
@@ -134,10 +143,10 @@ public class GymFacade {
         trainerService.changePassword(request);
     }
 
-    public TrainerResponse toggleTrainerActivation(String targetUsername) {
+    public void toggleTrainerActivation(String targetUsername, boolean isActive) {
         logger.info("Facade: Toggling activation for trainer with username: {}", targetUsername);
 
-        return trainerService.toggleTrainerActivation(targetUsername);
+        trainerService.toggleTrainerActivation(targetUsername, isActive);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training) {
@@ -164,18 +173,22 @@ public class GymFacade {
         );
 
         return responses.stream()
-                .map(trainingMapper::toRestTrainingGetResponse)
+                .map(trainingMapper::toRestTraineeTrainingGetResponse)
                 .toList();
     }
 
-    public List<TrainingResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
+    public List<TrainerTrainingGetResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
         logger.debug("Facade: Getting trainer trainings by criteria for username: {}", request.getTrainerUsername());
 
-        return trainingService.getTrainerTrainingsByCriteria(
+        List<TrainingResponse> responses = trainingService.getTrainerTrainingsByCriteria(
                 request.getTrainerUsername(),
                 request.getFromDate(),
                 request.getToDate(),
                 request.getTraineeName()
         );
+
+        return responses.stream()
+                .map(trainingMapper::toRestTrainerTrainingGetResponse)
+                .toList();
     }
 }
