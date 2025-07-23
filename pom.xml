@@ -280,6 +280,7 @@
                         <exclude>**/model/**</exclude>
                         <exclude>**/config/**</exclude>
                         <exclude>**/openapi/**</exclude>
+                        <exclude>**/mapper/**</exclude>
                     </excludes>
                 </configuration>
                 <executions>

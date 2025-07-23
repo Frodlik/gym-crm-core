@@ -10,10 +10,13 @@ import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
+import com.gym.crm.dto.trainer.TrainerGetResponseDto;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
+import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.model.TrainingType;
@@ -99,31 +102,44 @@ public class GymTestObjects {
                 .build();
     }
 
-    public static TrainerCreateRequest buildTrainerCreateRequest() {
-        return TrainerCreateRequest.builder()
+    public static TrainerCreateRequestDto buildTrainerCreateRequest() {
+        return TrainerCreateRequestDto.builder()
                 .firstName(TRAINER_FIRST_NAME)
                 .lastName(TRAINER_LAST_NAME)
                 .specialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build())
                 .build();
     }
 
-    public static TrainerUpdateRequest buildTrainerUpdateRequest() {
-        return TrainerUpdateRequest.builder()
-                .id(TRAINER_ID)
+    public static TrainerCreateResponseDto buildTrainerCreateResponseDto() {
+        return TrainerCreateResponseDto.builder()
+                .username(TRAINER_USERNAME)
+                .password(PASSWORD)
+                .build();
+    }
+
+    public static TrainerUpdateRequestDto buildTrainerUpdateRequest() {
+        return TrainerUpdateRequestDto.builder()
                 .firstName("Michael")
                 .lastName("Smith")
-                .username("michael.smith")
                 .isActive(false)
                 .specialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build())
                 .build();
     }
 
-    public static TrainerResponse buildTrainerResponse() {
-        return TrainerResponse.builder()
-                .id(TRAINER_ID)
+    public static TrainerUpdateResponseDto buildTrainerUpdateResponseDto() {
+        return TrainerUpdateResponseDto.builder()
+                .username(TRAINER_USERNAME)
                 .firstName(TRAINER_FIRST_NAME)
                 .lastName(TRAINER_LAST_NAME)
-                .username(TRAINER_USERNAME)
+                .specialization(FITNESS_TYPE)
+                .isActive(true)
+                .build();
+    }
+
+    public static TrainerGetResponseDto buildTrainerResponse() {
+        return TrainerGetResponseDto.builder()
+                .firstName(TRAINER_FIRST_NAME)
+                .lastName(TRAINER_LAST_NAME)
                 .isActive(true)
                 .specialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build())
                 .build();
@@ -135,6 +151,17 @@ public class GymTestObjects {
                 .firstName(TRAINER_FIRST_NAME)
                 .lastName(TRAINER_LAST_NAME)
                 .specialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build())
+                .build();
+    }
+
+    public static AvailableTrainerResponseDto buildAvailableTrainerResponseDto() {
+        return AvailableTrainerResponseDto.builder()
+                .username(TRAINER_USERNAME)
+                .firstName(TRAINER_FIRST_NAME)
+                .lastName(TRAINER_LAST_NAME)
+                .specialization(TrainingType.builder()
+                        .trainingTypeName(FITNESS_TYPE)
+                        .build())
                 .build();
     }
 
@@ -151,8 +178,8 @@ public class GymTestObjects {
     public static TrainingResponse buildTrainingResponse() {
         return TrainingResponse.builder()
                 .id(TRAINING_ID)
-                .traineeName(FIRST_NAME + " " + LAST_NAME)
-                .trainerName(TRAINER_FIRST_NAME + " " + TRAINER_LAST_NAME)
+                .traineeName(FIRST_NAME)
+                .trainerName(TRAINER_FIRST_NAME)
                 .trainingName(TRAINING_NAME)
                 .trainingTypeName(FITNESS_TYPE)
                 .trainingDate(TRAINING_DATE)
@@ -195,7 +222,7 @@ public class GymTestObjects {
                 .traineeUsername(USERNAME)
                 .fromDate(LocalDate.of(2024, 1, 1))
                 .toDate(LocalDate.of(2024, 12, 31))
-                .trainerName(TRAINER_FIRST_NAME + " " + TRAINER_LAST_NAME)
+                .trainerName(TRAINER_FIRST_NAME)
                 .trainingType(FITNESS_TYPE)
                 .build();
     }
@@ -205,7 +232,7 @@ public class GymTestObjects {
                 .trainerUsername(TRAINER_USERNAME)
                 .fromDate(LocalDate.of(2024, 1, 1))
                 .toDate(LocalDate.of(2024, 12, 31))
-                .traineeName(FIRST_NAME + " " + LAST_NAME)
+                .traineeName(FIRST_NAME)
                 .build();
     }
 }

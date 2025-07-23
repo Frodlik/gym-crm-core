@@ -1,19 +1,23 @@
 package com.gym.crm.facade;
 
 import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.model.TrainerModel;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
 import com.gym.crm.dto.trainee.TraineeGetResponseDto;
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
+import com.gym.crm.dto.trainer.TrainerGetResponseDto;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
+import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.mapper.TraineeMapper;
@@ -28,6 +32,12 @@ import com.gym.crm.openapi.model.TraineeGetResponse;
 import com.gym.crm.openapi.model.TraineeTrainingGetResponse;
 import com.gym.crm.openapi.model.TraineeUpdateRequest;
 import com.gym.crm.openapi.model.TraineeUpdateResponse;
+import com.gym.crm.openapi.model.TrainerCreateRequest;
+import com.gym.crm.openapi.model.TrainerCreateResponse;
+import com.gym.crm.openapi.model.TrainerGetResponse;
+import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
+import com.gym.crm.openapi.model.TrainerUpdateRequest;
+import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -37,25 +47,28 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
-import static com.gym.crm.facade.GymTestObjects.ADDRESS;
-import static com.gym.crm.facade.GymTestObjects.BIRTH_DATE;
-import static com.gym.crm.facade.GymTestObjects.FIRST_NAME;
-import static com.gym.crm.facade.GymTestObjects.FITNESS_TYPE;
-import static com.gym.crm.facade.GymTestObjects.LAST_NAME;
-import static com.gym.crm.facade.GymTestObjects.PASSWORD;
-import static com.gym.crm.facade.GymTestObjects.TRAINEE_ID;
-import static com.gym.crm.facade.GymTestObjects.TRAINER_FIRST_NAME;
 import static com.gym.crm.facade.GymTestObjects.TRAINER_USERNAME;
 import static com.gym.crm.facade.GymTestObjects.TRAINING_ID;
 import static com.gym.crm.facade.GymTestObjects.USERNAME;
+import static com.gym.crm.facade.GymTestObjects.buildAvailableTrainerResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildPasswordChangeRequest;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeCreateRequestDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeCreateResponseDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeGetResponseDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeTrainersUpdateRequestDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeTrainersUpdateResponseDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeTrainingCriteriaRequestDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeUpdateRequestDto;
+import static com.gym.crm.facade.GymTestObjects.buildTraineeUpdateResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildTrainerCreateRequest;
+import static com.gym.crm.facade.GymTestObjects.buildTrainerCreateResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildTrainerResponse;
+import static com.gym.crm.facade.GymTestObjects.buildTrainerTrainingCriteriaRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTrainerUpdateRequest;
+import static com.gym.crm.facade.GymTestObjects.buildTrainerUpdateResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingCreateRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingResponse;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -82,7 +95,7 @@ class GymFacadeTest {
     @Test
     void createTrainee_ShouldCallServiceAndReturnResponse() {
         TraineeCreateRequest request = new TraineeCreateRequest();
-        TraineeCreateRequestDto createRequestDto = new TraineeCreateRequestDto();
+        TraineeCreateRequestDto createRequestDto = buildTraineeCreateRequestDto();
         TraineeCreateResponseDto serviceResponse = buildTraineeCreateResponseDto();
         TraineeCreateResponse expectedResponse = new TraineeCreateResponse();
 
@@ -120,7 +133,7 @@ class GymFacadeTest {
     @Test
     void updateTrainee_ShouldCallServiceAndReturnResponse() {
         TraineeUpdateRequest request = new TraineeUpdateRequest();
-        TraineeUpdateRequestDto requestDto = new TraineeUpdateRequestDto();
+        TraineeUpdateRequestDto requestDto = buildTraineeUpdateRequestDto();
         TraineeUpdateResponseDto serviceResponse = buildTraineeUpdateResponseDto();
         TraineeUpdateResponse expectedResponse = new TraineeUpdateResponse();
 
@@ -141,7 +154,7 @@ class GymFacadeTest {
     @Test
     void updateTraineeTrainersList_ShouldCallServiceAndReturnResponse() {
         TraineeAssignedTrainersUpdateRequest request = new TraineeAssignedTrainersUpdateRequest();
-        TraineeTrainersUpdateRequestDto requestDto = new TraineeTrainersUpdateRequestDto();
+        TraineeTrainersUpdateRequestDto requestDto = buildTraineeTrainersUpdateRequestDto();
         TraineeTrainersUpdateResponseDto serviceResponse = buildTraineeTrainersUpdateResponseDto();
         TraineeAssignedTrainersUpdateResponse expectedResponse = new TraineeAssignedTrainersUpdateResponse();
 
@@ -186,48 +199,46 @@ class GymFacadeTest {
 
     @Test
     void createTrainer_ShouldCallServiceAndReturnResponse() {
-        TrainerCreateRequest request = buildTrainerCreateRequest();
-        TrainerResponse expectedResponse = buildTrainerResponse();
+        TrainerCreateRequest request = new TrainerCreateRequest();
+        TrainerCreateRequestDto requestDto = buildTrainerCreateRequest();
+        TrainerCreateResponseDto serviceResponse = buildTrainerCreateResponseDto();
+        TrainerCreateResponse expectedResponse = new TrainerCreateResponse();
 
-        when(trainerService.create(request)).thenReturn(expectedResponse);
+        when(trainerMapper.toCreateRequestDto(request)).thenReturn(requestDto);
+        when(trainerService.create(requestDto)).thenReturn(serviceResponse);
+        when(trainerMapper.toRestCreateResponse(serviceResponse)).thenReturn(expectedResponse);
 
-        TrainerResponse actual = facade.createTrainer(request);
+        TrainerCreateResponse actual = facade.createTrainer(request);
 
         assertThat(actual)
                 .isNotNull()
                 .isEqualTo(expectedResponse);
-
-        verify(trainerService).create(request);
+        verify(trainerMapper).toCreateRequestDto(request);
+        verify(trainerService).create(requestDto);
+        verify(trainerMapper).toRestCreateResponse(serviceResponse);
     }
 
     @Test
     void getTrainerByUsername_ShouldCallServiceAndReturnResponse() {
-        TrainerResponse expectedResponse = buildTrainerResponse();
+        TrainerGetResponseDto serviceResponse = buildTrainerResponse();
+        TrainerGetResponse expectedResponse = new TrainerGetResponse();
 
-        when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(expectedResponse));
+        when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(serviceResponse);
+        when(trainerMapper.toRestGetResponse(serviceResponse)).thenReturn(expectedResponse);
 
-        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
+        TrainerGetResponse actual = facade.getTrainerByUsername(TRAINER_USERNAME);
 
         assertThat(actual)
-                .isPresent()
-                .contains(expectedResponse);
+                .isNotNull()
+                .isEqualTo(expectedResponse);
         verify(trainerService).findByUsername(TRAINER_USERNAME);
-    }
-
-    @Test
-    void getTrainerByUsername_ShouldReturnEmptyWhenNotFound() {
-        when(trainerService.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
-
-        Optional<TrainerResponse> actual = facade.getTrainerByUsername(TRAINER_USERNAME);
-
-        assertThat(actual).isEmpty();
-        verify(trainerService).findByUsername(TRAINER_USERNAME);
+        verify(trainerMapper).toRestGetResponse(serviceResponse);
     }
 
     @Test
     void getTrainersNotAssignedToTrainee_ShouldCallServiceAndReturnMappedResponses() {
-        TrainerResponse serviceResponse = buildTrainerResponse();
-        List<TrainerResponse> serviceResponses = List.of(serviceResponse);
+        AvailableTrainerResponseDto serviceResponse = buildAvailableTrainerResponseDto();
+        List<AvailableTrainerResponseDto> serviceResponses = List.of(serviceResponse);
         AvailableTrainerGetResponse mappedResponse = new AvailableTrainerGetResponse();
 
         when(trainerService.findTrainersNotAssignedToTrainee(USERNAME)).thenReturn(serviceResponses);
@@ -244,17 +255,23 @@ class GymFacadeTest {
 
     @Test
     void updateTrainer_ShouldCallServiceAndReturnResponse() {
-        TrainerUpdateRequest request = buildTrainerUpdateRequest();
-        TrainerResponse expectedResponse = buildTrainerResponse();
+        TrainerUpdateRequest request = new TrainerUpdateRequest();
+        TrainerUpdateRequestDto requestDto = buildTrainerUpdateRequest();
+        TrainerUpdateResponseDto serviceResponse = buildTrainerUpdateResponseDto();
+        TrainerUpdateResponse expectedResponse = new TrainerUpdateResponse();
 
-        when(trainerService.update(request)).thenReturn(expectedResponse);
+        when(trainerMapper.toUpdateRequestDto(request)).thenReturn(requestDto);
+        when(trainerService.update(requestDto, TRAINER_USERNAME)).thenReturn(serviceResponse);
+        when(trainerMapper.toRestUpdateResponse(serviceResponse)).thenReturn(expectedResponse);
 
-        TrainerResponse actual = facade.updateTrainer(request);
+        TrainerUpdateResponse actual = facade.updateTrainer(TRAINER_USERNAME, request);
 
         assertThat(actual)
                 .isNotNull()
                 .isEqualTo(expectedResponse);
-        verify(trainerService).update(request);
+        verify(trainerMapper).toUpdateRequestDto(request);
+        verify(trainerService).update(requestDto, TRAINER_USERNAME);
+        verify(trainerMapper).toRestUpdateResponse(serviceResponse);
     }
 
     @Test
@@ -267,17 +284,12 @@ class GymFacadeTest {
     }
 
     @Test
-    void toggleTrainerActivation_ShouldCallServiceAndReturnResponse() {
-        TrainerResponse expectedResponse = buildTrainerResponse();
+    void toggleTrainerActivation_ShouldCallService() {
+        boolean isActive = false;
 
-        when(trainerService.toggleTrainerActivation(TRAINER_USERNAME)).thenReturn(expectedResponse);
+        facade.toggleTrainerActivation(TRAINER_USERNAME, isActive);
 
-        TrainerResponse actual = facade.toggleTrainerActivation(TRAINER_USERNAME);
-
-        assertThat(actual)
-                .isNotNull()
-                .isEqualTo(expectedResponse);
-        verify(trainerService).toggleTrainerActivation(TRAINER_USERNAME);
+        verify(trainerService).toggleTrainerActivation(TRAINER_USERNAME, isActive);
     }
 
     @Test
@@ -328,120 +340,49 @@ class GymFacadeTest {
         TraineeTrainingGetResponse mappedResponse = new TraineeTrainingGetResponse();
         List<TrainingResponse> serviceResponses = List.of(serviceResponse);
 
-        when(trainingService.getTraineeTrainingsByCriteria(
-                request.getTraineeUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTrainerName(),
-                request.getTrainingType()
-        )).thenReturn(serviceResponses);
-        when(trainingMapper.toRestTrainingGetResponse(serviceResponse)).thenReturn(mappedResponse);
+        TraineeSearchFilter expectedFilter = TraineeSearchFilter.builder()
+                .traineeUsername(request.getTraineeUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .trainerName(request.getTrainerName())
+                .trainingType(request.getTrainingType())
+                .build();
+
+        when(trainingService.getTraineeTrainingsByCriteria(expectedFilter)).thenReturn(serviceResponses);
+        when(trainingMapper.toRestTraineeTrainingGetResponse(serviceResponse)).thenReturn(mappedResponse);
 
         List<TraineeTrainingGetResponse> actual = facade.getTraineeTrainingsByCriteria(request);
 
         assertThat(actual)
                 .hasSize(1)
                 .containsExactly(mappedResponse);
-        verify(trainingService).getTraineeTrainingsByCriteria(
-                request.getTraineeUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTrainerName(),
-                request.getTrainingType()
-        );
-        verify(trainingMapper).toRestTrainingGetResponse(serviceResponse);
+        verify(trainingService).getTraineeTrainingsByCriteria(expectedFilter);
+        verify(trainingMapper).toRestTraineeTrainingGetResponse(serviceResponse);
     }
 
     @Test
     void getTrainerTrainingsByCriteria_ShouldCallServiceAndReturnResponse() {
-        TrainerTrainingCriteriaRequest request = buildTrainerTrainingCriteriaRequestDto();
-        TrainingResponse expectedResponse = buildTrainingResponse();
-        List<TrainingResponse> expectedResponses = List.of(expectedResponse);
+        TrainerTrainingCriteriaRequest request = buildTrainerTrainingCriteriaRequest();
+        TrainingResponse serviceResponse = buildTrainingResponse();
+        TrainerTrainingGetResponse mappedResponse = new TrainerTrainingGetResponse();
+        List<TrainingResponse> serviceResponses = List.of(serviceResponse);
 
-        when(trainingService.getTrainerTrainingsByCriteria(
-                request.getTrainerUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTraineeName()
-        )).thenReturn(expectedResponses);
+        TrainerSearchFilter expectedFilter = TrainerSearchFilter.builder()
+                .trainerUsername(request.getTrainerUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .traineeName(request.getTraineeName())
+                .build();
 
-        List<TrainingResponse> actual = facade.getTrainerTrainingsByCriteria(request);
+        when(trainingService.getTrainerTrainingsByCriteria(expectedFilter)).thenReturn(serviceResponses);
+        when(trainingMapper.toRestTrainerTrainingGetResponse(serviceResponse)).thenReturn(mappedResponse);
+
+        List<TrainerTrainingGetResponse> actual = facade.getTrainerTrainingsByCriteria(request);
 
         assertThat(actual)
                 .hasSize(1)
-                .containsExactly(expectedResponse);
-        verify(trainingService).getTrainerTrainingsByCriteria(
-                request.getTrainerUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTraineeName()
-        );
-    }
-
-    private TraineeGetResponseDto buildTraineeGetResponseDto() {
-        TraineeGetResponseDto response = new TraineeGetResponseDto();
-        response.setId(TRAINEE_ID);
-        response.setFirstName(FIRST_NAME);
-        response.setLastName(LAST_NAME);
-        response.setUsername(USERNAME);
-        response.setActive(true);
-        response.setDateOfBirth(BIRTH_DATE);
-        response.setAddress(ADDRESS);
-
-        return response;
-    }
-
-    private TraineeTrainingCriteriaRequestDto buildTraineeTrainingCriteriaRequestDto() {
-        TraineeTrainingCriteriaRequestDto request = new TraineeTrainingCriteriaRequestDto();
-        request.setTraineeUsername(USERNAME);
-        request.setFromDate(LocalDate.of(2024, 1, 1));
-        request.setToDate(LocalDate.of(2024, 12, 31));
-        request.setTrainerName(TRAINER_FIRST_NAME);
-        request.setTrainingType(FITNESS_TYPE);
-
-        return request;
-    }
-
-    private TrainerTrainingCriteriaRequest buildTrainerTrainingCriteriaRequestDto() {
-        TrainerTrainingCriteriaRequest request = new TrainerTrainingCriteriaRequest();
-        request.setTrainerUsername(TRAINER_USERNAME);
-        request.setFromDate(LocalDate.of(2024, 1, 1));
-        request.setToDate(LocalDate.of(2024, 12, 31));
-        request.setTraineeName(FIRST_NAME);
-
-        return request;
-    }
-
-    private TraineeCreateResponseDto buildTraineeCreateResponseDto() {
-        TraineeCreateResponseDto response = new TraineeCreateResponseDto();
-        response.setUsername(USERNAME);
-        response.setPassword(PASSWORD);
-
-        return response;
-    }
-
-    private TraineeUpdateResponseDto buildTraineeUpdateResponseDto() {
-        TraineeUpdateResponseDto response = new TraineeUpdateResponseDto();
-        response.setFirstName(FIRST_NAME);
-        response.setLastName(LAST_NAME);
-        response.setUsername(USERNAME);
-        response.setActive(true);
-        response.setDateOfBirth(BIRTH_DATE);
-        response.setAddress(ADDRESS);
-
-        return response;
-    }
-
-    private TraineeTrainersUpdateResponseDto buildTraineeTrainersUpdateResponseDto() {
-        TrainerModel trainer = TrainerModel.builder()
-                .username("trainer.john")
-                .firstName("John")
-                .lastName("Doe")
-                .build();
-
-        TraineeTrainersUpdateResponseDto response = new TraineeTrainersUpdateResponseDto();
-        response.setTrainers(List.of(trainer));
-
-        return response;
+                .containsExactly(mappedResponse);
+        verify(trainingService).getTrainerTrainingsByCriteria(expectedFilter);
+        verify(trainingMapper).toRestTrainerTrainingGetResponse(serviceResponse);
     }
 }
