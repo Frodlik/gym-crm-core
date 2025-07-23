@@ -2,10 +2,12 @@ package com.gym.crm.facade;
 
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.training.TrainingCreateRequest;
@@ -64,30 +66,35 @@ public class GymFacade {
         logger.info("Facade: Creating trainee");
 
         TraineeCreateRequestDto createRequestDto = traineeMapper.toCreateRequest(request);
+        var createdTrainee = traineeService.create(createRequestDto);
 
-        return traineeMapper.toRestCreateResponse(traineeService.create(createRequestDto));
+        return traineeMapper.toRestCreateResponse(createdTrainee);
     }
 
     public TraineeGetResponse getTraineeByUsername(String targetUsername) {
         logger.debug("Facade: Getting trainee by username: {}", targetUsername);
 
-        return traineeMapper.toRestGetResponse(traineeService.findByUsername(targetUsername));
+        var trainee = traineeService.findByUsername(targetUsername);
+
+        return traineeMapper.toRestGetResponse(trainee);
     }
 
     public TraineeUpdateResponse updateTrainee(String username, TraineeUpdateRequest request) {
         logger.info("Facade: Updating trainee with username: {}", username);
 
         TraineeUpdateRequestDto requestDto = traineeMapper.toUpdateRequest(request);
+        var updatedTrainee = traineeService.update(requestDto, username);
 
-        return traineeMapper.toRestUpdateResponse(traineeService.update(requestDto, username));
+        return traineeMapper.toRestUpdateResponse(updatedTrainee);
     }
 
     public TraineeAssignedTrainersUpdateResponse updateTraineeTrainersList(String username, TraineeAssignedTrainersUpdateRequest request) {
         logger.info("Facade: Updating trainers list for trainee with username: {}", username);
 
         TraineeTrainersUpdateRequestDto trainersUpdateRequest = traineeMapper.toTrainersUpdateRequest(request);
+        var updatedTrainee = traineeService.updateTraineeTrainersList(trainersUpdateRequest, username);
 
-        return traineeMapper.toRestTrainersUpdateResponse(traineeService.updateTraineeTrainersList(trainersUpdateRequest, username));
+        return traineeMapper.toRestTrainersUpdateResponse(updatedTrainee);
     }
 
     public void deleteTrainee(String targetUsername) {
@@ -112,14 +119,17 @@ public class GymFacade {
         logger.info("Facade: Creating trainer");
 
         TrainerCreateRequestDto createRequestDto = trainerMapper.toCreateRequestDto(request);
+        var createdTrainer = trainerService.create(createRequestDto);
 
-        return trainerMapper.toRestCreateResponse(trainerService.create(createRequestDto));
+        return trainerMapper.toRestCreateResponse(createdTrainer);
     }
 
     public TrainerGetResponse getTrainerByUsername(String targetUsername) {
         logger.debug("Facade: Getting trainer by username: {}", targetUsername);
 
-        return trainerMapper.toRestGetResponse(trainerService.findByUsername(targetUsername));
+        var trainer = trainerService.findByUsername(targetUsername);
+
+        return trainerMapper.toRestGetResponse(trainer);
     }
 
     public List<AvailableTrainerGetResponse> getTrainersNotAssignedToTrainee(String traineeUsername) {
@@ -134,8 +144,9 @@ public class GymFacade {
         logger.info("Facade: Updating trainer with username: {}", username);
 
         TrainerUpdateRequestDto updateRequestDto = trainerMapper.toUpdateRequestDto(request);
+        var updatedTrainer = trainerService.update(updateRequestDto, username);
 
-        return trainerMapper.toRestUpdateResponse(trainerService.update(updateRequestDto, username));
+        return trainerMapper.toRestUpdateResponse(updatedTrainer);
     }
 
     public void changeTrainerPassword(PasswordChangeRequest request) {
@@ -164,13 +175,15 @@ public class GymFacade {
     public List<TraineeTrainingGetResponse> getTraineeTrainingsByCriteria(TraineeTrainingCriteriaRequestDto request) {
         logger.debug("Facade: Getting trainee trainings by criteria for username: {}", request.getTraineeUsername());
 
-        List<TrainingResponse> responses = trainingService.getTraineeTrainingsByCriteria(
-                request.getTraineeUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTrainerName(),
-                request.getTrainingType()
-        );
+        TraineeSearchFilter filter = TraineeSearchFilter.builder()
+                .traineeUsername(request.getTraineeUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .trainerName(request.getTrainerName())
+                .trainingType(request.getTrainingType())
+                .build();
+
+        List<TrainingResponse> responses = trainingService.getTraineeTrainingsByCriteria(filter);
 
         return responses.stream()
                 .map(trainingMapper::toRestTraineeTrainingGetResponse)
@@ -180,12 +193,14 @@ public class GymFacade {
     public List<TrainerTrainingGetResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
         logger.debug("Facade: Getting trainer trainings by criteria for username: {}", request.getTrainerUsername());
 
-        List<TrainingResponse> responses = trainingService.getTrainerTrainingsByCriteria(
-                request.getTrainerUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTraineeName()
-        );
+        TrainerSearchFilter filter = TrainerSearchFilter.builder()
+                .trainerUsername(request.getTrainerUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .traineeName(request.getTraineeName())
+                .build();
+
+        List<TrainingResponse> responses = trainingService.getTrainerTrainingsByCriteria(filter);
 
         return responses.stream()
                 .map(trainingMapper::toRestTrainerTrainingGetResponse)

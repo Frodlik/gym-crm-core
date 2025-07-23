@@ -18,5 +18,5 @@ public class TrainerGetResponseDto {
     private String lastName;
     private TrainingType specialization;
     private boolean isActive;
-    Set<TraineeModel> trainees;
+    private Set<TraineeModel> trainees;
 }

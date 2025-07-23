@@ -20,5 +20,5 @@ public class TraineeUpdateResponseDto {
     private LocalDate dateOfBirth;
     private String address;
     private boolean isActive;
-    Set<TrainerModel> trainers;
+    private Set<TrainerModel> trainers;
 }

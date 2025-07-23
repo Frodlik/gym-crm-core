@@ -1,9 +1,10 @@
 package com.gym.crm.service;
 
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -12,9 +13,7 @@ public interface TrainingService {
 
     Optional<TrainingResponse> findById(Long id);
 
-    List<TrainingResponse> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate,
-                                                         String trainerName, String trainingType);
+    List<TrainingResponse> getTraineeTrainingsByCriteria(TraineeSearchFilter filter);
 
-    List<TrainingResponse> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate,
-                                                         String traineeName);
+    List<TrainingResponse> getTrainerTrainingsByCriteria(TrainerSearchFilter filter);
 }

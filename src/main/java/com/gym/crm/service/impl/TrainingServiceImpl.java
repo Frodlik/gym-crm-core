@@ -3,6 +3,8 @@ package com.gym.crm.service.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
@@ -18,7 +20,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -87,24 +88,22 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @PersistenceTx(readOnly = true)
-    public List<TrainingResponse> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate,
-                                                                LocalDate toDate, String trainerName,
-                                                                String trainingType) {
-        logger.debug("Getting trainee trainings by criteria: traineeUsername={}, fromDate={}, toDate={}, trainerName={}, trainingType={}",
-                traineeUsername, fromDate, toDate, trainerName, trainingType);
+    public List<TrainingResponse> getTraineeTrainingsByCriteria(@Valid TraineeSearchFilter filter) {
+        logger.debug("Getting trainee trainings by criteria: {}", filter);
 
-        if (traineeUsername == null || traineeUsername.trim().isEmpty()) {
-            throw new CoreServiceException("Trainee username is required");
-        }
-
-        if (traineeDAO.findByUsername(traineeUsername).isEmpty()) {
-            throw new CoreServiceException("Trainee not found with username: " + traineeUsername);
+        if (traineeDAO.findByUsername(filter.getTraineeUsername()).isEmpty()) {
+            throw new CoreServiceException("Trainee not found with username: " + filter.getTraineeUsername());
         }
 
         List<Training> trainings = trainingDAO.findTraineeTrainingsByCriteria(
-                traineeUsername, fromDate, toDate, trainerName, trainingType);
+                filter.getTraineeUsername(),
+                filter.getFromDate(),
+                filter.getToDate(),
+                filter.getTrainerName(),
+                filter.getTrainingType()
+        );
 
-        logger.info("Found {} trainings for trainee: {}", trainings.size(), traineeUsername);
+        logger.info("Found {} trainings for trainee: {}", trainings.size(), filter.getTraineeUsername());
 
         return trainings.stream()
                 .map(trainingMapper::toResponse)
@@ -113,23 +112,21 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     @PersistenceTx(readOnly = true)
-    public List<TrainingResponse> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate,
-                                                                LocalDate toDate, String traineeName) {
-        logger.debug("Getting trainer trainings by criteria: trainerUsername={}, fromDate={}, toDate={}, traineeName={}",
-                trainerUsername, fromDate, toDate, traineeName);
+    public List<TrainingResponse> getTrainerTrainingsByCriteria(@Valid TrainerSearchFilter filter) {
+        logger.debug("Getting trainer trainings by criteria: {}", filter);
 
-        if (trainerUsername == null || trainerUsername.trim().isEmpty()) {
-            throw new CoreServiceException("Trainer username is required");
-        }
-
-        if (trainerDAO.findByUsername(trainerUsername).isEmpty()) {
-            throw new CoreServiceException("Trainer not found with username: " + trainerUsername);
+        if (trainerDAO.findByUsername(filter.getTrainerUsername()).isEmpty()) {
+            throw new CoreServiceException("Trainer not found with username: " + filter.getTrainerUsername());
         }
 
         List<Training> trainings = trainingDAO.findTrainerTrainingsByCriteria(
-                trainerUsername, fromDate, toDate, traineeName);
+                filter.getTrainerUsername(),
+                filter.getFromDate(),
+                filter.getToDate(),
+                filter.getTraineeName()
+        );
 
-        logger.info("Found {} trainings for trainer: {}", trainings.size(), trainerUsername);
+        logger.info("Found {} trainings for trainer: {}", trainings.size(), filter.getTrainerUsername());
 
         return trainings.stream()
                 .map(trainingMapper::toResponse)

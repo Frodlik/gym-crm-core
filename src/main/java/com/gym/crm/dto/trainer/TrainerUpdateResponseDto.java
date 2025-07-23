@@ -18,5 +18,5 @@ public class TrainerUpdateResponseDto {
     private String lastName;
     private String specialization;
     private boolean isActive;
-    Set<TraineeModel> trainees;
+    private Set<TraineeModel> trainees;
 }
