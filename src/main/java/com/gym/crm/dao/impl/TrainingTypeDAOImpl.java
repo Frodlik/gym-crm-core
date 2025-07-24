@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -18,7 +19,7 @@ public class TrainingTypeDAOImpl implements TrainingTypeDAO {
     private final TransactionHandler transactionHandler;
 
     @Override
-    public Optional<TrainingType> getByName(String name) {
+    public Optional<TrainingType> findByName(String name) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
             TrainingType trainingType = entityManager.createQuery("FROM TrainingType tt " +
                             "WHERE tt.trainingTypeName = :name", TrainingType.class)
@@ -28,6 +29,18 @@ public class TrainingTypeDAOImpl implements TrainingTypeDAO {
             logger.info("Retrieved TrainingType by name: {}", name);
 
             return Optional.ofNullable(trainingType);
+        });
+    }
+
+    @Override
+    public List<TrainingType> findAll() {
+        return transactionHandler.performReturningWithinSession(entityManager -> {
+            List<TrainingType> trainingTypes = entityManager.createQuery("FROM TrainingType", TrainingType.class)
+                    .getResultList();
+
+            logger.info("Retrieved all TrainingTypes, count: {}", trainingTypes.size());
+
+            return trainingTypes;
         });
     }
 }

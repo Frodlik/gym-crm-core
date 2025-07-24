@@ -80,7 +80,7 @@ public class TrainerServiceImpl implements TrainerService {
         String rawPassword = userCredentialsGenerator.generateRawPassword();
         String encodedPassword = userCredentialsGenerator.encodePassword(rawPassword);
 
-        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User user = User.builder()
@@ -147,7 +147,7 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer existingTrainer = trainerDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
-        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User updatedUser = existingTrainer.getUser().toBuilder()

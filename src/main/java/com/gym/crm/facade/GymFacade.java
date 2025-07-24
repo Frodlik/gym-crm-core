@@ -6,15 +6,16 @@ import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
 import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
 import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
-import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.mapper.TrainingMapper;
+import com.gym.crm.model.TrainingType;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
@@ -30,6 +31,8 @@ import com.gym.crm.openapi.model.TrainerGetResponse;
 import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
 import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
+import com.gym.crm.openapi.model.TrainingCreateRequest;
+import com.gym.crm.openapi.model.TrainingTypeGetResponse;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -135,7 +138,9 @@ public class GymFacade {
     public List<AvailableTrainerGetResponse> getTrainersNotAssignedToTrainee(String traineeUsername) {
         logger.debug("Facade: Getting trainers not assigned to trainee with username: {}", traineeUsername);
 
-        return trainerService.findTrainersNotAssignedToTrainee(traineeUsername).stream()
+        List<AvailableTrainerResponseDto> trainerDtos = trainerService.findTrainersNotAssignedToTrainee(traineeUsername);
+
+        return trainerDtos.stream()
                 .map(trainerMapper::toRestAvailableTrainerResponse)
                 .toList();
     }
@@ -160,10 +165,12 @@ public class GymFacade {
         trainerService.toggleTrainerActivation(targetUsername, isActive);
     }
 
-    public TrainingResponse createTraining(TrainingCreateRequest training) {
+    public void createTraining(TrainingCreateRequest request) {
         logger.info("Facade: Creating training");
 
-        return trainingService.create(training);
+        var trainingCreateRequestDto = trainingMapper.toCreateRequestDto(request);
+
+        trainingService.create(trainingCreateRequestDto);
     }
 
     public Optional<TrainingResponse> getTrainingById(Long id) {
@@ -204,6 +211,16 @@ public class GymFacade {
 
         return responses.stream()
                 .map(trainingMapper::toRestTrainerTrainingGetResponse)
+                .toList();
+    }
+
+    public List<TrainingTypeGetResponse> getAllTrainingTypes() {
+        logger.debug("Facade: Getting all training types");
+
+        List<TrainingType> trainingTypes = trainingService.getAllTrainingTypes();
+
+        return trainingTypes.stream()
+                .map(trainingMapper::toRestTrainingTypeGetResponse)
                 .toList();
     }
 }
