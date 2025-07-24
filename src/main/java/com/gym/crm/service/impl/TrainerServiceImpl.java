@@ -174,12 +174,14 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
-        if (!trainer.getUser().getPassword().equals(request.getOldPassword())) {
+        if (!userCredentialsGenerator.matches(request.getOldPassword(), trainer.getUser().getPassword())) {
             throw new CoreServiceException("Invalid old password");
         }
 
+        String newPassword = userCredentialsGenerator.encodePassword(request.getNewPassword());
+
         User updatedUser = trainer.getUser().toBuilder()
-                .password(request.getNewPassword())
+                .password(newPassword)
                 .build();
         Trainer updatedTrainer = trainer.toBuilder()
                 .user(updatedUser)

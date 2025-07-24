@@ -12,11 +12,14 @@ import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
+import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
+import com.gym.crm.openapi.model.ChangePasswordRequest;
+import com.gym.crm.openapi.model.LoginRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
 import com.gym.crm.openapi.model.TraineeCreateRequest;
@@ -33,9 +36,13 @@ import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.openapi.model.TrainingCreateRequest;
 import com.gym.crm.openapi.model.TrainingTypeGetResponse;
+import com.gym.crm.security.AuthenticationContext;
+import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -53,16 +60,31 @@ public class GymFacade {
     private final TraineeMapper traineeMapper;
     private final TrainerMapper trainerMapper;
     private final TrainingMapper trainingMapper;
+    private final AuthenticationService authenticationService;
+    private final AuthenticationContext authenticationContext;
 
     public GymFacade(TraineeService traineeService, TrainerService trainerService,
                      TrainingService trainingService, TraineeMapper traineeMapper,
-                     TrainerMapper trainerMapper, TrainingMapper trainingMapper) {
+                     TrainerMapper trainerMapper, TrainingMapper trainingMapper, AuthenticationService authenticationService, AuthenticationContext authenticationContext) {
         this.traineeService = traineeService;
         this.trainerService = trainerService;
         this.trainingService = trainingService;
         this.traineeMapper = traineeMapper;
         this.trainerMapper = trainerMapper;
         this.trainingMapper = trainingMapper;
+        this.authenticationService = authenticationService;
+        this.authenticationContext = authenticationContext;
+    }
+
+    public void login(LoginRequest request, HttpServletRequest httpRequest){
+        logger.info("Facade: Logging in user with username: {}", request.getUsername());
+
+        String userType = authenticationService.validateCredentials(request.getUsername(), request.getPassword());
+
+        HttpSession session = httpRequest.getSession(true);
+        session.setAttribute("username", request.getUsername());
+        session.setAttribute("userType", userType);
+        session.setAttribute("authenticated", true);
     }
 
     public TraineeCreateResponse createTrainee(TraineeCreateRequest request) {
@@ -106,10 +128,29 @@ public class GymFacade {
         traineeService.deleteByUsername(targetUsername);
     }
 
-    public void changeTraineePassword(PasswordChangeRequest request) {
+    public void changePassword(ChangePasswordRequest request) {
         logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
 
-        traineeService.changePassword(request);
+        PasswordChangeRequest passwordChangeRequest = PasswordChangeRequest.builder()
+                .username(request.getUsername())
+                .oldPassword(request.getOldPassword())
+                .newPassword(request.getNewPassword())
+                .build();
+
+        String userType = authenticationContext.getCurrentUserType();
+
+        switch (userType) {
+            case "TRAINEE":
+                traineeService.changePassword(passwordChangeRequest);
+                logger.info("Password changed for trainee: {}", passwordChangeRequest.getUsername());
+                break;
+            case "TRAINER":
+                trainerService.changePassword(passwordChangeRequest);
+                logger.info("Password changed for trainer: {}", passwordChangeRequest.getUsername());
+                break;
+            default:
+                throw new CoreServiceException("User not found with username: " + request.getUsername());
+        }
     }
 
     public void toggleTraineeActivation(String targetUsername, boolean isActive) {
@@ -152,11 +193,6 @@ public class GymFacade {
         var updatedTrainer = trainerService.update(updateRequestDto, username);
 
         return trainerMapper.toRestUpdateResponse(updatedTrainer);
-    }
-
-    public void changeTrainerPassword(PasswordChangeRequest request) {
-        logger.info("Facade: Changing password for trainer with username: {}", request.getUsername());
-        trainerService.changePassword(request);
     }
 
     public void toggleTrainerActivation(String targetUsername, boolean isActive) {
