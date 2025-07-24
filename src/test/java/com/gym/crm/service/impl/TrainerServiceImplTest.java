@@ -96,7 +96,7 @@ class TrainerServiceImplTest {
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
         when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+        when(trainingTypeDAO.findByName(createRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.of(specialization));
         when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
 
@@ -111,7 +111,7 @@ class TrainerServiceImplTest {
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generateRawPassword();
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
-        verify(trainingTypeDAO).getByName(createRequest.getSpecialization().getTrainingTypeName());
+        verify(trainingTypeDAO).findByName(createRequest.getSpecialization().getTrainingTypeName());
         verify(trainerDAO).create(any(Trainer.class));
     }
 
@@ -138,7 +138,7 @@ class TrainerServiceImplTest {
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
         when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+        when(trainingTypeDAO.findByName(createRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.of(specialization));
         when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
 
@@ -151,7 +151,7 @@ class TrainerServiceImplTest {
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generateRawPassword();
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
-        verify(trainingTypeDAO).getByName(createRequest.getSpecialization().getTrainingTypeName());
+        verify(trainingTypeDAO).findByName(createRequest.getSpecialization().getTrainingTypeName());
     }
 
     @Test
@@ -164,7 +164,7 @@ class TrainerServiceImplTest {
         when(userCredentialsGenerator.generateUsername(any(), any(), any())).thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
         when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
-        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+        when(trainingTypeDAO.findByName(createRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(createRequest));
@@ -247,7 +247,7 @@ class TrainerServiceImplTest {
         when(trainerDAO.findByUsername(username)).thenReturn(Optional.of(originalTrainer));
         when(trainerDAO.update(any(Trainer.class))).thenReturn(updatedTrainer);
         when(trainerMapper.toUpdateResponseDto(updatedTrainer)).thenReturn(expected);
-        when(trainingTypeDAO.getByName(updateRequest.getSpecialization().getTrainingTypeName()))
+        when(trainingTypeDAO.findByName(updateRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.of(TrainingType.builder().trainingTypeName(YOGA_TYPE).build()));
 
         TrainerUpdateResponseDto actual = service.update(updateRequest, username);
@@ -259,7 +259,7 @@ class TrainerServiceImplTest {
         assertEquals(expected.getSpecialization(), actual.getSpecialization());
 
         verify(trainerDAO).findByUsername(username);
-        verify(trainingTypeDAO).getByName(updateRequest.getSpecialization().getTrainingTypeName());
+        verify(trainingTypeDAO).findByName(updateRequest.getSpecialization().getTrainingTypeName());
         verify(trainerDAO).update(any(Trainer.class));
         verify(trainerMapper).toUpdateResponseDto(updatedTrainer);
     }
@@ -287,7 +287,7 @@ class TrainerServiceImplTest {
         Trainer originalTrainer = buildTrainer();
 
         when(trainerDAO.findByUsername(username)).thenReturn(Optional.of(originalTrainer));
-        when(trainingTypeDAO.getByName(updateRequest.getSpecialization().getTrainingTypeName()))
+        when(trainingTypeDAO.findByName(updateRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,

@@ -30,6 +30,7 @@ import java.util.function.Function;
 @ContextConfiguration(classes = {TraineeDAOImpl.class,
         TrainerDAOImpl.class,
         TrainingDAOImpl.class,
+        TrainingTypeDAOImpl.class,
         TestDataSourceConfig.class})
 @DBUnit(leakHunter = true, schema = "gym_crm_test", caseSensitiveTableNames = true)
 public abstract class BaseIntegrationTest<R> {

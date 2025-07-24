@@ -8,6 +8,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -17,13 +18,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
-
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testGetByName_ShouldReturnTrainingTypeWhenExists() {
+    void testFindByName_ShouldReturnTrainingTypeWhenExists() {
         String existingTrainingTypeName = "Strength";
 
-        Optional<TrainingType> actual = dao.getByName(existingTrainingTypeName);
+        Optional<TrainingType> actual = dao.findByName(existingTrainingTypeName);
 
         assertTrue(actual.isPresent());
         assertNotNull(actual.get());
@@ -33,10 +33,10 @@ class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testGetByName_ShouldReturnTrainingTypeForYoga() {
+    void testFindByName_ShouldReturnTrainingTypeForYoga() {
         String yogaTypeName = "Yoga";
 
-        Optional<TrainingType> actual = dao.getByName(yogaTypeName);
+        Optional<TrainingType> actual = dao.findByName(yogaTypeName);
 
         assertTrue(actual.isPresent());
         assertEquals(yogaTypeName, actual.get().getTrainingTypeName());
@@ -45,10 +45,10 @@ class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testGetByName_ShouldReturnTrainingTypeForCardio() {
+    void testFindByName_ShouldReturnTrainingTypeForCardio() {
         String cardioTypeName = "Cardio";
 
-        Optional<TrainingType> actual = dao.getByName(cardioTypeName);
+        Optional<TrainingType> actual = dao.findByName(cardioTypeName);
 
         assertTrue(actual.isPresent());
         assertEquals(cardioTypeName, actual.get().getTrainingTypeName());
@@ -58,12 +58,31 @@ class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
     @ParameterizedTest
     @MethodSource("provideValidTrainingTypeNames")
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testGetByName_ShouldReturnCorrectTrainingTypeForValidNames(String trainingTypeName, Long expectedId) {
-        Optional<TrainingType> actual = dao.getByName(trainingTypeName);
+    void testFindByName_ShouldReturnCorrectTrainingTypeForValidNames(String trainingTypeName, Long expectedId) {
+        Optional<TrainingType> actual = dao.findByName(trainingTypeName);
 
         assertTrue(actual.isPresent());
         assertEquals(trainingTypeName, actual.get().getTrainingTypeName());
         assertEquals(expectedId, actual.get().getId());
+    }
+
+    @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void testFindAll_ShouldReturnAllTrainingTypes() {
+        List<TrainingType> trainingTypes = dao.findAll();
+
+        assertNotNull(trainingTypes);
+        assertEquals(7, trainingTypes.size());
+
+        List<String> expectedNames = List.of(
+                "Strength", "Yoga", "Cardio", "HIIT", "Pilates", "Flexibility", "Boxing"
+        );
+
+        List<String> actualNames = trainingTypes.stream()
+                .map(TrainingType::getTrainingTypeName)
+                .toList();
+
+        assertTrue(actualNames.containsAll(expectedNames));
     }
 
     private static Stream<Arguments> provideValidTrainingTypeNames() {

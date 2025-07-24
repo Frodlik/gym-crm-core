@@ -18,7 +18,7 @@ import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
-import com.gym.crm.dto.training.TrainingCreateRequest;
+import com.gym.crm.dto.training.TrainingCreateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
@@ -38,6 +38,7 @@ import com.gym.crm.openapi.model.TrainerGetResponse;
 import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
 import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
+import com.gym.crm.openapi.model.TrainingCreateRequest;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -72,6 +73,7 @@ import static com.gym.crm.facade.GymTestObjects.buildTrainerUpdateResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingCreateRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingResponse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -293,18 +295,18 @@ class GymFacadeTest {
     }
 
     @Test
-    void createTraining_ShouldCallServiceAndReturnResponse() {
-        TrainingCreateRequest request = buildTrainingCreateRequest();
-        TrainingResponse expectedResponse = buildTrainingResponse();
+    void createTraining_ShouldCallService() {
+        TrainingCreateRequest restRequest = new TrainingCreateRequest();
+        TrainingCreateRequestDto requestDto = buildTrainingCreateRequest();
 
-        when(trainingService.create(request)).thenReturn(expectedResponse);
+        when(trainingMapper.toCreateRequestDto(restRequest)).thenReturn(requestDto);
 
-        TrainingResponse actual = facade.createTraining(request);
+        doNothing().when(trainingService).create(requestDto);
 
-        assertThat(actual)
-                .isNotNull()
-                .isEqualTo(expectedResponse);
-        verify(trainingService).create(request);
+        facade.createTraining(restRequest);
+
+        verify(trainingMapper).toCreateRequestDto(restRequest);
+        verify(trainingService).create(requestDto);
     }
 
     @Test
