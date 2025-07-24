@@ -2,10 +2,14 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.dao.TrainingTypeDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
+import com.gym.crm.dto.trainer.TrainerGetResponseDto;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
+import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.facade.GymTestObjects;
 import com.gym.crm.mapper.TrainerMapper;
@@ -57,6 +61,8 @@ class TrainerServiceImplTest {
     @Mock
     private TraineeDAO traineeDAO;
     @Mock
+    private TrainingTypeDAO trainingTypeDAO;
+    @Mock
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
     private TrainerMapper trainerMapper;
@@ -65,7 +71,7 @@ class TrainerServiceImplTest {
 
     @Test
     void create_ShouldCreateTrainerSuccessfully() {
-        TrainerCreateRequest createRequest = GymTestObjects.buildTrainerCreateRequest();
+        TrainerCreateRequestDto createRequest = GymTestObjects.buildTrainerCreateRequest();
         Trainer initialTrainer = buildTrainer();
         List<Trainer> existingTrainers = List.of(
                 createTrainerWithUsername("existing.trainer1"),
@@ -73,22 +79,16 @@ class TrainerServiceImplTest {
         );
         List<String> existingUsernames = List.of("existing.trainer1", "existing.trainer2");
 
-        User userWithCredentials = User.builder()
-                .firstName(TRAINER_FIRST_NAME)
-                .lastName(TRAINER_LAST_NAME)
-                .username(TRAINER_USERNAME)
-                .password(ENCODED_PASSWORD)
-                .isActive(true)
+        TrainingType specialization = TrainingType.builder()
+                .trainingTypeName(FITNESS_TYPE)
                 .build();
-        Trainer trainerWithCredentials = Trainer.builder()
-                .user(userWithCredentials)
-                .specialization(createRequest.getSpecialization())
-                .build();
-        Trainer savedTrainer = trainerWithCredentials.toBuilder()
+        Trainer savedTrainer = trainer.toBuilder()
                 .id(TRAINER_ID)
                 .build();
-
-        TrainerResponse expected = buildTrainerResponse();
+        TrainerCreateResponseDto expected = TrainerCreateResponseDto.builder()
+                .username(TRAINER_USERNAME)
+                .password(RAW_PASSWORD)
+                .build();
 
         when(trainerMapper.toEntity(createRequest)).thenReturn(initialTrainer);
         when(trainerDAO.findAll()).thenReturn(existingTrainers);
@@ -96,34 +96,40 @@ class TrainerServiceImplTest {
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
         when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+                .thenReturn(Optional.of(specialization));
         when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
-        when(trainerMapper.toResponse(savedTrainer)).thenReturn(expected);
 
-        TrainerResponse actual = service.create(createRequest);
+        TrainerCreateResponseDto actual = service.create(createRequest);
 
         assertNotNull(actual);
-        assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getUsername(), actual.getUsername());
-        assertEquals(expected.getSpecialization(), actual.getSpecialization());
+        assertEquals(expected.getPassword(), actual.getPassword());
 
         verify(trainerMapper).toEntity(createRequest);
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generateRawPassword();
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
+        verify(trainingTypeDAO).getByName(createRequest.getSpecialization().getTrainingTypeName());
         verify(trainerDAO).create(any(Trainer.class));
-        verify(trainerMapper).toResponse(savedTrainer);
     }
 
     @Test
     void create_ShouldHandleEmptyExistingUsernames() {
-        TrainerCreateRequest createRequest = GymTestObjects.buildTrainerCreateRequest();
+        TrainerCreateRequestDto createRequest = GymTestObjects.buildTrainerCreateRequest();
         List<Trainer> existingTrainers = List.of();
         List<String> existingUsernames = List.of();
-        TrainerResponse expectedResponse = buildTrainerResponse();
 
+        TrainingType specialization = TrainingType.builder()
+                .trainingTypeName(FITNESS_TYPE)
+                .build();
         Trainer savedTrainer = trainer.toBuilder()
                 .id(TRAINER_ID)
+                .build();
+        TrainerCreateResponseDto expectedResponse = TrainerCreateResponseDto.builder()
+                .username(TRAINER_USERNAME)
+                .password(RAW_PASSWORD)
                 .build();
 
         when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
@@ -132,30 +138,53 @@ class TrainerServiceImplTest {
                 .thenReturn(TRAINER_USERNAME);
         when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
         when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+                .thenReturn(Optional.of(specialization));
         when(trainerDAO.create(any(Trainer.class))).thenReturn(savedTrainer);
-        when(trainerMapper.toResponse(savedTrainer)).thenReturn(expectedResponse);
 
-        TrainerResponse actual = service.create(createRequest);
+        TrainerCreateResponseDto actual = service.create(createRequest);
 
         assertNotNull(actual);
+        assertEquals(expectedResponse.getUsername(), actual.getUsername());
+        assertEquals(expectedResponse.getPassword(), actual.getPassword());
         verify(trainerDAO).findAll();
         verify(userCredentialsGenerator).generateUsername(TRAINER_FIRST_NAME, TRAINER_LAST_NAME, existingUsernames);
         verify(userCredentialsGenerator).generateRawPassword();
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
+        verify(trainingTypeDAO).getByName(createRequest.getSpecialization().getTrainingTypeName());
+    }
+
+    @Test
+    void create_ShouldThrowExceptionWhenTrainingTypeNotFound() {
+        TrainerCreateRequestDto createRequest = GymTestObjects.buildTrainerCreateRequest();
+        List<Trainer> existingTrainers = List.of();
+
+        when(trainerMapper.toEntity(createRequest)).thenReturn(trainer);
+        when(trainerDAO.findAll()).thenReturn(existingTrainers);
+        when(userCredentialsGenerator.generateUsername(any(), any(), any())).thenReturn(TRAINER_USERNAME);
+        when(userCredentialsGenerator.generateRawPassword()).thenReturn(RAW_PASSWORD);
+        when(userCredentialsGenerator.encodePassword(RAW_PASSWORD)).thenReturn(ENCODED_PASSWORD);
+        when(trainingTypeDAO.getByName(createRequest.getSpecialization().getTrainingTypeName()))
+                .thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(createRequest));
+
+        assertEquals("Training type not found: " + createRequest.getSpecialization().getTrainingTypeName(),
+                exception.getMessage());
+        verify(trainerDAO, never()).create(any());
     }
 
     @Test
     void findById_ShouldReturnTrainerWhenExists() {
-        TrainerResponse expected = buildTrainerResponse();
+        TrainerGetResponseDto expected = buildTrainerResponse();
 
         when(trainerDAO.findById(TRAINER_ID)).thenReturn(Optional.of(trainer));
         when(trainerMapper.toResponse(trainer)).thenReturn(expected);
 
-        Optional<TrainerResponse> actual = service.findById(TRAINER_ID);
+        Optional<TrainerGetResponseDto> actual = service.findById(TRAINER_ID);
 
         assertTrue(actual.isPresent());
-        assertEquals(expected.getId(), actual.get().getId());
-        assertEquals(expected.getUsername(), actual.get().getUsername());
+        assertEquals(expected.getFirstName(), actual.get().getFirstName());
         assertEquals(expected.getSpecialization(), actual.get().getSpecialization());
         verify(trainerDAO).findById(TRAINER_ID);
         verify(trainerMapper).toResponse(trainer);
@@ -167,7 +196,7 @@ class TrainerServiceImplTest {
 
         when(trainerDAO.findById(trainerId)).thenReturn(Optional.empty());
 
-        Optional<TrainerResponse> result = service.findById(trainerId);
+        Optional<TrainerGetResponseDto> result = service.findById(trainerId);
 
         assertFalse(result.isPresent());
         verify(trainerDAO).findById(trainerId);
@@ -177,68 +206,96 @@ class TrainerServiceImplTest {
     @Test
     void findByUsername_ShouldReturnTrainerWhenExists() {
         Trainer buildTrainer = buildTrainer();
-        TrainerResponse expected = buildTrainerResponse();
+        TrainerGetResponseDto expected = buildTrainerResponse();
 
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(buildTrainer));
         when(trainerMapper.toResponse(buildTrainer)).thenReturn(expected);
 
-        Optional<TrainerResponse> actual = service.findByUsername(TRAINER_USERNAME);
+        TrainerGetResponseDto actual = service.findByUsername(TRAINER_USERNAME);
 
-        assertTrue(actual.isPresent());
-        assertEquals(expected.getId(), actual.get().getId());
-        assertEquals(expected.getUsername(), actual.get().getUsername());
+        assertNotNull(actual);
+        assertEquals(expected.getFirstName(), actual.getFirstName());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerMapper).toResponse(buildTrainer);
     }
 
     @Test
-    void findByUsername_ShouldReturnEmptyWhenNotExists() {
+    void findByUsername_ShouldThrowExceptionWhenNotExists() {
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
-        Optional<TrainerResponse> actual = service.findByUsername(TRAINER_USERNAME);
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.findByUsername(TRAINER_USERNAME));
 
-        assertFalse(actual.isPresent());
+        assertEquals("Trainer not found with username: " + TRAINER_USERNAME, exception.getMessage());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerMapper, never()).toResponse(any());
     }
 
     @Test
     void update_ShouldUpdateTrainerSuccessfully() {
-        TrainerUpdateRequest updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        TrainerUpdateRequestDto updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        String username = "test.username";
         Trainer originalTrainer = buildTrainer();
         Trainer updatedTrainer = buildUpdatedTrainer();
-        TrainerResponse expected = buildUpdatedResponse();
 
-        when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.of(originalTrainer));
+        TrainerUpdateResponseDto expected = new TrainerUpdateResponseDto();
+        expected.setFirstName("Michael");
+        expected.setLastName("Smith");
+        expected.setActive(false);
+        expected.setSpecialization(YOGA_TYPE);
+
+        when(trainerDAO.findByUsername(username)).thenReturn(Optional.of(originalTrainer));
         when(trainerDAO.update(any(Trainer.class))).thenReturn(updatedTrainer);
-        when(trainerMapper.toResponse(updatedTrainer)).thenReturn(expected);
+        when(trainerMapper.toUpdateResponseDto(updatedTrainer)).thenReturn(expected);
+        when(trainingTypeDAO.getByName(updateRequest.getSpecialization().getTrainingTypeName()))
+                .thenReturn(Optional.of(TrainingType.builder().trainingTypeName(YOGA_TYPE).build()));
 
-        TrainerResponse actual = service.update(updateRequest);
+        TrainerUpdateResponseDto actual = service.update(updateRequest, username);
 
         assertNotNull(actual);
-        assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getFirstName(), actual.getFirstName());
         assertEquals(expected.getLastName(), actual.getLastName());
         assertEquals(expected.isActive(), actual.isActive());
         assertEquals(expected.getSpecialization(), actual.getSpecialization());
 
-        verify(trainerDAO).findById(updateRequest.getId());
+        verify(trainerDAO).findByUsername(username);
+        verify(trainingTypeDAO).getByName(updateRequest.getSpecialization().getTrainingTypeName());
         verify(trainerDAO).update(any(Trainer.class));
-        verify(trainerMapper).toResponse(updatedTrainer);
+        verify(trainerMapper).toUpdateResponseDto(updatedTrainer);
     }
 
     @Test
     void update_ShouldThrowExceptionWhenTrainerNotFound() {
-        TrainerUpdateRequest updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        TrainerUpdateRequestDto updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        String username = "nonexistent.username";
 
-        when(trainerDAO.findById(updateRequest.getId())).thenReturn(Optional.empty());
+        when(trainerDAO.findByUsername(username)).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.update(updateRequest));
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.update(updateRequest, username));
 
-        assertEquals("Trainer not found with id: " + updateRequest.getId(), exception.getMessage());
-        verify(trainerDAO).findById(updateRequest.getId());
+        assertEquals("Trainer not found with username: " + username, exception.getMessage());
+        verify(trainerDAO).findByUsername(username);
         verify(trainerDAO, never()).update(any());
-        verify(trainerMapper, never()).toResponse(any());
+        verify(trainerMapper, never()).toUpdateResponseDto(any());
+    }
+
+    @Test
+    void update_ShouldThrowExceptionWhenTrainingTypeNotFound() {
+        TrainerUpdateRequestDto updateRequest = GymTestObjects.buildTrainerUpdateRequest();
+        String username = "test.username";
+        Trainer originalTrainer = buildTrainer();
+
+        when(trainerDAO.findByUsername(username)).thenReturn(Optional.of(originalTrainer));
+        when(trainingTypeDAO.getByName(updateRequest.getSpecialization().getTrainingTypeName()))
+                .thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.update(updateRequest, username));
+
+        assertEquals("Training type not found: " + updateRequest.getSpecialization().getTrainingTypeName(),
+                exception.getMessage());
+        verify(trainerDAO, never()).update(any());
     }
 
     @Test
@@ -261,28 +318,45 @@ class TrainerServiceImplTest {
     }
 
     @Test
+    void changePassword_ShouldThrowExceptionWhenUserNotFound() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(TRAINER_USERNAME);
+        request.setOldPassword(PASSWORD);
+        request.setNewPassword("newSecurePassword");
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.changePassword(request));
+
+        assertEquals("User not found with username: " + TRAINER_USERNAME, exception.getMessage());
+        verify(trainerDAO, never()).update(any());
+    }
+
+    @Test
+    void changePassword_ShouldThrowExceptionWhenOldPasswordInvalid() {
+        PasswordChangeRequest request = new PasswordChangeRequest();
+        request.setUsername(TRAINER_USERNAME);
+        request.setOldPassword("wrongPassword");
+        request.setNewPassword("newSecurePassword");
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.changePassword(request));
+
+        assertEquals("Invalid old password", exception.getMessage());
+        verify(trainerDAO, never()).update(any());
+    }
+
+    @Test
     void toggleTrainerActivation_ShouldToggleFromActiveToInactive() {
-        Trainer activeTrainer = buildTrainer();
-        User inactiveUser = activeTrainer.getUser().toBuilder()
-                .isActive(false)
-                .build();
-        Trainer inactiveTrainer = activeTrainer.toBuilder()
-                .user(inactiveUser)
-                .build();
-        TrainerResponse expected = buildTrainerResponse();
-        expected.setActive(false);
+        Trainer existingTrainer = buildTrainer();
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(existingTrainer));
 
-        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
-        when(trainerDAO.update(any(Trainer.class))).thenReturn(inactiveTrainer);
-        when(trainerMapper.toResponse(inactiveTrainer)).thenReturn(expected);
+        service.toggleTrainerActivation(TRAINER_USERNAME, false);
 
-        TrainerResponse actual = service.toggleTrainerActivation(TRAINER_USERNAME);
-
-        assertNotNull(actual);
-        assertFalse(actual.isActive());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
-        verify(trainerDAO).update(any(Trainer.class));
-        verify(trainerMapper).toResponse(inactiveTrainer);
         verify(trainerDAO).update(captor.capture());
 
         Trainer captured = captor.getValue();
@@ -297,31 +371,27 @@ class TrainerServiceImplTest {
         Trainer inactiveTrainer = buildTrainer().toBuilder()
                 .user(inactiveUser)
                 .build();
-        User activeUser = inactiveUser.toBuilder()
-                .isActive(true)
-                .build();
-        Trainer activeTrainer = inactiveTrainer.toBuilder()
-                .user(activeUser)
-                .build();
-
-        TrainerResponse expected = buildTrainerResponse();
-        expected.setActive(true);
 
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
-        when(trainerDAO.update(any(Trainer.class))).thenReturn(activeTrainer);
-        when(trainerMapper.toResponse(activeTrainer)).thenReturn(expected);
 
-        TrainerResponse actual = service.toggleTrainerActivation(TRAINER_USERNAME);
+        service.toggleTrainerActivation(TRAINER_USERNAME, true);
 
-        assertNotNull(actual);
-        assertTrue(actual.isActive());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
-        verify(trainerDAO).update(any(Trainer.class));
-        verify(trainerMapper).toResponse(activeTrainer);
         verify(trainerDAO).update(captor.capture());
 
         Trainer captured = captor.getValue();
         assertTrue(captured.getUser().getIsActive());
+    }
+
+    @Test
+    void toggleTrainerActivation_ShouldThrowExceptionWhenTrainerNotFound() {
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.toggleTrainerActivation(TRAINER_USERNAME, true));
+
+        assertEquals("Trainer not found with username: " + TRAINER_USERNAME, exception.getMessage());
+        verify(trainerDAO, never()).update(any());
     }
 
     @Test
@@ -334,19 +404,19 @@ class TrainerServiceImplTest {
                 createTrainerWithUsername("trainer2"),
                 createTrainerWithUsername("trainer3")
         );
-        List<TrainerResponse> expectedResponses = List.of(
-                createTrainerResponse("trainer1", 1L),
-                createTrainerResponse("trainer2", 2L),
-                createTrainerResponse("trainer3", 3L)
+        List<AvailableTrainerResponseDto> expectedResponses = List.of(
+                createAvailableTrainerResponse("trainer1"),
+                createAvailableTrainerResponse("trainer2"),
+                createAvailableTrainerResponse("trainer3")
         );
 
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
         when(trainerDAO.findTrainersNotAssignedToTrainee(traineeUsername)).thenReturn(unassignedTrainers);
-        when(trainerMapper.toResponse(unassignedTrainers.get(0))).thenReturn(expectedResponses.get(0));
-        when(trainerMapper.toResponse(unassignedTrainers.get(1))).thenReturn(expectedResponses.get(1));
-        when(trainerMapper.toResponse(unassignedTrainers.get(2))).thenReturn(expectedResponses.get(2));
+        when(trainerMapper.toAvailableTrainerResponseDto(unassignedTrainers.get(0))).thenReturn(expectedResponses.get(0));
+        when(trainerMapper.toAvailableTrainerResponseDto(unassignedTrainers.get(1))).thenReturn(expectedResponses.get(1));
+        when(trainerMapper.toAvailableTrainerResponseDto(unassignedTrainers.get(2))).thenReturn(expectedResponses.get(2));
 
-        List<TrainerResponse> actual = service.findTrainersNotAssignedToTrainee(traineeUsername);
+        List<AvailableTrainerResponseDto> actual = service.findTrainersNotAssignedToTrainee(traineeUsername);
 
         assertNotNull(actual);
         assertEquals(3, actual.size());
@@ -356,9 +426,22 @@ class TrainerServiceImplTest {
 
         verify(traineeDAO).findByUsername(traineeUsername);
         verify(trainerDAO).findTrainersNotAssignedToTrainee(traineeUsername);
-        verify(trainerMapper).toResponse(unassignedTrainers.get(0));
-        verify(trainerMapper).toResponse(unassignedTrainers.get(1));
-        verify(trainerMapper).toResponse(unassignedTrainers.get(2));
+        verify(trainerMapper).toAvailableTrainerResponseDto(unassignedTrainers.get(0));
+        verify(trainerMapper).toAvailableTrainerResponseDto(unassignedTrainers.get(1));
+        verify(trainerMapper).toAvailableTrainerResponseDto(unassignedTrainers.get(2));
+    }
+
+    @Test
+    void findTrainersNotAssignedToTrainee_ShouldThrowExceptionWhenTraineeNotFound() {
+        String traineeUsername = "nonexistent.trainee";
+
+        when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.empty());
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.findTrainersNotAssignedToTrainee(traineeUsername));
+
+        assertEquals("Trainee not found with username: " + traineeUsername, exception.getMessage());
+        verify(trainerDAO, never()).findTrainersNotAssignedToTrainee(any());
     }
 
     private Trainer buildTrainer() {
@@ -391,17 +474,6 @@ class TrainerServiceImplTest {
                 .build();
     }
 
-    private TrainerResponse buildUpdatedResponse() {
-        TrainerResponse response = new TrainerResponse();
-        response.setId(TRAINER_ID);
-        response.setFirstName("Michael");
-        response.setLastName("Smith");
-        response.setActive(false);
-        response.setSpecialization(TrainingType.builder().trainingTypeName(YOGA_TYPE).build());
-
-        return response;
-    }
-
     private Trainer createTrainerWithUsername(String username) {
         User user = User.builder()
                 .username(username)
@@ -424,13 +496,11 @@ class TrainerServiceImplTest {
                 .build();
     }
 
-    private TrainerResponse createTrainerResponse(String username, Long id) {
-        TrainerResponse response = new TrainerResponse();
-        response.setId(id);
+    private AvailableTrainerResponseDto createAvailableTrainerResponse(String username) {
+        AvailableTrainerResponseDto response = new AvailableTrainerResponseDto();
         response.setUsername(username);
         response.setFirstName("Trainer");
         response.setLastName("Name");
-        response.setActive(true);
         response.setSpecialization(TrainingType.builder().trainingTypeName(FITNESS_TYPE).build());
 
         return response;

@@ -2,13 +2,14 @@ package com.gym.crm.facade;
 
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainingCriteriaRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
-import com.gym.crm.dto.trainer.TrainerCreateRequest;
-import com.gym.crm.dto.trainer.TrainerResponse;
+import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
-import com.gym.crm.dto.trainer.TrainerUpdateRequest;
+import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.mapper.TraineeMapper;
@@ -23,6 +24,12 @@ import com.gym.crm.openapi.model.TraineeGetResponse;
 import com.gym.crm.openapi.model.TraineeTrainingGetResponse;
 import com.gym.crm.openapi.model.TraineeUpdateRequest;
 import com.gym.crm.openapi.model.TraineeUpdateResponse;
+import com.gym.crm.openapi.model.TrainerCreateRequest;
+import com.gym.crm.openapi.model.TrainerCreateResponse;
+import com.gym.crm.openapi.model.TrainerGetResponse;
+import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
+import com.gym.crm.openapi.model.TrainerUpdateRequest;
+import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -59,30 +66,35 @@ public class GymFacade {
         logger.info("Facade: Creating trainee");
 
         TraineeCreateRequestDto createRequestDto = traineeMapper.toCreateRequest(request);
+        var createdTrainee = traineeService.create(createRequestDto);
 
-        return traineeMapper.toRestCreateResponse(traineeService.create(createRequestDto));
+        return traineeMapper.toRestCreateResponse(createdTrainee);
     }
 
     public TraineeGetResponse getTraineeByUsername(String targetUsername) {
         logger.debug("Facade: Getting trainee by username: {}", targetUsername);
 
-        return traineeMapper.toRestGetResponse(traineeService.findByUsername(targetUsername));
+        var trainee = traineeService.findByUsername(targetUsername);
+
+        return traineeMapper.toRestGetResponse(trainee);
     }
 
     public TraineeUpdateResponse updateTrainee(String username, TraineeUpdateRequest request) {
         logger.info("Facade: Updating trainee with username: {}", username);
 
         TraineeUpdateRequestDto requestDto = traineeMapper.toUpdateRequest(request);
+        var updatedTrainee = traineeService.update(requestDto, username);
 
-        return traineeMapper.toRestUpdateResponse(traineeService.update(requestDto, username));
+        return traineeMapper.toRestUpdateResponse(updatedTrainee);
     }
 
     public TraineeAssignedTrainersUpdateResponse updateTraineeTrainersList(String username, TraineeAssignedTrainersUpdateRequest request) {
         logger.info("Facade: Updating trainers list for trainee with username: {}", username);
 
         TraineeTrainersUpdateRequestDto trainersUpdateRequest = traineeMapper.toTrainersUpdateRequest(request);
+        var updatedTrainee = traineeService.updateTraineeTrainersList(trainersUpdateRequest, username);
 
-        return traineeMapper.toRestTrainersUpdateResponse(traineeService.updateTraineeTrainersList(trainersUpdateRequest, username));
+        return traineeMapper.toRestTrainersUpdateResponse(updatedTrainee);
     }
 
     public void deleteTrainee(String targetUsername) {
@@ -103,16 +115,21 @@ public class GymFacade {
         traineeService.toggleTraineeActivation(targetUsername, isActive);
     }
 
-    public TrainerResponse createTrainer(TrainerCreateRequest request) {
+    public TrainerCreateResponse createTrainer(TrainerCreateRequest request) {
         logger.info("Facade: Creating trainer");
 
-        return trainerService.create(request);
+        TrainerCreateRequestDto createRequestDto = trainerMapper.toCreateRequestDto(request);
+        var createdTrainer = trainerService.create(createRequestDto);
+
+        return trainerMapper.toRestCreateResponse(createdTrainer);
     }
 
-    public Optional<TrainerResponse> getTrainerByUsername(String targetUsername) {
+    public TrainerGetResponse getTrainerByUsername(String targetUsername) {
         logger.debug("Facade: Getting trainer by username: {}", targetUsername);
 
-        return trainerService.findByUsername(targetUsername);
+        var trainer = trainerService.findByUsername(targetUsername);
+
+        return trainerMapper.toRestGetResponse(trainer);
     }
 
     public List<AvailableTrainerGetResponse> getTrainersNotAssignedToTrainee(String traineeUsername) {
@@ -123,10 +140,13 @@ public class GymFacade {
                 .toList();
     }
 
-    public TrainerResponse updateTrainer(TrainerUpdateRequest request) {
-        logger.info("Facade: Updating trainer with ID: {}", request.getId());
+    public TrainerUpdateResponse updateTrainer(String username, TrainerUpdateRequest request) {
+        logger.info("Facade: Updating trainer with username: {}", username);
 
-        return trainerService.update(request);
+        TrainerUpdateRequestDto updateRequestDto = trainerMapper.toUpdateRequestDto(request);
+        var updatedTrainer = trainerService.update(updateRequestDto, username);
+
+        return trainerMapper.toRestUpdateResponse(updatedTrainer);
     }
 
     public void changeTrainerPassword(PasswordChangeRequest request) {
@@ -134,10 +154,10 @@ public class GymFacade {
         trainerService.changePassword(request);
     }
 
-    public TrainerResponse toggleTrainerActivation(String targetUsername) {
+    public void toggleTrainerActivation(String targetUsername, boolean isActive) {
         logger.info("Facade: Toggling activation for trainer with username: {}", targetUsername);
 
-        return trainerService.toggleTrainerActivation(targetUsername);
+        trainerService.toggleTrainerActivation(targetUsername, isActive);
     }
 
     public TrainingResponse createTraining(TrainingCreateRequest training) {
@@ -155,27 +175,35 @@ public class GymFacade {
     public List<TraineeTrainingGetResponse> getTraineeTrainingsByCriteria(TraineeTrainingCriteriaRequestDto request) {
         logger.debug("Facade: Getting trainee trainings by criteria for username: {}", request.getTraineeUsername());
 
-        List<TrainingResponse> responses = trainingService.getTraineeTrainingsByCriteria(
-                request.getTraineeUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTrainerName(),
-                request.getTrainingType()
-        );
+        TraineeSearchFilter filter = TraineeSearchFilter.builder()
+                .traineeUsername(request.getTraineeUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .trainerName(request.getTrainerName())
+                .trainingType(request.getTrainingType())
+                .build();
+
+        List<TrainingResponse> responses = trainingService.getTraineeTrainingsByCriteria(filter);
 
         return responses.stream()
-                .map(trainingMapper::toRestTrainingGetResponse)
+                .map(trainingMapper::toRestTraineeTrainingGetResponse)
                 .toList();
     }
 
-    public List<TrainingResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
+    public List<TrainerTrainingGetResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
         logger.debug("Facade: Getting trainer trainings by criteria for username: {}", request.getTrainerUsername());
 
-        return trainingService.getTrainerTrainingsByCriteria(
-                request.getTrainerUsername(),
-                request.getFromDate(),
-                request.getToDate(),
-                request.getTraineeName()
-        );
+        TrainerSearchFilter filter = TrainerSearchFilter.builder()
+                .trainerUsername(request.getTrainerUsername())
+                .fromDate(request.getFromDate())
+                .toDate(request.getToDate())
+                .traineeName(request.getTraineeName())
+                .build();
+
+        List<TrainingResponse> responses = trainingService.getTrainerTrainingsByCriteria(filter);
+
+        return responses.stream()
+                .map(trainingMapper::toRestTrainerTrainingGetResponse)
+                .toList();
     }
 }

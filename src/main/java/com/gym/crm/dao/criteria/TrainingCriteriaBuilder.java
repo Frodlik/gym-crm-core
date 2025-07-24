@@ -46,6 +46,11 @@ public class TrainingCriteriaBuilder {
         CriteriaQuery<Training> query = cb.createQuery(Training.class);
         Root<Training> root = query.from(Training.class);
 
+        root.fetch(TRAINER, JoinType.LEFT).fetch(USER, JoinType.LEFT);
+        root.fetch(TRAINER, JoinType.LEFT).fetch("specialization", JoinType.LEFT);
+        root.fetch(TRAINEE, JoinType.LEFT).fetch(USER, JoinType.LEFT);
+        root.fetch(TRAINING_TYPE, JoinType.LEFT);
+
         TrainingJoins joins = createJoins(root, criteria.trainingType());
         List<Predicate> predicates = buildPredicates(cb, root, joins, criteria);
 

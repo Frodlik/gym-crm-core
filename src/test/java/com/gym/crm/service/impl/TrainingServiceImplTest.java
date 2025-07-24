@@ -3,6 +3,8 @@ package com.gym.crm.service.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.dto.trainee.TraineeSearchFilter;
+import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.training.TrainingCreateRequest;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
@@ -213,6 +215,14 @@ class TrainingServiceImplTest {
         String trainerName = "Mike";
         String trainingType = "Fitness";
 
+        TraineeSearchFilter filter = TraineeSearchFilter.builder()
+                .traineeUsername(USERNAME)
+                .fromDate(LocalDate.of(2024, 1, 1))
+                .toDate(LocalDate.of(2024, 12, 31))
+                .trainerName("Mike")
+                .trainingType("Fitness")
+                .build();
+
         TrainingResponse expected = GymTestObjects.buildTrainingResponse();
 
         when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
@@ -220,9 +230,7 @@ class TrainingServiceImplTest {
                 .thenReturn(List.of(training));
         when(trainingMapper.toResponse(training)).thenReturn(expected);
 
-        List<TrainingResponse> actual = service.getTraineeTrainingsByCriteria(
-                traineeUsername, from, to, trainerName, trainingType
-        );
+        List<TrainingResponse> actual = service.getTraineeTrainingsByCriteria(filter);
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
@@ -233,25 +241,18 @@ class TrainingServiceImplTest {
 
     @Test
     void getTraineeTrainingsByCriteria_ShouldThrow_WhenTraineeNotFound() {
-        String traineeUsername = "nonexistent";
+        TraineeSearchFilter filter = TraineeSearchFilter.builder()
+                .traineeUsername("nonexistent")
+                .build();
 
-        when(traineeDAO.findByUsername(traineeUsername)).thenReturn(Optional.empty());
+        when(traineeDAO.findByUsername("nonexistent")).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
-                service.getTraineeTrainingsByCriteria(traineeUsername, null, null, null, null));
+                service.getTraineeTrainingsByCriteria(filter));
 
         assertEquals("Trainee not found with username: nonexistent", exception.getMessage());
-        verify(traineeDAO).findByUsername(traineeUsername);
+        verify(traineeDAO).findByUsername("nonexistent");
         verifyNoInteractions(trainingDAO);
-    }
-
-    @Test
-    void getTraineeTrainingsByCriteria_ShouldThrow_WhenUsernameIsBlank() {
-        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
-                service.getTraineeTrainingsByCriteria("  ", null, null, null, null));
-
-        assertEquals("Trainee username is required", exception.getMessage());
-        verifyNoInteractions(traineeDAO);
     }
 
     @Test
@@ -261,6 +262,13 @@ class TrainingServiceImplTest {
         LocalDate to = LocalDate.of(2024, 12, 31);
         String traineeName = "John";
 
+        TrainerSearchFilter filter = TrainerSearchFilter.builder()
+                .trainerUsername(TRAINER_USERNAME)
+                .fromDate(LocalDate.of(2024, 1, 1))
+                .toDate(LocalDate.of(2024, 12, 31))
+                .traineeName("John")
+                .build();
+
         TrainingResponse expected = GymTestObjects.buildTrainingResponse();
 
         when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.of(trainer));
@@ -268,9 +276,7 @@ class TrainingServiceImplTest {
                 .thenReturn(List.of(training));
         when(trainingMapper.toResponse(training)).thenReturn(expected);
 
-        List<TrainingResponse> actual = service.getTrainerTrainingsByCriteria(
-                trainerUsername, from, to, traineeName
-        );
+        List<TrainingResponse> actual = service.getTrainerTrainingsByCriteria(filter);
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
@@ -281,25 +287,18 @@ class TrainingServiceImplTest {
 
     @Test
     void getTrainerTrainingsByCriteria_ShouldThrow_WhenTrainerNotFound() {
-        String trainerUsername = "not.found";
+        TrainerSearchFilter filter = TrainerSearchFilter.builder()
+                .trainerUsername("not.found")
+                .build();
 
-        when(trainerDAO.findByUsername(trainerUsername)).thenReturn(Optional.empty());
+        when(trainerDAO.findByUsername("not.found")).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
-                service.getTrainerTrainingsByCriteria(trainerUsername, null, null, null));
+                service.getTrainerTrainingsByCriteria(filter));
 
         assertEquals("Trainer not found with username: not.found", exception.getMessage());
-        verify(trainerDAO).findByUsername(trainerUsername);
+        verify(trainerDAO).findByUsername("not.found");
         verifyNoInteractions(trainingDAO);
-    }
-
-    @Test
-    void getTrainerTrainingsByCriteria_ShouldThrow_WhenUsernameIsBlank() {
-        CoreServiceException exception = assertThrows(CoreServiceException.class, () ->
-                service.getTrainerTrainingsByCriteria("  ", null, null, null));
-
-        assertEquals("Trainer username is required", exception.getMessage());
-        verifyNoInteractions(trainerDAO);
     }
 
     private Training buildTraining() {

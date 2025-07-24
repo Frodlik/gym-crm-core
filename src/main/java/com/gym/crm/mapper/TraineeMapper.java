@@ -1,5 +1,6 @@
 package com.gym.crm.mapper;
 
+import com.gym.crm.dto.model.TraineeModel;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
 import com.gym.crm.dto.trainee.TraineeGetResponseDto;
@@ -30,6 +31,11 @@ public interface TraineeMapper {
     @Mapping(target = "isActive", source = "user.isActive")
     @Mapping(target = "trainers", source = "trainers")
     TraineeGetResponseDto toResponse(Trainee trainee);
+
+    @Mapping(target = "username", source = "user.username")
+    @Mapping(target = "firstName", source = "user.firstName")
+    @Mapping(target = "lastName", source = "user.lastName")
+    TraineeModel toTraineeModel(Trainee trainee);
 
     TraineeCreateRequestDto toCreateRequest(TraineeCreateRequest request);
 

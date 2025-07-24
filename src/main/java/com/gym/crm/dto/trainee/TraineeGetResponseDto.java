@@ -22,5 +22,5 @@ public class TraineeGetResponseDto {
     private boolean isActive;
     private LocalDate dateOfBirth;
     private String address;
-    Set<TrainerModel> trainers = new HashSet<>();
+    private Set<TrainerModel> trainers = new HashSet<>();
 }
