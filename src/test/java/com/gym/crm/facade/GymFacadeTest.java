@@ -24,6 +24,7 @@ import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
+import com.gym.crm.openapi.model.ChangePasswordRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
 import com.gym.crm.openapi.model.TraineeCreateRequest;
@@ -39,6 +40,7 @@ import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
 import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.openapi.model.TrainingCreateRequest;
+import com.gym.crm.security.AuthenticationContext;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
@@ -91,6 +93,8 @@ class GymFacadeTest {
     private TrainerMapper trainerMapper;
     @Mock
     private TrainingMapper trainingMapper;
+    @Mock
+    private AuthenticationContext authenticationContext;
     @InjectMocks
     private GymFacade facade;
 
@@ -182,10 +186,17 @@ class GymFacadeTest {
     }
 
     @Test
-    void changeTraineePassword_ShouldCallService() {
+    void changePassword_ShouldCallService() {
         PasswordChangeRequest request = buildPasswordChangeRequest();
+        ChangePasswordRequest facadeRequest = new ChangePasswordRequest(
+                request.getUsername(),
+                request.getOldPassword(),
+                request.getNewPassword()
+        );
 
-        facade.changeTraineePassword(request);
+        when(authenticationContext.getCurrentUserType()).thenReturn("TRAINEE");
+
+        facade.changePassword(facadeRequest);
 
         verify(traineeService).changePassword(request);
     }
@@ -274,15 +285,6 @@ class GymFacadeTest {
         verify(trainerMapper).toUpdateRequestDto(request);
         verify(trainerService).update(requestDto, TRAINER_USERNAME);
         verify(trainerMapper).toRestUpdateResponse(serviceResponse);
-    }
-
-    @Test
-    void changeTrainerPassword_ShouldCallService() {
-        PasswordChangeRequest request = buildPasswordChangeRequest();
-
-        facade.changeTrainerPassword(request);
-
-        verify(trainerService).changePassword(request);
     }
 
     @Test

@@ -306,6 +306,8 @@ class TrainerServiceImplTest {
         request.setNewPassword("newSecurePassword");
 
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+        when(userCredentialsGenerator.matches(PASSWORD, trainer.getUser().getPassword())).thenReturn(true);
+        when(userCredentialsGenerator.encodePassword("newSecurePassword")).thenReturn("newSecurePassword");
 
         service.changePassword(request);
 

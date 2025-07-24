@@ -1,0 +1,14 @@
+[
+  {
+    "trainingTypeId": 1,
+    "trainingType": "Ninjutsu"
+  },
+  {
+    "trainingTypeId": 2,
+    "trainingType": "Taijutsu"
+  },
+  {
+    "trainingTypeId": 3,
+    "trainingType": "Genjutsu"
+  }
+]
