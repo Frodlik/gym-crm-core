@@ -237,6 +237,7 @@ class TrainerControllerTest {
         training.setTrainingDate(java.time.LocalDate.now());
         training.setTraineeName(TrainerControllerTest.TRAINEE_1_NAME);
         training.setTrainingDuration(TrainerControllerTest.TRAINING_DURATION_SHADOW_CLONE);
+
         return training;
     }
 }
