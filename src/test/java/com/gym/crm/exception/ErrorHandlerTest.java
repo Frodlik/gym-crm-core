@@ -126,8 +126,6 @@ class ErrorHandlerTest {
         assertEquals(SERVER_ERROR.getMessage(), actual.getBody().getErrorMessage());
     }
 
-
-
     @Test
     void handleCoreServiceException_shouldHandleNullMessage() {
         CoreServiceException ex = new CoreServiceException(null);
