@@ -7,12 +7,13 @@ import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
 import com.gym.crm.dto.trainer.TrainerGetResponseDto;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
+import jakarta.validation.Valid;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface TrainerService {
-    TrainerCreateResponseDto create(TrainerCreateRequestDto request);
+    TrainerCreateResponseDto create(@Valid TrainerCreateRequestDto request);
 
     Optional<TrainerGetResponseDto> findById(Long id);
 
@@ -20,9 +21,9 @@ public interface TrainerService {
 
     List<AvailableTrainerResponseDto> findTrainersNotAssignedToTrainee(String traineeUsername);
 
-    TrainerUpdateResponseDto update(TrainerUpdateRequestDto request, String username);
+    TrainerUpdateResponseDto update(@Valid TrainerUpdateRequestDto request, String username);
 
-    void changePassword(PasswordChangeRequest request);
+    void changePassword(@Valid PasswordChangeRequest request);
 
     void toggleTrainerActivation(String username, boolean isActive);
 }

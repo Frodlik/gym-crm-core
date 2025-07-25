@@ -8,23 +8,24 @@ import com.gym.crm.dto.trainee.TraineeTrainersUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
+import jakarta.validation.Valid;
 
 import java.util.Optional;
 
 public interface TraineeService {
-    TraineeCreateResponseDto create(TraineeCreateRequestDto request);
+    TraineeCreateResponseDto create(@Valid TraineeCreateRequestDto request);
 
     Optional<TraineeGetResponseDto> findById(Long id);
 
     TraineeGetResponseDto findByUsername(String username);
 
-    TraineeUpdateResponseDto update(TraineeUpdateRequestDto request, String username);
+    TraineeUpdateResponseDto update(@Valid TraineeUpdateRequestDto request, String username);
 
-    TraineeTrainersUpdateResponseDto updateTraineeTrainersList(TraineeTrainersUpdateRequestDto request, String username);
+    TraineeTrainersUpdateResponseDto updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequestDto request, String username);
 
     void deleteByUsername(String username);
 
-    void changePassword(PasswordChangeRequest request);
+    void changePassword(@Valid PasswordChangeRequest request);
 
     void toggleTraineeActivation(String username, boolean isActive);
 }

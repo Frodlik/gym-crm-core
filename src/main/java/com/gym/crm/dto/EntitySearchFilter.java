@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
@@ -12,6 +13,9 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 public abstract class EntitySearchFilter {
-    protected LocalDate fromDate;
-    protected LocalDate toDate;
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate fromDate;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd")
+    private LocalDate toDate;
 }

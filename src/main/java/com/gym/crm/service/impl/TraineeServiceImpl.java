@@ -22,11 +22,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Validated
 public class TraineeServiceImpl implements TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeServiceImpl.class);
 
@@ -174,7 +176,7 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    public void changePassword(PasswordChangeRequest request) {
+    public void changePassword(@Valid PasswordChangeRequest request) {
         logger.debug("Changing password for trainee: {}", request.getUsername());
 
         Trainee trainee = traineeDAO.findByUsername(request.getUsername())
