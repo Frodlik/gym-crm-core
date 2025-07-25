@@ -3,9 +3,10 @@ package com.gym.crm.service.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.dao.TrainingTypeDAO;
 import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainer.TrainerSearchFilter;
-import com.gym.crm.dto.training.TrainingCreateRequest;
+import com.gym.crm.dto.training.TrainingCreateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.facade.GymTestObjects;
@@ -28,13 +29,13 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -64,87 +65,78 @@ class TrainingServiceImplTest {
     @Mock
     private TrainerDAO trainerDAO;
     @Mock
+    private TrainingTypeDAO trainingTypeDAO;
+    @Mock
     private TrainingMapper trainingMapper;
     @InjectMocks
     private TrainingServiceImpl service;
 
     @Test
     void create_ShouldCreateTrainingSuccessfully() {
-        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
-        TrainingResponse expected = GymTestObjects.buildTrainingResponse();
+        TrainingCreateRequestDto createRequest = GymTestObjects.buildTrainingCreateRequest();
 
-        when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(trainee));
-        when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(trainer));
+        when(traineeDAO.findByUsername(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerDAO.findByUsername(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(trainingTypeDAO.findByName(createRequest.getTrainingName())).thenReturn(Optional.of(buildFitnessTrainingType()));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
-        when(trainingDAO.create(any(Training.class))).thenReturn(training);
-        when(trainingMapper.toResponse(training)).thenReturn(expected);
 
-        TrainingResponse actual = service.create(createRequest);
+        service.create(createRequest);
 
-        assertNotNull(actual);
-        assertEquals(expected.getId(), actual.getId());
-        assertEquals(expected.getTraineeName(), actual.getTraineeName());
-        assertEquals(expected.getTrainerName(), actual.getTrainerName());
-        assertEquals(expected.getTrainingName(), actual.getTrainingName());
-        assertEquals(expected.getTrainingDate(), actual.getTrainingDate());
-        assertEquals(expected.getTrainingDuration(), actual.getTrainingDuration());
-
-        verify(traineeDAO).findById(createRequest.getTraineeId());
-        verify(trainerDAO).findById(createRequest.getTrainerId());
+        verify(traineeDAO).findByUsername(createRequest.getTraineeUsername());
+        verify(trainerDAO).findByUsername(createRequest.getTrainerUsername());
         verify(trainingMapper).toEntity(createRequest);
-        verify(trainingMapper).toResponse(training);
+        verify(trainingDAO).create(any(Training.class));
     }
 
     @Test
     void create_ShouldThrowExceptionWhenTraineeNotFound() {
-        TrainingCreateRequest actual = GymTestObjects.buildTrainingCreateRequest();
+        TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
 
-        when(traineeDAO.findById(actual.getTraineeId())).thenReturn(Optional.empty());
-        when(trainerDAO.findById(actual.getTrainerId())).thenReturn(Optional.of(trainer));
+        when(traineeDAO.findByUsername(request.getTraineeUsername())).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(actual));
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.create(request));
 
-        assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-        verify(traineeDAO).findById(actual.getTraineeId());
-        verify(trainerDAO).findById(actual.getTrainerId());
-        verify(trainingMapper, never()).toEntity(any());
-        verify(trainingDAO, never()).create(any());
-        verify(trainingMapper, never()).toResponse(any());
+        assertEquals("Trainee not found with username: " + request.getTraineeUsername(), exception.getMessage());
+
+        verify(traineeDAO).findByUsername(request.getTraineeUsername());
+        verifyNoMoreInteractions(trainerDAO, trainingMapper, trainingDAO);
     }
 
     @Test
     void create_ShouldThrowExceptionWhenTrainerNotFound() {
-        TrainingCreateRequest actual = GymTestObjects.buildTrainingCreateRequest();
+        TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
 
-        when(traineeDAO.findById(actual.getTraineeId())).thenReturn(Optional.of(trainee));
-        when(trainerDAO.findById(actual.getTrainerId())).thenReturn(Optional.empty());
+        when(traineeDAO.findByUsername(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerDAO.findByUsername(request.getTrainerUsername())).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(actual));
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.create(request));
 
-        assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-        verify(traineeDAO).findById(actual.getTraineeId());
-        verify(trainerDAO).findById(actual.getTrainerId());
-        verify(trainingMapper, never()).toEntity(any());
-        verify(trainingDAO, never()).create(any());
-        verify(trainingMapper, never()).toResponse(any());
+        assertEquals("Trainer not found with username: " + request.getTrainerUsername(), exception.getMessage());
+
+        verify(traineeDAO).findByUsername(request.getTraineeUsername());
+        verify(trainerDAO).findByUsername(request.getTrainerUsername());
+        verifyNoMoreInteractions(trainingMapper, trainingDAO);
     }
 
     @Test
-    void create_ShouldThrowExceptionWhenBothTraineeAndTrainerNotFound() {
-        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
+    void create_ShouldThrowExceptionWhenTrainingTypeNotFound() {
+        TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
 
-        when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.empty());
-        when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.empty());
+        when(traineeDAO.findByUsername(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerDAO.findByUsername(request.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(trainingTypeDAO.findByName(request.getTrainingName())).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
-                () -> service.create(createRequest));
+                () -> service.create(request));
 
-        assertEquals("Trainee or/and Trainer was not found", exception.getMessage());
-        verify(traineeDAO).findById(createRequest.getTraineeId());
-        verify(trainerDAO).findById(createRequest.getTrainerId());
-        verify(trainingMapper, never()).toEntity(any());
-        verify(trainingDAO, never()).create(any());
-        verify(trainingMapper, never()).toResponse(any());
+        assertEquals("Training type not found with name: " + request.getTrainingName(), exception.getMessage());
+
+        verify(traineeDAO).findByUsername(request.getTraineeUsername());
+        verify(trainerDAO).findByUsername(request.getTrainerUsername());
+        verify(trainingTypeDAO).findByName(request.getTrainingName());
+        verifyNoMoreInteractions(trainingMapper, trainingDAO);
     }
 
     @Test
@@ -183,28 +175,28 @@ class TrainingServiceImplTest {
     void create_ShouldSetCorrectUserIds() {
         Long traineeUserId = 100L;
         Long trainerUserId = 200L;
-        TrainingCreateRequest createRequest = GymTestObjects.buildTrainingCreateRequest();
-        TrainingResponse expectedResponse = GymTestObjects.buildTrainingResponse();
+        TrainingCreateRequestDto createRequest = GymTestObjects.buildTrainingCreateRequest();
 
         Trainee updatedTrainee = trainee.toBuilder()
                 .id(traineeUserId)
                 .build();
-
         Trainer updatedTrainer = trainer.toBuilder()
                 .id(trainerUserId)
                 .build();
-
-        when(traineeDAO.findById(createRequest.getTraineeId())).thenReturn(Optional.of(updatedTrainee));
-        when(trainerDAO.findById(createRequest.getTrainerId())).thenReturn(Optional.of(updatedTrainer));
-        when(trainingMapper.toEntity(createRequest)).thenReturn(training);
-        when(trainingDAO.create(any(Training.class))).thenReturn(training);
-        when(trainingMapper.toResponse(training)).thenReturn(expectedResponse);
-
         ArgumentCaptor<Training> captor = ArgumentCaptor.forClass(Training.class);
+
+        when(traineeDAO.findByUsername(createRequest.getTraineeUsername())).thenReturn(Optional.of(updatedTrainee));
+        when(trainerDAO.findByUsername(createRequest.getTrainerUsername())).thenReturn(Optional.of(updatedTrainer));
+        when(trainingTypeDAO.findByName(createRequest.getTrainingName())).thenReturn(Optional.of(buildFitnessTrainingType()));
+        when(trainingMapper.toEntity(createRequest)).thenReturn(training);
 
         service.create(createRequest);
 
         verify(trainingDAO).create(captor.capture());
+
+        Training captured = captor.getValue();
+        assertEquals(traineeUserId, captured.getTrainee().getId());
+        assertEquals(trainerUserId, captured.getTrainer().getId());
     }
 
     @Test

@@ -1,9 +1,9 @@
 package com.gym.crm.dto.training;
 
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -17,12 +17,22 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
-public class TrainingCreateRequest {
-    @NotNull(message = "Trainee ID is required")
-    private Long traineeId;
+public class TrainingCreateRequestDto {
+    private static final String PATTERN_USERNAME = "^[a-zA-Z]+\\.[a-zA-Z]+$";
 
-    @NotNull(message = "Trainer ID is required")
-    private Long trainerId;
+    @NotBlank(message = "Trainee username is required")
+    @Pattern(
+            regexp = PATTERN_USERNAME,
+            message = "Trainee username must be in format 'firstname.lastname'"
+    )
+    private String traineeUsername;
+
+    @NotBlank(message = "Trainer username is required")
+    @Pattern(
+            regexp = PATTERN_USERNAME,
+            message = "Trainer username must be in format 'firstname.lastname'"
+    )
+    private String trainerUsername;
 
     @NotBlank(message = "Training name is required")
     @Size(max = 100, message = "Training name must be at most 100 characters")

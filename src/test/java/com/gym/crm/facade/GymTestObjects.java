@@ -17,7 +17,7 @@ import com.gym.crm.dto.trainer.TrainerGetResponseDto;
 import com.gym.crm.dto.trainer.TrainerTrainingCriteriaRequest;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
-import com.gym.crm.dto.training.TrainingCreateRequest;
+import com.gym.crm.dto.training.TrainingCreateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.model.TrainingType;
 
@@ -165,10 +165,10 @@ public class GymTestObjects {
                 .build();
     }
 
-    public static TrainingCreateRequest buildTrainingCreateRequest() {
-        return TrainingCreateRequest.builder()
-                .traineeId(TRAINEE_ID)
-                .trainerId(TRAINER_ID)
+    public static TrainingCreateRequestDto buildTrainingCreateRequest() {
+        return TrainingCreateRequestDto.builder()
+                .traineeUsername(USERNAME)
+                .trainerUsername(TRAINER_USERNAME)
                 .trainingName(TRAINING_NAME)
                 .trainingDate(TRAINING_DATE)
                 .trainingDuration(TRAINING_DURATION)

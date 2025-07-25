@@ -180,12 +180,14 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee trainee = traineeDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
-        if (!trainee.getUser().getPassword().equals(request.getOldPassword())) {
+        if (!userCredentialsGenerator.matches(request.getOldPassword(), trainee.getUser().getPassword())) {
             throw new CoreServiceException("Invalid old password");
         }
 
+        String newPassword = userCredentialsGenerator.encodePassword(request.getNewPassword());
+
         User updatedUser = trainee.getUser().toBuilder()
-                .password(request.getNewPassword())
+                .password(newPassword)
                 .build();
         Trainee updatedTrainee = trainee.toBuilder()
                 .user(updatedUser)

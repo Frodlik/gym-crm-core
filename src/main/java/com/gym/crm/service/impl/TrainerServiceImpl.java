@@ -80,7 +80,7 @@ public class TrainerServiceImpl implements TrainerService {
         String rawPassword = userCredentialsGenerator.generateRawPassword();
         String encodedPassword = userCredentialsGenerator.encodePassword(rawPassword);
 
-        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User user = User.builder()
@@ -147,7 +147,7 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer existingTrainer = trainerDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
-        TrainingType specialization = trainingTypeDAO.getByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User updatedUser = existingTrainer.getUser().toBuilder()
@@ -174,12 +174,14 @@ public class TrainerServiceImpl implements TrainerService {
         Trainer trainer = trainerDAO.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
-        if (!trainer.getUser().getPassword().equals(request.getOldPassword())) {
+        if (!userCredentialsGenerator.matches(request.getOldPassword(), trainer.getUser().getPassword())) {
             throw new CoreServiceException("Invalid old password");
         }
 
+        String newPassword = userCredentialsGenerator.encodePassword(request.getNewPassword());
+
         User updatedUser = trainer.getUser().toBuilder()
-                .password(request.getNewPassword())
+                .password(newPassword)
                 .build();
         Trainer updatedTrainer = trainer.toBuilder()
                 .user(updatedUser)

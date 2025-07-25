@@ -3,15 +3,17 @@ package com.gym.crm.service.impl;
 import com.gym.crm.dao.TraineeDAO;
 import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dao.TrainingDAO;
+import com.gym.crm.dao.TrainingTypeDAO;
 import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainer.TrainerSearchFilter;
-import com.gym.crm.dto.training.TrainingCreateRequest;
+import com.gym.crm.dto.training.TrainingCreateRequestDto;
 import com.gym.crm.dto.training.TrainingResponse;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TrainingMapper;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
+import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.transaction.PersistenceTx;
 import jakarta.validation.Valid;
@@ -30,6 +32,7 @@ public class TrainingServiceImpl implements TrainingService {
     private TrainingDAO trainingDAO;
     private TraineeDAO traineeDAO;
     private TrainerDAO trainerDAO;
+    private TrainingTypeDAO trainingTypeDAO;
     private TrainingMapper trainingMapper;
 
     @Autowired
@@ -48,34 +51,40 @@ public class TrainingServiceImpl implements TrainingService {
     }
 
     @Autowired
+    public void setTrainingTypeDAO(TrainingTypeDAO trainingTypeDAO) {
+        this.trainingTypeDAO = trainingTypeDAO;
+    }
+
+    @Autowired
     public void setTrainingMapper(TrainingMapper trainingMapper) {
         this.trainingMapper = trainingMapper;
     }
 
     @Override
     @PersistenceTx
-    public TrainingResponse create(@Valid TrainingCreateRequest request) {
-        logger.debug("Creating training: traineeId={}, trainerId={}", request.getTraineeId(), request.getTrainerId());
+    public void create(@Valid TrainingCreateRequestDto request) {
+        logger.debug("Creating training: traineeUsername={}, trainerUsername={}", request.getTraineeUsername(), request.getTrainerUsername());
 
-        Optional<Trainee> trainee = traineeDAO.findById(request.getTraineeId());
-        Optional<Trainer> trainer = trainerDAO.findById(request.getTrainerId());
+        Trainee trainee = traineeDAO.findByUsername(request.getTraineeUsername())
+                .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + request.getTraineeUsername()));
 
-        if (trainee.isEmpty() || trainer.isEmpty()) {
-            throw new CoreServiceException("Trainee or/and Trainer was not found");
-        }
+        Trainer trainer = trainerDAO.findByUsername(request.getTrainerUsername())
+                .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + request.getTrainerUsername()));
+
+        TrainingType trainingType = trainingTypeDAO.findByName(request.getTrainingName())
+                .orElseThrow(() -> new CoreServiceException("Training type not found with name: " + request.getTrainingName()));
 
         Training training = trainingMapper.toEntity(request);
 
         training = training.toBuilder()
-                .trainee(trainee.get())
-                .trainer(trainer.get())
+                .trainee(trainee)
+                .trainer(trainer)
+                .trainingType(trainingType)
                 .build();
 
-        Training saved = trainingDAO.create(training);
+        trainingDAO.create(training);
 
         logger.info("Training created successfully");
-
-        return trainingMapper.toResponse(saved);
     }
 
     @Override
@@ -131,5 +140,13 @@ public class TrainingServiceImpl implements TrainingService {
         return trainings.stream()
                 .map(trainingMapper::toResponse)
                 .toList();
+    }
+
+    @Override
+    @PersistenceTx(readOnly = true)
+    public List<TrainingType> getAllTrainingTypes() {
+        logger.info("Retrieving all training types");
+
+        return trainingTypeDAO.findAll();
     }
 }
