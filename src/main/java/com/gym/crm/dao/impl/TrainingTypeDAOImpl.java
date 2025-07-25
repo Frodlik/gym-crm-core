@@ -21,14 +21,14 @@ public class TrainingTypeDAOImpl implements TrainingTypeDAO {
     @Override
     public Optional<TrainingType> findByName(String name) {
         return transactionHandler.performReturningWithinSession(entityManager -> {
-            TrainingType trainingType = entityManager.createQuery("FROM TrainingType tt " +
+            List<TrainingType> resultList = entityManager.createQuery("FROM TrainingType tt " +
                             "WHERE tt.trainingTypeName = :name", TrainingType.class)
                     .setParameter("name", name)
-                    .getSingleResult();
+                    .getResultList();
 
             logger.info("Retrieved TrainingType by name: {}", name);
 
-            return Optional.ofNullable(trainingType);
+            return resultList.stream().findFirst();
         });
     }
 

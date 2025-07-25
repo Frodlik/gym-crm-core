@@ -21,19 +21,19 @@ public class AuthenticationContext {
         }
 
         HttpSession session = request.getSession(false);
-        if (session != null) {
-            return (String) session.getAttribute("userType");
+        if (session == null) {
+            return null;
         }
 
-        return null;
+        return (String) session.getAttribute("userType");
     }
 
     private HttpServletRequest getCurrentRequest() {
         RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        if (attributes instanceof ServletRequestAttributes servletAttributes) {
-            return servletAttributes.getRequest();
+        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
+            return null;
         }
 
-        return null;
+        return servletAttributes.getRequest();
     }
 }

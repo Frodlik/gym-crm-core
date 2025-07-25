@@ -12,47 +12,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.hamcrest.CoreMatchers.allOf;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
-    @Test
-    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindByName_ShouldReturnTrainingTypeWhenExists() {
-        String existingTrainingTypeName = "Strength";
-
-        Optional<TrainingType> actual = dao.findByName(existingTrainingTypeName);
-
-        assertTrue(actual.isPresent());
-        assertNotNull(actual.get());
-        assertEquals(existingTrainingTypeName, actual.get().getTrainingTypeName());
-        assertNotNull(actual.get().getId());
-    }
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindByName_ShouldReturnTrainingTypeForYoga() {
-        String yogaTypeName = "Yoga";
+    void findByName_ShouldReturnEmpty_WhenTrainingTypeDoesNotExist() {
+        String invalidTraining = "Not_exist_training";
 
-        Optional<TrainingType> actual = dao.findByName(yogaTypeName);
+        Optional<TrainingType> actual = dao.findByName(invalidTraining);
 
-        assertTrue(actual.isPresent());
-        assertEquals(yogaTypeName, actual.get().getTrainingTypeName());
-        assertEquals(Long.valueOf(2), actual.get().getId());
-    }
-
-    @Test
-    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindByName_ShouldReturnTrainingTypeForCardio() {
-        String cardioTypeName = "Cardio";
-
-        Optional<TrainingType> actual = dao.findByName(cardioTypeName);
-
-        assertTrue(actual.isPresent());
-        assertEquals(cardioTypeName, actual.get().getTrainingTypeName());
-        assertEquals(Long.valueOf(3), actual.get().getId());
+        assertThat(actual.isPresent(), is(false));
     }
 
     @ParameterizedTest
@@ -61,28 +38,49 @@ class TrainingTypeDAOImplTest extends BaseIntegrationTest<TrainingTypeDAOImpl> {
     void testFindByName_ShouldReturnCorrectTrainingTypeForValidNames(String trainingTypeName, Long expectedId) {
         Optional<TrainingType> actual = dao.findByName(trainingTypeName);
 
-        assertTrue(actual.isPresent());
-        assertEquals(trainingTypeName, actual.get().getTrainingTypeName());
-        assertEquals(expectedId, actual.get().getId());
+        assertThat(actual.isPresent(), is(true));
+        assertThat(actual.get(), allOf(
+                hasProperty("id", is(expectedId)),
+                hasProperty("trainingTypeName", is(trainingTypeName))
+        ));
     }
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindAll_ShouldReturnAllTrainingTypes() {
+    void testFindAll_ShouldReturnAllTrainingTypes_Hamcrest() {
         List<TrainingType> trainingTypes = dao.findAll();
 
-        assertNotNull(trainingTypes);
-        assertEquals(7, trainingTypes.size());
-
-        List<String> expectedNames = List.of(
-                "Strength", "Yoga", "Cardio", "HIIT", "Pilates", "Flexibility", "Boxing"
-        );
-
-        List<String> actualNames = trainingTypes.stream()
-                .map(TrainingType::getTrainingTypeName)
-                .toList();
-
-        assertTrue(actualNames.containsAll(expectedNames));
+        assertThat(trainingTypes, hasSize(7));
+        assertThat(trainingTypes, containsInAnyOrder(
+                allOf(
+                        hasProperty("id", is(1L)),
+                        hasProperty("trainingTypeName", is("Strength"))
+                ),
+                allOf(
+                        hasProperty("id", is(2L)),
+                        hasProperty("trainingTypeName", is("Yoga"))
+                ),
+                allOf(
+                        hasProperty("id", is(3L)),
+                        hasProperty("trainingTypeName", is("Cardio"))
+                ),
+                allOf(
+                        hasProperty("id", is(4L)),
+                        hasProperty("trainingTypeName", is("HIIT"))
+                ),
+                allOf(
+                        hasProperty("id", is(5L)),
+                        hasProperty("trainingTypeName", is("Pilates"))
+                ),
+                allOf(
+                        hasProperty("id", is(6L)),
+                        hasProperty("trainingTypeName", is("Flexibility"))
+                ),
+                allOf(
+                        hasProperty("id", is(7L)),
+                        hasProperty("trainingTypeName", is("Boxing"))
+                )
+        ));
     }
 
     private static Stream<Arguments> provideValidTrainingTypeNames() {
