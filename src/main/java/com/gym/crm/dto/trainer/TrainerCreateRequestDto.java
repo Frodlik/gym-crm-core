@@ -14,12 +14,12 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @SuperBuilder(toBuilder = true)
 public class TrainerCreateRequestDto {
-    @NotBlank(message = "First name is required")
-    @Size(max = 50, message = "First name must be at most 50 characters")
+    @NotBlank(message = "First name is required and cannot be blank")
+    @Size(min = 2, max = 50, message = "First name must be between 2 and 50 characters")
     private String firstName;
 
-    @NotBlank(message = "Last name is required")
-    @Size(max = 50, message = "Last name must be at most 50 characters")
+    @NotBlank(message = "Last name is required and cannot be blank")
+    @Size(min = 2, max = 50, message = "Last name must be between 2 and 50 characters")
     private String lastName;
 
     @NotNull(message = "Specialization is required")
