@@ -1,9 +1,9 @@
 package com.gym.crm.security.interceptor;
 
+import com.gym.crm.exception.NotAuthenticatedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -38,11 +38,7 @@ public class AuthenticationInterceptor implements HandlerInterceptor {
 
         HttpSession session = request.getSession(false);
         if (session == null || !Boolean.TRUE.equals(session.getAttribute("authenticated"))) {
-            response.setStatus(HttpStatus.UNAUTHORIZED.value());
-            response.setContentType("application/json");
-            response.getWriter().write("{\"error\": \"Authentication required. Please login first.\"}");
-
-            return false;
+            throw new NotAuthenticatedException("Authentication required");
         }
 
         request.setAttribute("currentUsername", session.getAttribute("username"));
