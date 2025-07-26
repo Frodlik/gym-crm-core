@@ -5,6 +5,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -18,7 +19,7 @@ public class LoggingInterceptor implements HandlerInterceptor {
     private static final String REQUEST_START_TIME = "requestStartTime";
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+    public boolean preHandle(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) throws Exception {
         String transactionId = UUID.randomUUID().toString();
 
         MDC.put(TRANSACTION_ID_KEY, transactionId);
@@ -46,38 +47,44 @@ public class LoggingInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
+    public void afterCompletion(HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex) throws Exception {
         try {
             String transactionId = (String) request.getAttribute(TRANSACTION_ID_KEY);
             Long startTime = (Long) request.getAttribute(REQUEST_START_TIME);
 
-            if (transactionId != null && startTime != null) {
-                long duration = System.currentTimeMillis() - startTime;
-
-                String method = request.getMethod();
-                String uri = request.getRequestURI();
-                int statusCode = response.getStatus();
-                String statusMessage = getStatusMessage(statusCode);
-
-                if (ex != null) {
-                    logger.error("!REQUEST COMPLETED WITH ERROR! TransactionId: {} | Method: {} | URI: {} | Status: {} | Duration: {}ms | Error: {}",
-                            transactionId, method, uri, statusCode, duration, ex.getMessage(), ex);
-                } else {
-                    if (statusCode >= 400) {
-                        logger.warn("!REQUEST COMPLETED! TransactionId: {} | Method: {} | URI: {} | Status: {} ({}) | Duration: {}ms",
-                                transactionId, method, uri, statusCode, statusMessage, duration);
-                    } else {
-                        logger.info("!REQUEST COMPLETED! TransactionId: {} | Method: {} | URI: {} | Status: {} ({}) | Duration: {}ms",
-                                transactionId, method, uri, statusCode, statusMessage, duration);
-                    }
-                }
-
-                if (logger.isDebugEnabled()) {
-                    logResponseHeaders(response, transactionId);
-                }
+            if (transactionId == null || startTime == null) {
+                return;
             }
+
+            logRequestCompletion(request, response, ex, transactionId, startTime);
+
         } finally {
             MDC.clear();
+        }
+    }
+
+    private void logRequestCompletion(HttpServletRequest request, HttpServletResponse response, Exception ex,
+                                      String transactionId, Long startTime) {
+        long duration = System.currentTimeMillis() - startTime;
+
+        String method = request.getMethod();
+        String uri = request.getRequestURI();
+        int statusCode = response.getStatus();
+        String statusMessage = getStatusMessage(statusCode);
+
+        if (ex != null) {
+            logger.error("!REQUEST COMPLETED WITH ERROR! TransactionId: {} | Method: {} | URI: {} | Status: {} | Duration: {}ms | Error: {}",
+                    transactionId, method, uri, statusCode, duration, ex.getMessage(), ex);
+        } else if (statusCode >= 400) {
+            logger.warn("!REQUEST COMPLETED! TransactionId: {} | Method: {} | URI: {} | Status: {} ({}) | Duration: {}ms",
+                    transactionId, method, uri, statusCode, statusMessage, duration);
+        } else {
+            logger.info("!REQUEST COMPLETED! TransactionId: {} | Method: {} | URI: {} | Status: {} ({}) | Duration: {}ms",
+                    transactionId, method, uri, statusCode, statusMessage, duration);
+        }
+
+        if (logger.isDebugEnabled()) {
+            logResponseHeaders(response, transactionId);
         }
     }
 
