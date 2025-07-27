@@ -5,7 +5,6 @@ import com.gym.crm.facade.GymFacade;
 import com.gym.crm.openapi.model.ActivationStatusRequest;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
-
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
 import com.gym.crm.openapi.model.TraineeCreateRequest;
 import com.gym.crm.openapi.model.TraineeCreateResponse;
