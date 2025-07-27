@@ -106,29 +106,37 @@ public class LoggingInterceptor implements HandlerInterceptor {
         }
     }
 
-    private void logRequestBody(ContentCachingRequestWrapper request, String transactionId) {
+    private boolean logRequestBody(ContentCachingRequestWrapper request, String transactionId) {
         byte[] content = request.getContentAsByteArray();
-        if (content.length > 0) {
-            String body = new String(content, StandardCharsets.UTF_8);
-            String maskedBody = maskSensitiveData(body);
-            String truncatedBody = truncateIfNeeded(maskedBody);
-            logger.info("REQUEST BODY - TransactionId: {} | Body: {}", transactionId, truncatedBody);
+        if (content.length == 0) {
+            return false;
         }
+
+        String body = new String(content, StandardCharsets.UTF_8);
+        String maskedBody = maskSensitiveData(body);
+        String truncatedBody = truncateIfNeeded(maskedBody);
+        logger.info("REQUEST BODY - TransactionId: {} | Body: {}", transactionId, truncatedBody);
+
+        return true;
     }
 
-    private void logResponseBody(ContentCachingResponseWrapper response, String transactionId) {
+    private boolean logResponseBody(ContentCachingResponseWrapper response, String transactionId) {
         byte[] content = response.getContentAsByteArray();
-        if (content.length > 0) {
-            String body = new String(content, StandardCharsets.UTF_8);
-            String truncatedBody = truncateIfNeeded(body);
-            logger.info("RESPONSE BODY - TransactionId: {} | Body: {}", transactionId, truncatedBody);
-
-            try {
-                response.copyBodyToResponse();
-            } catch (Exception e) {
-                logger.error("Error copying response body", e);
-            }
+        if (content.length == 0) {
+            return false;
         }
+
+        String body = new String(content, StandardCharsets.UTF_8);
+        String truncatedBody = truncateIfNeeded(body);
+        logger.info("RESPONSE BODY - TransactionId: {} | Body: {}", transactionId, truncatedBody);
+
+        try {
+            response.copyBodyToResponse();
+        } catch (Exception e) {
+            logger.error("Error copying response body", e);
+        }
+
+        return true;
     }
 
     private boolean isSensitiveEndpoint(String uri) {
