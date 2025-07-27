@@ -41,3 +41,57 @@ Once the application is running, you can access the interactive API documentatio
 ## 🔗 Swagger UI
 **[http://localhost:8080/gym-crm-core/swagger-ui/index.html](http://localhost:8080/gym-crm-core/swagger-ui/index.html)**
 
+## 📮 Postman Collection
+
+For comprehensive API testing, we provide a complete Postman collection with all endpoints, examples, and environment configurations.
+
+### 📁 Collection Files:
+- **Collection:** [`postman/Gym-CRM-API.postman_collection.json`](/src/main/resources/postman/Gym-CRM-API.postman_collection.json)
+
+### 📊 Collection Structure:
+```
+📮 Gym CRM API
+├── 🔐 Authentication
+│   ├── Login
+│   └── Change Password
+├── 👥 Trainee
+│   ├── Register Trainee
+│   ├── Get Trainee Profile
+│   ├── Update Trainee Profile
+│   ├── Delete Trainee Profile
+│   ├── Get Trainee Trainings
+│   ├── Get Available Trainers
+│   ├── Update Trainee Trainers
+│   └── Activate/Deactivate Trainee
+├── 🏋️ Trainer
+│   ├── Register Trainer
+│   ├── Get Trainer Profile
+│   ├── Update Trainer Profile
+│   ├── Get Trainer Trainings
+│   └── Activate/Deactivate Trainer
+└── 📚 Training
+    ├── Add Training
+    └── Get Training Types
+```
+
+### 🧪 Testing Workflow:
+
+1. **Start with Registration:**
+   ```
+   Register Trainee/Trainer → Note generated credentials
+   ```
+
+2. **Authentication:**
+   ```
+   Login with generated credentials
+   ```
+
+3. **Profile Management:**
+   ```
+   Get Profile → Update Profile → Manage Status
+   ```
+
+4. **Training Management:**
+   ```
+   Assign Trainers → Create Training → View Training History
+   ```
