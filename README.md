@@ -34,3 +34,10 @@ DB_USERNAME=gcauser;
 DB_PASSWORD=gcauser;
 ```
 
+# API Documentation
+
+Once the application is running, you can access the interactive API documentation through **Swagger UI**:
+
+## 🔗 Swagger UI
+**[http://localhost:8080/gym-crm-core/swagger-ui/index.html](http://localhost:8080/gym-crm-core/swagger-ui/index.html)**
+

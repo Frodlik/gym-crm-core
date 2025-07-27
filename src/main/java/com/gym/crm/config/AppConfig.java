@@ -2,6 +2,9 @@ package com.gym.crm.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -16,6 +19,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.validation.beanvalidation.MethodValidationPostProcessor;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
@@ -23,7 +27,7 @@ import java.util.Properties;
 
 @Configuration
 @EnableWebMvc
-@ComponentScan(basePackages = "com.gym.crm")
+@ComponentScan(basePackages = {"com.gym.crm", "org.springdoc"})
 public class AppConfig implements WebMvcConfigurer {
     @Bean
     public static PropertySourcesPlaceholderConfigurer properties(ConfigurableEnvironment env) {
@@ -37,6 +41,7 @@ public class AppConfig implements WebMvcConfigurer {
         env.getPropertySources().addFirst(propertySource);
 
         configurer.setProperties(properties);
+
         return configurer;
     }
 
@@ -44,7 +49,20 @@ public class AppConfig implements WebMvcConfigurer {
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+
         return mapper;
+    }
+
+    @Bean
+    public OpenAPI customOpenAPI() {
+        return new OpenAPI()
+                .info(new Info()
+                        .title("Gym CRM API")
+                        .version("1.0")
+                        .description("Comprehensive API for Gym Customer Relationship Management System"))
+                .servers(List.of(
+                        new Server().url("http://localhost:8080/gym-crm-core").description("Default Server")
+                ));
     }
 
     @Bean
@@ -52,11 +70,9 @@ public class AppConfig implements WebMvcConfigurer {
         return new MethodValidationPostProcessor();
     }
 
-    @Override
-    public void configureMessageConverters(List<HttpMessageConverter<?>> converters) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.registerModule(new JavaTimeModule());
-        converters.add(new MappingJackson2HttpMessageConverter(mapper));
+    @Bean
+    public MappingJackson2HttpMessageConverter mappingJackson2HttpMessageConverter(ObjectMapper objectMapper) {
+        return new MappingJackson2HttpMessageConverter(objectMapper);
     }
 
     @Override
@@ -65,5 +81,17 @@ public class AppConfig implements WebMvcConfigurer {
                 .allowedOrigins("*")
                 .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowedHeaders("*");
+    }
+
+    @Override
+    public void addResourceHandlers(ResourceHandlerRegistry registry) {
+        registry.addResourceHandler("/swagger-ui.html**")
+                .addResourceLocations("classpath:/META-INF/resources/");
+        registry.addResourceHandler("/webjars/**")
+                .addResourceLocations("classpath:/META-INF/resources/webjars/");
+        registry.addResourceHandler("/v3/api-docs/**")
+                .addResourceLocations("classpath:/META-INF/resources/");
+        registry.addResourceHandler("/gca-api.yaml")
+                .addResourceLocations("classpath:/gca-api.yaml");
     }
 }
