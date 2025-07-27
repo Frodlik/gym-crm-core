@@ -5,7 +5,6 @@ import com.gym.crm.facade.GymFacade;
 import com.gym.crm.openapi.model.ActivationStatusRequest;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
-
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
 import com.gym.crm.openapi.model.TraineeCreateRequest;
 import com.gym.crm.openapi.model.TraineeCreateResponse;
@@ -13,7 +12,6 @@ import com.gym.crm.openapi.model.TraineeGetResponse;
 import com.gym.crm.openapi.model.TraineeTrainingGetResponse;
 import com.gym.crm.openapi.model.TraineeUpdateRequest;
 import com.gym.crm.openapi.model.TraineeUpdateResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -37,7 +35,6 @@ import static com.gym.crm.controller.ApiConstant.BASE_PATH;
 @RestController
 @RequestMapping(BASE_PATH + "/trainees")
 @RequiredArgsConstructor
-@Tag(name = "Trainee", description = "Endpoints for managing trainee profiles")
 public class TraineeController {
     private final GymFacade gymFacade;
 

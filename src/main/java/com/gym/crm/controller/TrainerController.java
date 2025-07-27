@@ -9,7 +9,6 @@ import com.gym.crm.openapi.model.TrainerGetResponse;
 import com.gym.crm.openapi.model.TrainerTrainingGetResponse;
 import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -32,7 +31,6 @@ import static com.gym.crm.controller.ApiConstant.BASE_PATH;
 @RestController
 @RequestMapping(BASE_PATH + "/trainers")
 @RequiredArgsConstructor
-@Tag(name = "Trainer", description = "Endpoints for managing trainer profiles")
 public class TrainerController {
     private final GymFacade gymFacade;
 
