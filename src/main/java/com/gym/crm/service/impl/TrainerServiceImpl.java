@@ -201,6 +201,11 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer trainer = trainerDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
+        boolean currentStatus = trainer.getUser().getIsActive();
+
+        if (currentStatus == isActive) {
+            throw new CoreServiceException(String.format("Trainer with username: %s is already %s", username, isActive ? "active" : "inactive"));
+        }
 
         User updatedUser = trainer.getUser().toBuilder()
                 .isActive(isActive)

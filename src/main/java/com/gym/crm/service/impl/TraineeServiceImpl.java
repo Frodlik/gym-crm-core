@@ -207,6 +207,11 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee trainee = traineeDAO.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
+        boolean currentStatus = trainee.getUser().getIsActive();
+
+        if (currentStatus == isActive) {
+            throw new CoreServiceException(String.format("Trainee with username: %s is already %s", username, isActive ? "active" : "inactive"));
+        }
 
         User updatedUser = trainee.getUser().toBuilder()
                 .isActive(isActive)
