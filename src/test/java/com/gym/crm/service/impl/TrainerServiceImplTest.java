@@ -397,6 +397,41 @@ class TrainerServiceImplTest {
     }
 
     @Test
+    void toggleTrainerActivation_ShouldThrowException_WhenTryingToActivateAlreadyActiveTrainer() {
+        Trainer activeTrainer = buildTrainer();
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.toggleTrainerActivation(TRAINER_USERNAME, true));
+
+        assertEquals("Trainer with username: " + TRAINER_USERNAME + " is already active", exception.getMessage());
+
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO, never()).update(any(Trainer.class));
+    }
+
+    @Test
+    void toggleTrainerActivation_ShouldThrowException_WhenTryingToDeactivateAlreadyInactiveTrainer() {
+        User inactiveUser = buildTrainer().getUser().toBuilder()
+                .isActive(false)
+                .build();
+        Trainer inactiveTrainer = buildTrainer().toBuilder()
+                .user(inactiveUser)
+                .build();
+
+        when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.toggleTrainerActivation(TRAINER_USERNAME, false));
+
+        assertEquals("Trainer with username: " + TRAINER_USERNAME + " is already inactive", exception.getMessage());
+
+        verify(trainerDAO).findByUsername(TRAINER_USERNAME);
+        verify(trainerDAO, never()).update(any(Trainer.class));
+    }
+
+    @Test
     void findTrainersNotAssignedToTrainee_ShouldReturnListOfTrainers() {
         String traineeUsername = "trainee.user";
         Trainee trainee = buildTraineeWithUsername(traineeUsername);

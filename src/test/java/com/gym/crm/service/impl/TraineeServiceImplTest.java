@@ -296,6 +296,36 @@ class TraineeServiceImplTest {
     }
 
     @Test
+    void toggleTraineeActivation_ShouldThrowException_WhenTryingToActivateAlreadyActiveTrainee() {
+        Trainee activeTrainee = buildTrainee();
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(activeTrainee));
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.toggleTraineeActivation(USERNAME, true));
+
+        assertEquals("Trainee with username: " + USERNAME + " is already active", exception.getMessage());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO, never()).update(any(Trainee.class));
+    }
+
+    @Test
+    void toggleTraineeActivation_ShouldThrowException_WhenTryingToDeactivateAlreadyInactiveTrainee() {
+        Trainee inactiveTrainee = buildInactiveTrainee();
+
+        when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
+
+        CoreServiceException exception = assertThrows(CoreServiceException.class,
+                () -> service.toggleTraineeActivation(USERNAME, false));
+
+        assertEquals("Trainee with username: " + USERNAME + " is already inactive", exception.getMessage());
+
+        verify(traineeDAO).findByUsername(USERNAME);
+        verify(traineeDAO, never()).update(any(Trainee.class));
+    }
+
+    @Test
     void updateTraineeTrainersList_ShouldUpdateSuccessfully() {
         TraineeTrainersUpdateRequestDto request = new TraineeTrainersUpdateRequestDto();
         request.setTrainerUsernames(List.of("trainer1", "trainer2"));
