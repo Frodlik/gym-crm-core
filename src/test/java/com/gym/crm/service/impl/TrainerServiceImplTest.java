@@ -398,6 +398,7 @@ class TrainerServiceImplTest {
 
     @Test
     void toggleTrainerActivation_ShouldThrowException_WhenTryingToActivateAlreadyActiveTrainer() {
+        String expectedMessage = String.format("Trainer with username: %s is already active", TRAINER_USERNAME);
         Trainer activeTrainer = buildTrainer();
 
         when(trainerDAO.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
@@ -405,14 +406,14 @@ class TrainerServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTrainerActivation(TRAINER_USERNAME, true));
 
-        assertEquals("Trainer with username: " + TRAINER_USERNAME + " is already active", exception.getMessage());
-
+        assertEquals(expectedMessage, exception.getMessage());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO, never()).update(any(Trainer.class));
     }
 
     @Test
     void toggleTrainerActivation_ShouldThrowException_WhenTryingToDeactivateAlreadyInactiveTrainer() {
+        String expectedMessage = String.format("Trainer with username: %s is already inactive", TRAINER_USERNAME);
         User inactiveUser = buildTrainer().getUser().toBuilder()
                 .isActive(false)
                 .build();
@@ -425,8 +426,7 @@ class TrainerServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTrainerActivation(TRAINER_USERNAME, false));
 
-        assertEquals("Trainer with username: " + TRAINER_USERNAME + " is already inactive", exception.getMessage());
-
+        assertEquals(expectedMessage, exception.getMessage());
         verify(trainerDAO).findByUsername(TRAINER_USERNAME);
         verify(trainerDAO, never()).update(any(Trainer.class));
     }

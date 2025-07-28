@@ -297,6 +297,7 @@ class TraineeServiceImplTest {
 
     @Test
     void toggleTraineeActivation_ShouldThrowException_WhenTryingToActivateAlreadyActiveTrainee() {
+        String expectedMessage = String.format("Trainee with username: %s is already active", USERNAME);
         Trainee activeTrainee = buildTrainee();
 
         when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(activeTrainee));
@@ -304,14 +305,14 @@ class TraineeServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTraineeActivation(USERNAME, true));
 
-        assertEquals("Trainee with username: " + USERNAME + " is already active", exception.getMessage());
-
+        assertEquals(expectedMessage, exception.getMessage());
         verify(traineeDAO).findByUsername(USERNAME);
         verify(traineeDAO, never()).update(any(Trainee.class));
     }
 
     @Test
     void toggleTraineeActivation_ShouldThrowException_WhenTryingToDeactivateAlreadyInactiveTrainee() {
+        String expectedMessage = String.format("Trainee with username: %s is already inactive", USERNAME);
         Trainee inactiveTrainee = buildInactiveTrainee();
 
         when(traineeDAO.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
@@ -319,8 +320,7 @@ class TraineeServiceImplTest {
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTraineeActivation(USERNAME, false));
 
-        assertEquals("Trainee with username: " + USERNAME + " is already inactive", exception.getMessage());
-
+        assertEquals(expectedMessage, exception.getMessage());
         verify(traineeDAO).findByUsername(USERNAME);
         verify(traineeDAO, never()).update(any(Trainee.class));
     }
