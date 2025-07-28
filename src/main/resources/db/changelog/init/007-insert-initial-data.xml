@@ -6,25 +6,6 @@
         http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
     <changeSet id="007-insert-initial-data" author="Vadym Zakletskyi">
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Cardio"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Strength"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Flexibility"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="HIIT"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Yoga"/>
-        </insert>
-        <insert tableName="training_types">
-            <column name="training_type_name" value="Pilates"/>
-        </insert>
-
         <insert tableName="users">
             <column name="first_name" value="John"/>
             <column name="last_name" value="Smith"/>
