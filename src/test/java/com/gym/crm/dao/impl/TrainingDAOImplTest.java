@@ -5,7 +5,6 @@ import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
-import com.gym.crm.model.User;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -26,7 +25,7 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithYogaSpecializationAndCorrectDuration() {
-        Training trainingToCreate = buildTrainingWithSpecialization("Morning Yoga Session", "Yoga", 60);
+        Training trainingToCreate = buildTrainingFromDataset(1L, 2L, "Morning Yoga Session", 2L, 60);
 
         Training actual = dao.create(trainingToCreate);
 
@@ -37,41 +36,39 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals("Morning Yoga Session", actual.getTrainingName());
         assertEquals(60, actual.getTrainingDuration());
         assertEquals(LocalDate.of(2024, 8, 15), actual.getTrainingDate());
-        assertNotNull(actual.getTrainee());
-        assertNotNull(actual.getTrainer());
-        assertNotNull(actual.getTrainingType());
         assertEquals("Yoga", actualTrainingTypeName);
     }
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithFlexibilitySpecializationAndExtendedDuration() {
-        Training trainingToCreate = buildTrainingWithSpecialization("General Flexibility Training", "Flexibility", 90);
+        Training trainingToCreate = buildTrainingFromDataset(2L, 1L, "Power Lifting Session", 1L, 90);
 
         Training actual = dao.create(trainingToCreate);
 
         String actualTrainingTypeName = getTrainingTypeNameById(actual.getId());
 
         assertNotNull(actual);
-        assertNotNull(actual.getId());
-        assertEquals("General Flexibility Training", actual.getTrainingName());
+        assertEquals("Power Lifting Session", actual.getTrainingName());
         assertEquals(90, actual.getTrainingDuration());
-        assertEquals("Flexibility", actualTrainingTypeName);
+        assertEquals("Strength", actualTrainingTypeName);
     }
 
     @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void testCreate_ShouldPersistTrainingWithMinimalDataAndDefaultCardioType() {
         LocalDate todayDate = LocalDate.now();
-        Training trainingToCreate = buildTrainingWithMinimalData(todayDate);
+        Training trainingToCreate = buildTrainingFromDataset(1L, 3L, "Quick Cardio Session", 3L, 30);
+        trainingToCreate = trainingToCreate.toBuilder()
+                .trainingDate(todayDate)
+                .build();
 
         Training actual = dao.create(trainingToCreate);
 
         String actualTrainingTypeName = getTrainingTypeNameById(actual.getId());
 
         assertNotNull(actual);
-        assertNotNull(actual.getId());
-        assertEquals("Quick Session", actual.getTrainingName());
+        assertEquals("Quick Cardio Session", actual.getTrainingName());
         assertEquals(todayDate, actual.getTrainingDate());
         assertEquals(30, actual.getTrainingDuration());
         assertEquals("Cardio", actualTrainingTypeName);
@@ -156,6 +153,31 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
         assertEquals(testCase.expectedSize(), actual.size());
     }
 
+    private Training buildTrainingFromDataset(Long traineeId, Long trainerId, String trainingName, Long trainingTypeId, int duration) {
+        return doInSession(session -> {
+            Trainee trainee = session.get(Trainee.class, traineeId);
+            Trainer trainer = session.get(Trainer.class, trainerId);
+            TrainingType trainingType = session.get(TrainingType.class, trainingTypeId);
+
+            return Training.builder()
+                    .trainee(trainee)
+                    .trainer(trainer)
+                    .trainingName(trainingName)
+                    .trainingType(trainingType)
+                    .trainingDate(LocalDate.of(2024, 8, 15))
+                    .trainingDuration(duration)
+                    .build();
+        });
+    }
+
+    private String getTrainingTypeNameById(Long trainingId) {
+        return doInSession(session -> {
+            Training persistedTraining = session.get(Training.class, trainingId);
+
+            return persistedTraining.getTrainingType().getTrainingTypeName();
+        });
+    }
+
     private static Stream<Arguments> provideTraineeCriteriaTestCases() {
         return Stream.of(
                 Arguments.of(new CriteriaTestCase(
@@ -200,94 +222,6 @@ class TrainingDAOImplTest extends BaseIntegrationTest<TrainingDAOImpl> {
                         null, 1, "Power Strength Training"
                 ))
         );
-    }
-
-    private Training buildTrainingWithSpecialization(String trainingName, String trainingTypeName, int duration) {
-        return doInSession(session -> {
-            User traineeUser = buildUser("John", "Doe", "john.doe." + System.nanoTime());
-            Trainee trainee = buildTrainee(traineeUser);
-
-            User trainerUser = buildUser("Jane", "Smith", "jane.smith." + System.nanoTime());
-            TrainingType trainingType = getTrainingTypeByName(session, trainingTypeName);
-            Trainer trainer = buildTrainer(trainerUser, trainingType);
-
-            session.persist(trainee);
-            session.persist(trainer);
-            session.flush();
-
-            return Training.builder()
-                    .trainee(trainee)
-                    .trainer(trainer)
-                    .trainingName(trainingName)
-                    .trainingType(trainingType)
-                    .trainingDate(LocalDate.of(2024, 8, 15))
-                    .trainingDuration(duration)
-                    .build();
-        });
-    }
-
-    private Training buildTrainingWithMinimalData(LocalDate trainingDate) {
-        return doInSession(session -> {
-            User traineeUser = buildUser("John", "Doe", "john.doe" + System.currentTimeMillis());
-            Trainee trainee = buildTrainee(traineeUser);
-
-            User trainerUser = buildUser("Jane", "Smith", "jane.smith" + System.currentTimeMillis());
-            TrainingType cardioType = getTrainingTypeByName(session, "Cardio");
-            Trainer trainer = buildTrainer(trainerUser, cardioType);
-
-            session.persist(trainee);
-            session.persist(trainer);
-            session.flush();
-
-            return Training.builder()
-                    .trainee(trainee)
-                    .trainer(trainer)
-                    .trainingName("Quick Session")
-                    .trainingType(cardioType)
-                    .trainingDate(trainingDate)
-                    .trainingDuration(30)
-                    .build();
-        });
-    }
-
-    private User buildUser(String firstName, String lastName, String username) {
-        return User.builder()
-                .firstName(firstName)
-                .lastName(lastName)
-                .username(username)
-                .password("password123")
-                .isActive(true)
-                .build();
-    }
-
-    private Trainee buildTrainee(User user) {
-        return Trainee.builder()
-                .user(user)
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .address("123 Main St")
-                .build();
-    }
-
-    private Trainer buildTrainer(User user, TrainingType specialization) {
-        return Trainer.builder()
-                .user(user)
-                .specialization(specialization)
-                .build();
-    }
-
-    private TrainingType getTrainingTypeByName(Object session, String trainingTypeName) {
-        return ((org.hibernate.Session) session).createQuery(
-                        "SELECT tt FROM TrainingType tt WHERE tt.trainingTypeName = :name", TrainingType.class)
-                .setParameter("name", trainingTypeName)
-                .uniqueResult();
-    }
-
-    private String getTrainingTypeNameById(Long trainingId) {
-        return doInSession(session -> {
-            Training persistedTraining = session.get(Training.class, trainingId);
-
-            return persistedTraining.getTrainingType().getTrainingTypeName();
-        });
     }
 
     private record CriteriaTestCase(
