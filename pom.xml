@@ -20,7 +20,9 @@
         <maven.compiler.source>21</maven.compiler.source>
         <maven.compiler.target>21</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <servlet.api.version>6.0.0</servlet.api.version>
+        <sonar.projectKey>Frodlik_gym-crm-core</sonar.projectKey>
+        <sonar.organization>frodlik</sonar.organization>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     </properties>
 
     <dependencies>
@@ -178,6 +180,11 @@
                         </goals>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>3.11.0.3922</version>
             </plugin>
             <plugin>
                 <groupId>org.openapitools</groupId>
