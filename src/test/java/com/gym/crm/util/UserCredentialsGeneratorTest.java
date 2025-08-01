@@ -30,14 +30,14 @@ class UserCredentialsGeneratorTest {
     private static final String EXPECTED_USERNAME = "john.doe";
     private static final String EXPECTED_USERNAME_WITH_SUFFIX = "john.doe1";
 
-    private UserCredentialsGenerator sut;
     private final SecureRandom secureRandom = new SecureRandom();
     private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
+    private UserCredentialsGenerator sut;
 
     @BeforeEach
     void setUp() {
         sut = new UserCredentialsGenerator(secureRandom, passwordEncoder);
-
     }
 
     @ParameterizedTest

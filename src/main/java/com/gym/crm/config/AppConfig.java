@@ -6,20 +6,14 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.servers.Server;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.security.SecureRandom;
 import java.util.List;
 
 @Configuration
-@EnableWebMvc
-@ComponentScan(basePackages = {"com.gym.crm", "org.springdoc"})
-public class AppConfig implements WebMvcConfigurer {
+public class AppConfig {
     @Bean
     public ObjectMapper objectMapper() {
         ObjectMapper mapper = new ObjectMapper();
@@ -47,17 +41,5 @@ public class AppConfig implements WebMvcConfigurer {
     @Bean
     public SecureRandom secureRandom() {
         return new SecureRandom();
-    }
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        registry.addResourceHandler("/swagger-ui.html**")
-                .addResourceLocations("classpath:/META-INF/resources/");
-        registry.addResourceHandler("/webjars/**")
-                .addResourceLocations("classpath:/META-INF/resources/webjars/");
-        registry.addResourceHandler("/v3/api-docs/**")
-                .addResourceLocations("classpath:/META-INF/resources/");
-        registry.addResourceHandler("/gca-api.yaml")
-                .addResourceLocations("classpath:/gca-api.yaml");
     }
 }
