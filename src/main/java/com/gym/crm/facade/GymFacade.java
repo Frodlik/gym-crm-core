@@ -43,6 +43,7 @@ import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
+@RequiredArgsConstructor
 public class GymFacade {
     private static final Logger logger = LoggerFactory.getLogger(GymFacade.class);
 
@@ -62,19 +64,6 @@ public class GymFacade {
     private final TrainingMapper trainingMapper;
     private final AuthenticationService authenticationService;
     private final AuthenticationContext authenticationContext;
-
-    public GymFacade(TraineeService traineeService, TrainerService trainerService,
-                     TrainingService trainingService, TraineeMapper traineeMapper,
-                     TrainerMapper trainerMapper, TrainingMapper trainingMapper, AuthenticationService authenticationService, AuthenticationContext authenticationContext) {
-        this.traineeService = traineeService;
-        this.trainerService = trainerService;
-        this.trainingService = trainingService;
-        this.traineeMapper = traineeMapper;
-        this.trainerMapper = trainerMapper;
-        this.trainingMapper = trainingMapper;
-        this.authenticationService = authenticationService;
-        this.authenticationContext = authenticationContext;
-    }
 
     public void login(LoginRequest request, HttpServletRequest httpRequest){
         logger.info("Facade: Logging in user with username: {}", request.getUsername());

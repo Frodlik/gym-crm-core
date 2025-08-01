@@ -18,7 +18,7 @@ import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = TraineeMapper.class)
+@Mapper(componentModel = "spring")
 public interface TrainerMapper {
     Trainer toEntity(TrainerCreateRequestDto request);
 

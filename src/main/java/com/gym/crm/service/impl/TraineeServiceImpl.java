@@ -18,9 +18,9 @@ import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.transaction.PersistenceTx;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -29,35 +29,16 @@ import java.util.Optional;
 
 @Service
 @Validated
+@RequiredArgsConstructor
 public class TraineeServiceImpl implements TraineeService {
     private static final Logger logger = LoggerFactory.getLogger(TraineeServiceImpl.class);
 
     private static final String TRAINEE_NOT_FOUND_MSG = "Trainee not found with username: ";
 
-    private TraineeDAO traineeDAO;
-    private TrainerDAO trainerDAO;
-    private UserCredentialsGenerator userCredentialsGenerator;
-    private TraineeMapper traineeMapper;
-
-    @Autowired
-    public void setTraineeDAO(TraineeDAO traineeDAO) {
-        this.traineeDAO = traineeDAO;
-    }
-
-    @Autowired
-    public void setUserCredentialsGenerator(UserCredentialsGenerator userCredentialsGenerator) {
-        this.userCredentialsGenerator = userCredentialsGenerator;
-    }
-
-    @Autowired
-    public void setTraineeMapper(TraineeMapper traineeMapper) {
-        this.traineeMapper = traineeMapper;
-    }
-
-    @Autowired
-    public void setTrainerDAO(TrainerDAO trainerDAO) {
-        this.trainerDAO = trainerDAO;
-    }
+    private final TraineeDAO traineeDAO;
+    private final TrainerDAO trainerDAO;
+    private final UserCredentialsGenerator userCredentialsGenerator;
+    private final TraineeMapper traineeMapper;
 
     @Override
     @PersistenceTx
