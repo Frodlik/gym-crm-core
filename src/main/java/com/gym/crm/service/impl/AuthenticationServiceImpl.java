@@ -6,39 +6,25 @@ import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.exception.NotAuthenticatedException;
 import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.util.UserCredentialsGenerator;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 import java.util.function.Function;
 
 @Service
+@RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
     private static final String TRAINER = "TRAINER";
     private static final String TRAINEE = "TRAINEE";
 
-    private TraineeDAO traineeDAO;
-    private TrainerDAO trainerDAO;
-    private UserCredentialsGenerator userCredentialsGenerator;
-
-    @Autowired
-    public void setTraineeDAO(TraineeDAO traineeDAO) {
-        this.traineeDAO = traineeDAO;
-    }
-
-    @Autowired
-    public void setTrainerDAO(TrainerDAO trainerDAO) {
-        this.trainerDAO = trainerDAO;
-    }
-
-    @Autowired
-    public void setUserCredentialsGenerator(UserCredentialsGenerator userCredentialsGenerator) {
-        this.userCredentialsGenerator = userCredentialsGenerator;
-    }
+    private final TraineeDAO traineeDAO;
+    private final TrainerDAO trainerDAO;
+    private final UserCredentialsGenerator userCredentialsGenerator;
 
     @Override
     public String validateCredentials(String username, String password) {

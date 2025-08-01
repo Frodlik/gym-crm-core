@@ -2,13 +2,11 @@ package com.gym.crm.config;
 
 import com.gym.crm.security.interceptor.AuthenticationInterceptor;
 import com.gym.crm.security.interceptor.LoggingInterceptor;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@ComponentScan("com.gym.crm.controller")
 public class WebConfig implements WebMvcConfigurer {
     private final AuthenticationInterceptor authenticationInterceptor;
     private final LoggingInterceptor loggingInterceptor;

@@ -9,6 +9,7 @@ import com.gym.crm.dto.trainee.TraineeTrainersUpdateResponseDto;
 import com.gym.crm.dto.trainee.TraineeUpdateRequestDto;
 import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.TrainingType;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateRequest;
 import com.gym.crm.openapi.model.TraineeAssignedTrainersUpdateResponse;
 import com.gym.crm.openapi.model.TraineeCreateRequest;
@@ -19,7 +20,7 @@ import com.gym.crm.openapi.model.TraineeUpdateResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", uses = TrainerMapper.class)
+@Mapper(componentModel = "spring")
 public interface TraineeMapper {
     Trainee toEntity(TraineeCreateRequestDto request);
 
@@ -62,4 +63,8 @@ public interface TraineeMapper {
 
     @Mapping(target = "trainers", source = "trainers")
     TraineeAssignedTrainersUpdateResponse toRestTrainersUpdateResponse(TraineeTrainersUpdateResponseDto dto);
+
+    default String map(TrainingType trainingType) {
+        return trainingType != null ? trainingType.getTrainingTypeName() : null;
+    }
 }

@@ -1,8 +1,8 @@
 package com.gym.crm.util;
 
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
 public class UserCredentialsGenerator {
     private static final Logger logger = LoggerFactory.getLogger(UserCredentialsGenerator.class);
 
@@ -20,8 +21,8 @@ public class UserCredentialsGenerator {
     private static final String DIGITS = "0123456789";
     private static final int PASSWORD_LENGTH = 10;
 
-    private final SecureRandom random = new SecureRandom();
-    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final SecureRandom random;
+    private final PasswordEncoder passwordEncoder;
 
     public String generateUsername(String firstName, String lastName, List<String> existingUsernames) {
         String baseUsername = buildBaseUsername(firstName, lastName);

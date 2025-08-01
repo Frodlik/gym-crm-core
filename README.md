@@ -26,12 +26,14 @@ CREATE USER 'gcauser'@'localhost' IDENTIFIED BY 'gcauser';
 GRANT ALL PRIVILEGES ON gym_crm.* TO 'gcauser'@'localhost';
 ```
 2. ## Environment Variables
-To run the application locally, define the following environment variables in your run configuration.
+Create a .env file in the root directory of the project with the following configuration:
 
 ```
-DB_URL=jdbc:mysql://localhost:3306/gym_crm;
-DB_USERNAME=gcauser;
-DB_PASSWORD=gcauser;
+DB_USERNAME=gcauser
+DB_PASSWORD=gcauser
+DB_URL=jdbc:mysql://localhost:3306/gym_crm
+LIQUIBASE_CONTEXTS=dev
+DB_SCHEMA=gym_crm
 ```
 
 # API Documentation

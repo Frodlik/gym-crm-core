@@ -17,9 +17,9 @@ import com.gym.crm.model.TrainingType;
 import com.gym.crm.service.TrainingService;
 import com.gym.crm.service.transaction.PersistenceTx;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.annotation.Validated;
 
@@ -28,39 +28,15 @@ import java.util.Optional;
 
 @Service
 @Validated
+@RequiredArgsConstructor
 public class TrainingServiceImpl implements TrainingService {
     private static final Logger logger = LoggerFactory.getLogger(TrainingServiceImpl.class);
 
-    private TrainingDAO trainingDAO;
-    private TraineeDAO traineeDAO;
-    private TrainerDAO trainerDAO;
-    private TrainingTypeDAO trainingTypeDAO;
-    private TrainingMapper trainingMapper;
-
-    @Autowired
-    public void setTrainingDAO(TrainingDAO trainingDAO) {
-        this.trainingDAO = trainingDAO;
-    }
-
-    @Autowired
-    public void setTraineeDAO(TraineeDAO traineeDAO) {
-        this.traineeDAO = traineeDAO;
-    }
-
-    @Autowired
-    public void setTrainerDAO(TrainerDAO trainerDAO) {
-        this.trainerDAO = trainerDAO;
-    }
-
-    @Autowired
-    public void setTrainingTypeDAO(TrainingTypeDAO trainingTypeDAO) {
-        this.trainingTypeDAO = trainingTypeDAO;
-    }
-
-    @Autowired
-    public void setTrainingMapper(TrainingMapper trainingMapper) {
-        this.trainingMapper = trainingMapper;
-    }
+    private final TrainingDAO trainingDAO;
+    private final TraineeDAO traineeDAO;
+    private final TrainerDAO trainerDAO;
+    private final TrainingTypeDAO trainingTypeDAO;
+    private final TrainingMapper trainingMapper;
 
     @Override
     @PersistenceTx
