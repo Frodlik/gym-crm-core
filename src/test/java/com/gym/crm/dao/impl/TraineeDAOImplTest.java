@@ -111,7 +111,7 @@ class TraineeDAOImplTest extends BaseIntegrationTest<TraineeDAOImpl> {
     void testFindAll_ShouldReturnInitialTraineesFromDataset() {
         List<Trainee> actualTrainees = dao.findAll();
 
-        Trainee trainee = actualTrainees.getFirst();
+        Trainee trainee = actualTrainees.get(0);
 
         assertEquals(1, actualTrainees.size());
         assertEquals("Emma", trainee.getUser().getFirstName());

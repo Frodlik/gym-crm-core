@@ -7,7 +7,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.security.SecureRandom;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
@@ -28,10 +31,13 @@ class UserCredentialsGeneratorTest {
     private static final String EXPECTED_USERNAME_WITH_SUFFIX = "john.doe1";
 
     private UserCredentialsGenerator sut;
+    private final SecureRandom secureRandom = new SecureRandom();
+    private final PasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
     @BeforeEach
     void setUp() {
-        sut = new UserCredentialsGenerator();
+        sut = new UserCredentialsGenerator(secureRandom, passwordEncoder);
+
     }
 
     @ParameterizedTest

@@ -346,7 +346,7 @@ class TraineeServiceImplTest {
         TraineeTrainersUpdateResponseDto actual = service.updateTraineeTrainersList(request, USERNAME);
 
         assertNotNull(actual);
-        assertEquals(expected.getTrainers().getFirst().getUsername(), actual.getTrainers().getFirst().getUsername());
+        assertEquals(expected.getTrainers().get(0).getUsername(), actual.getTrainers().get(0).getUsername());
         verify(traineeDAO).findByUsername(USERNAME);
         verify(trainerDAO).findByUsername("trainer1");
         verify(trainerDAO).findByUsername("trainer2");
