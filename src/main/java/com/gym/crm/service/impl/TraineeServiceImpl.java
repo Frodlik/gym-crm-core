@@ -1,7 +1,5 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dao.TraineeDAO;
-import com.gym.crm.dao.TrainerDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
@@ -13,19 +11,24 @@ import com.gym.crm.dto.trainee.TraineeUpdateResponseDto;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.mapper.TraineeMapper;
 import com.gym.crm.model.Trainee;
+import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.TraineeService;
-import com.gym.crm.service.transaction.PersistenceTx;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @Validated
@@ -35,19 +38,19 @@ public class TraineeServiceImpl implements TraineeService {
 
     private static final String TRAINEE_NOT_FOUND_MSG = "Trainee not found with username: ";
 
-    private final TraineeDAO traineeDAO;
-    private final TrainerDAO trainerDAO;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final TraineeMapper traineeMapper;
 
     @Override
-    @PersistenceTx
+    @Transactional
     public TraineeCreateResponseDto create(@Valid TraineeCreateRequestDto request) {
         logger.debug("Creating trainee: {} {}", request.getFirstName(), request.getLastName());
 
         Trainee trainee = traineeMapper.toEntity(request);
 
-        List<String> existingUsernames = traineeDAO.findAll().stream()
+        List<String> existingUsernames = traineeRepository.findAll().stream()
                 .map(t -> t.getUser().getUsername())
                 .toList();
 
@@ -67,7 +70,7 @@ public class TraineeServiceImpl implements TraineeService {
                 .user(updatedUser)
                 .build();
 
-        Trainee saved = traineeDAO.create(trainee);
+        Trainee saved = traineeRepository.save(trainee);
 
         logger.info("Successfully created trainee with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
@@ -78,29 +81,31 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<TraineeGetResponseDto> findById(Long id) {
         logger.debug("Finding trainee by ID: {}", id);
 
-        return traineeDAO.findById(id)
+        return traineeRepository.findById(id)
                 .map(traineeMapper::toResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TraineeGetResponseDto findByUsername(String username) {
         logger.debug("Finding trainee by username: {}", username);
 
-        Trainee trainee = traineeDAO.findByUsername(username)
+        Trainee trainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException("Unable to find trainee with username: " + username));
 
         return traineeMapper.toResponse(trainee);
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public TraineeUpdateResponseDto update(@Valid TraineeUpdateRequestDto request, String username) {
         logger.debug("Updating trainee with username: {}", username);
 
-        Trainee existingTrainee = traineeDAO.findByUsername(username)
+        Trainee existingTrainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
         User updatedUser = existingTrainee.getUser().toBuilder()
@@ -114,7 +119,7 @@ public class TraineeServiceImpl implements TraineeService {
                 .address(request.getAddress())
                 .build();
 
-        Trainee savedTrainee = traineeDAO.update(updatedTrainee);
+        Trainee savedTrainee = traineeRepository.save(updatedTrainee);
 
         logger.info("Successfully updated trainee with username: {}", username);
 
@@ -122,21 +127,23 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public TraineeTrainersUpdateResponseDto updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequestDto request, String username) {
         logger.debug("Updating trainers list for trainee with username: {}", username);
 
-        traineeDAO.findByUsername(username)
+        Trainee trainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
+        validateTrainerUsernames(request.getTrainerUsernames());
 
-        request.getTrainerUsernames().stream()
-                .filter(trainerUsername -> trainerDAO.findByUsername(trainerUsername).isEmpty())
-                .findFirst()
-                .ifPresent(notFound -> {
-                    throw new CoreServiceException("Trainer not found with username: " + notFound);
-                });
+        Set<Trainer> trainers = request.getTrainerUsernames().stream()
+                .map(trainerUsername -> trainerRepository.findByUsername(trainerUsername)
+                        .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + trainerUsername)))
+                .collect(Collectors.toSet());
+        Trainee updatedTrainee = trainee.toBuilder()
+                .trainers(trainers)
+                .build();
 
-        Trainee updatedTrainee = traineeDAO.updateTraineeTrainersList(username, request.getTrainerUsernames());
+        traineeRepository.save(updatedTrainee);
 
         logger.info("Successfully updated trainers list for trainee with username: {}", username);
 
@@ -144,23 +151,24 @@ public class TraineeServiceImpl implements TraineeService {
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public void deleteByUsername(String username) {
         logger.debug("Deleting trainee by username: {}", username);
 
-        traineeDAO.findByUsername(username)
+        traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
-        traineeDAO.deleteByUsername(username);
+        traineeRepository.deleteByUser_Username(username);
 
         logger.info("Trainee deleted with username: {}", username);
     }
 
     @Override
+    @Transactional
     public void changePassword(@Valid PasswordChangeRequest request) {
         logger.debug("Changing password for trainee: {}", request.getUsername());
 
-        Trainee trainee = traineeDAO.findByUsername(request.getUsername())
+        Trainee trainee = traineeRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!userCredentialsGenerator.matches(request.getOldPassword(), trainee.getUser().getPassword())) {
@@ -176,17 +184,17 @@ public class TraineeServiceImpl implements TraineeService {
                 .user(updatedUser)
                 .build();
 
-        traineeDAO.update(updatedTrainee);
+        traineeRepository.save(updatedTrainee);
 
         logger.info("Password changed successfully for trainee: {}", request.getUsername());
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public void toggleTraineeActivation(String username, boolean isActive) {
         logger.debug("Setting activation for trainee with username: {} to {}", username, isActive);
 
-        Trainee trainee = traineeDAO.findByUsername(username)
+        Trainee trainee = traineeRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
         boolean currentStatus = trainee.getUser().getIsActive();
 
@@ -201,8 +209,17 @@ public class TraineeServiceImpl implements TraineeService {
                 .user(updatedUser)
                 .build();
 
-        traineeDAO.update(updatedTrainee);
+        traineeRepository.save(updatedTrainee);
 
         logger.info("Successfully set activation for trainee with username: {} to {}", username, isActive ? "active" : "inactive");
+    }
+
+    private void validateTrainerUsernames(List<String> trainerUsernames) {
+        trainerUsernames.stream()
+                .filter(trainerUsername -> trainerRepository.findByUsername(trainerUsername).isEmpty())
+                .findFirst()
+                .ifPresent(notFound -> {
+                    throw new CoreServiceException("Trainer not found with username: " + notFound);
+                });
     }
 }
