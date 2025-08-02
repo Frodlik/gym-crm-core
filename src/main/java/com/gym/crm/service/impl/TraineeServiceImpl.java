@@ -94,7 +94,7 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeGetResponseDto findByUsername(String username) {
         logger.debug("Finding trainee by username: {}", username);
 
-        Trainee trainee = traineeRepository.findByUsername(username)
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException("Unable to find trainee with username: " + username));
 
         return traineeMapper.toResponse(trainee);
@@ -105,7 +105,7 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeUpdateResponseDto update(@Valid TraineeUpdateRequestDto request, String username) {
         logger.debug("Updating trainee with username: {}", username);
 
-        Trainee existingTrainee = traineeRepository.findByUsername(username)
+        Trainee existingTrainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
         User updatedUser = existingTrainee.getUser().toBuilder()
@@ -131,14 +131,10 @@ public class TraineeServiceImpl implements TraineeService {
     public TraineeTrainersUpdateResponseDto updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequestDto request, String username) {
         logger.debug("Updating trainers list for trainee with username: {}", username);
 
-        Trainee trainee = traineeRepository.findByUsername(username)
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
-        validateTrainerUsernames(request.getTrainerUsernames());
+        Set<Trainer> trainers = findTrainersByUsernames(request.getTrainerUsernames());
 
-        Set<Trainer> trainers = request.getTrainerUsernames().stream()
-                .map(trainerUsername -> trainerRepository.findByUsername(trainerUsername)
-                        .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + trainerUsername)))
-                .collect(Collectors.toSet());
         Trainee updatedTrainee = trainee.toBuilder()
                 .trainers(trainers)
                 .build();
@@ -155,7 +151,7 @@ public class TraineeServiceImpl implements TraineeService {
     public void deleteByUsername(String username) {
         logger.debug("Deleting trainee by username: {}", username);
 
-        traineeRepository.findByUsername(username)
+        traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
         traineeRepository.deleteByUser_Username(username);
@@ -168,7 +164,7 @@ public class TraineeServiceImpl implements TraineeService {
     public void changePassword(@Valid PasswordChangeRequest request) {
         logger.debug("Changing password for trainee: {}", request.getUsername());
 
-        Trainee trainee = traineeRepository.findByUsername(request.getUsername())
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!userCredentialsGenerator.matches(request.getOldPassword(), trainee.getUser().getPassword())) {
@@ -194,7 +190,7 @@ public class TraineeServiceImpl implements TraineeService {
     public void toggleTraineeActivation(String username, boolean isActive) {
         logger.debug("Setting activation for trainee with username: {} to {}", username, isActive);
 
-        Trainee trainee = traineeRepository.findByUsername(username)
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
         boolean currentStatus = trainee.getUser().getIsActive();
 
@@ -214,12 +210,21 @@ public class TraineeServiceImpl implements TraineeService {
         logger.info("Successfully set activation for trainee with username: {} to {}", username, isActive ? "active" : "inactive");
     }
 
-    private void validateTrainerUsernames(List<String> trainerUsernames) {
-        trainerUsernames.stream()
-                .filter(trainerUsername -> trainerRepository.findByUsername(trainerUsername).isEmpty())
-                .findFirst()
-                .ifPresent(notFound -> {
-                    throw new CoreServiceException("Trainer not found with username: " + notFound);
-                });
+    private Set<Trainer> findTrainersByUsernames(List<String> trainerUsernames) {
+        List<Trainer> foundTrainers = trainerRepository.findAllByUser_UsernameIn(trainerUsernames);
+
+        Set<String> foundUsernames = foundTrainers.stream()
+                .map(trainer -> trainer.getUser().getUsername())
+                .collect(Collectors.toSet());
+        List<String> missingUsernames = trainerUsernames.stream()
+                .filter(username -> !foundUsernames.contains(username))
+                .toList();
+
+        if (!missingUsernames.isEmpty()) {
+            String missingUsernamesStr = String.join(", ", missingUsernames);
+            throw new CoreServiceException("Trainers not found with usernames: " + missingUsernamesStr);
+        }
+
+        return foundTrainers.stream().collect(Collectors.toSet());
     }
 }

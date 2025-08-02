@@ -14,11 +14,13 @@ import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
 import com.gym.crm.repository.TrainingTypeRepository;
+import com.gym.crm.repository.specification.TrainingSpecifications;
 import com.gym.crm.service.TrainingService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -43,10 +45,10 @@ public class TrainingServiceImpl implements TrainingService {
     public void create(@Valid TrainingCreateRequestDto request) {
         logger.debug("Creating training: traineeUsername={}, trainerUsername={}", request.getTraineeUsername(), request.getTrainerUsername());
 
-        Trainee trainee = traineeRepository.findByUsername(request.getTraineeUsername())
+        Trainee trainee = traineeRepository.findTraineeByUser_Username(request.getTraineeUsername())
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + request.getTraineeUsername()));
 
-        Trainer trainer = trainerRepository.findByUsername(request.getTrainerUsername())
+        Trainer trainer = trainerRepository.findTrainerByUser_Username(request.getTrainerUsername())
                 .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + request.getTrainerUsername()));
 
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(request.getTrainingName())
@@ -78,17 +80,18 @@ public class TrainingServiceImpl implements TrainingService {
     public List<TrainingResponse> getTraineeTrainingsByCriteria(@Valid TraineeSearchFilter filter) {
         logger.debug("Getting trainee trainings by criteria: {}", filter);
 
-        if (traineeRepository.findByUsername(filter.getTraineeUsername()).isEmpty()) {
+        if (traineeRepository.findTraineeByUser_Username(filter.getTraineeUsername()).isEmpty()) {
             throw new CoreServiceException("Trainee not found with username: " + filter.getTraineeUsername());
         }
 
-        List<Training> trainings = trainingRepository.findTraineeTrainingsByCriteria(
-                filter.getTraineeUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTrainerName(),
-                filter.getTrainingType()
-        );
+        Specification<Training> spec = Specification
+                .where(TrainingSpecifications.hasTraineeUsername(filter.getTraineeUsername()))
+                .and(TrainingSpecifications.hasTrainingDateBetween(filter.getFromDate(), filter.getToDate()))
+                .and(TrainingSpecifications.hasTrainerNameContaining(filter.getTrainerName()))
+                .and(TrainingSpecifications.hasTrainingTypeContaining(filter.getTrainingType()))
+                .and(TrainingSpecifications.withEagerFetching())
+                .and(TrainingSpecifications.orderByTrainingDateDesc());
+        List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainee: {}", trainings.size(), filter.getTraineeUsername());
 
@@ -102,16 +105,17 @@ public class TrainingServiceImpl implements TrainingService {
     public List<TrainingResponse> getTrainerTrainingsByCriteria(@Valid TrainerSearchFilter filter) {
         logger.debug("Getting trainer trainings by criteria: {}", filter);
 
-        if (trainerRepository.findByUsername(filter.getTrainerUsername()).isEmpty()) {
+        if (trainerRepository.findTrainerByUser_Username(filter.getTrainerUsername()).isEmpty()) {
             throw new CoreServiceException("Trainer not found with username: " + filter.getTrainerUsername());
         }
 
-        List<Training> trainings = trainingRepository.findTrainerTrainingsByCriteria(
-                filter.getTrainerUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTraineeName()
-        );
+        Specification<Training> spec = Specification
+                .where(TrainingSpecifications.hasTrainerUsername(filter.getTrainerUsername()))
+                .and(TrainingSpecifications.hasTrainingDateBetween(filter.getFromDate(), filter.getToDate()))
+                .and(TrainingSpecifications.hasTraineeNameContaining(filter.getTraineeName()))
+                .and(TrainingSpecifications.withEagerFetching())
+                .and(TrainingSpecifications.orderByTrainingDateDesc());
+        List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainer: {}", trainings.size(), filter.getTrainerUsername());
 

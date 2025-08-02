@@ -41,13 +41,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String tryAuthenticate(String username, String rawPassword) {
         if (isAuthenticated(TRAINEE, username, rawPassword,
-                traineeRepository::findByUsername,
+                traineeRepository::findTraineeByUser_Username,
                 trainee -> trainee.getUser().getPassword())) {
             return TRAINEE;
         }
 
         if (isAuthenticated(TRAINER, username, rawPassword,
-                trainerRepository::findByUsername,
+                trainerRepository::findTrainerByUser_Username,
                 trainer -> trainer.getUser().getPassword())) {
             return TRAINER;
         }
