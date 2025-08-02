@@ -36,7 +36,7 @@ public class TrainerServiceImpl implements TrainerService {
 
     private static final String TRAINER_NOT_FOUND_MSG = "Trainer not found with username: ";
 
-    private final TrainerRepository trainerrepository;
+    private final TrainerRepository trainerRepository;
     private final TraineeRepository traineeRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
@@ -49,7 +49,7 @@ public class TrainerServiceImpl implements TrainerService {
 
         Trainer trainer = trainerMapper.toEntity(request);
 
-        List<String> existingUsernames = trainerrepository.findAll().stream()
+        List<String> existingUsernames = trainerRepository.findAll().stream()
                 .map(t -> t.getUser().getUsername())
                 .toList();
 
@@ -73,7 +73,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .specialization(specialization)
                 .build();
 
-        Trainer saved = trainerrepository.save(trainer);
+        Trainer saved = trainerRepository.save(trainer);
 
         logger.info("Successfully created trainer with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
@@ -88,7 +88,7 @@ public class TrainerServiceImpl implements TrainerService {
     public Optional<TrainerGetResponseDto> findById(Long id) {
         logger.debug("Finding trainer by ID: {}", id);
 
-        return trainerrepository.findById(id)
+        return trainerRepository.findById(id)
                 .map(trainerMapper::toResponse);
     }
 
@@ -97,7 +97,7 @@ public class TrainerServiceImpl implements TrainerService {
     public TrainerGetResponseDto findByUsername(String username) {
         logger.debug("Finding trainer by username: {}", username);
 
-        Trainer trainer = trainerrepository.findByUsername(username)
+        Trainer trainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
         return trainerMapper.toResponse(trainer);
@@ -111,7 +111,7 @@ public class TrainerServiceImpl implements TrainerService {
         traineeRepository.findByUsername(traineeUsername)
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + traineeUsername));
 
-        List<Trainer> trainers = trainerrepository.findTrainersNotAssignedToTrainee(traineeUsername);
+        List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername);
 
         logger.info("Found {} trainers not assigned to trainee: {}", trainers.size(), traineeUsername);
 
@@ -125,7 +125,7 @@ public class TrainerServiceImpl implements TrainerService {
     public TrainerUpdateResponseDto update(@Valid TrainerUpdateRequestDto request, String username) {
         logger.debug("Updating trainer with username: {}", username);
 
-        Trainer existingTrainer = trainerrepository.findByUsername(username)
+        Trainer existingTrainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
         TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization().getTrainingTypeName())
@@ -141,7 +141,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .specialization(specialization)
                 .build();
 
-        Trainer updatedTrainer = trainerrepository.save(trainer);
+        Trainer updatedTrainer = trainerRepository.save(trainer);
 
         logger.info("Successfully updated trainer with username: {}", username);
 
@@ -153,7 +153,7 @@ public class TrainerServiceImpl implements TrainerService {
     public void changePassword(@Valid PasswordChangeRequest request) {
         logger.debug("Changing password for trainer: {}", request.getUsername());
 
-        Trainer trainer = trainerrepository.findByUsername(request.getUsername())
+        Trainer trainer = trainerRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!userCredentialsGenerator.matches(request.getOldPassword(), trainer.getUser().getPassword())) {
@@ -169,7 +169,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .user(updatedUser)
                 .build();
 
-        trainerrepository.save(updatedTrainer);
+        trainerRepository.save(updatedTrainer);
 
         logger.info("Password changed successfully for trainer: {}", request.getUsername());
     }
@@ -179,7 +179,7 @@ public class TrainerServiceImpl implements TrainerService {
     public void toggleTrainerActivation(String username, boolean isActive) {
         logger.debug("Toggling activation for trainer with username: {}", username);
 
-        Trainer trainer = trainerrepository.findByUsername(username)
+        Trainer trainer = trainerRepository.findByUsername(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
         boolean currentStatus = trainer.getUser().getIsActive();
 
@@ -194,7 +194,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .user(updatedUser)
                 .build();
 
-        trainerrepository.save(updatedTrainer);
+        trainerRepository.save(updatedTrainer);
 
         logger.info("Successfully set activation for trainer with username: {} to {}", username, isActive ? "active" : "inactive");
     }

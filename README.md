@@ -11,7 +11,8 @@ Before you build or run the project, make sure the following software is install
 | Docker     | 20.10+          |
 | MySQL      | 8.0+            |
 
-Docker is required to run integration tests via Testcontainers.
+> ⚠️ **Important:** Docker must be running for tests to execute successfully. The project uses Testcontainers for integration testing, which requires Docker to spin up test database instances.
+
 > *Optional:* You can use MySQL Workbench or any other database client to inspect the schema, test queries, or browse data.
 
 
@@ -35,6 +36,28 @@ DB_URL=jdbc:mysql://localhost:3306/gym_crm
 LIQUIBASE_CONTEXTS=dev
 DB_SCHEMA=gym_crm
 ```
+3. ## Run the Application
+```bash
+# Build the project
+mvn clean compile
+
+# Run tests (requires Docker to be running)
+mvn test
+
+# Start the application
+mvn spring-boot:run
+```
+The application will be available at http://localhost:8080/
+
+4. ## Testing Requirements
+**Docker must be running** before executing tests. The integration tests use Testcontainers to:
+
+* Automatically provision MySQL test containers
+* Run tests against real database instances
+* Ensure test isolation and consistency
+
+If Docker is not running, tests will fail with connection errors.
+
 
 # API Documentation
 

@@ -34,7 +34,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     private final TrainingRepository trainingRepository;
     private final TraineeRepository traineeRepository;
-    private final TrainerRepository trainerrepository;
+    private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingMapper trainingMapper;
 
@@ -46,7 +46,7 @@ public class TrainingServiceImpl implements TrainingService {
         Trainee trainee = traineeRepository.findByUsername(request.getTraineeUsername())
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + request.getTraineeUsername()));
 
-        Trainer trainer = trainerrepository.findByUsername(request.getTrainerUsername())
+        Trainer trainer = trainerRepository.findByUsername(request.getTrainerUsername())
                 .orElseThrow(() -> new CoreServiceException("Trainer not found with username: " + request.getTrainerUsername()));
 
         TrainingType trainingType = trainingTypeRepository.findByTrainingTypeName(request.getTrainingName())
@@ -102,7 +102,7 @@ public class TrainingServiceImpl implements TrainingService {
     public List<TrainingResponse> getTrainerTrainingsByCriteria(@Valid TrainerSearchFilter filter) {
         logger.debug("Getting trainer trainings by criteria: {}", filter);
 
-        if (trainerrepository.findByUsername(filter.getTrainerUsername()).isEmpty()) {
+        if (trainerRepository.findByUsername(filter.getTrainerUsername()).isEmpty()) {
             throw new CoreServiceException("Trainer not found with username: " + filter.getTrainerUsername());
         }
 
