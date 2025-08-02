@@ -193,26 +193,26 @@ class TrainerServiceImplTest {
         Trainer trainer = buildTrainer();
         TrainerGetResponseDto expected = buildTrainerResponse();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
         when(trainerMapper.toResponse(trainer)).thenReturn(expected);
 
         TrainerGetResponseDto actual = service.findByUsername(TRAINER_USERNAME);
 
         assertNotNull(actual);
         assertEquals(expected.getFirstName(), actual.getFirstName());
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerMapper).toResponse(trainer);
     }
 
     @Test
     void findByUsername_ShouldThrowException_WhenNotExists() {
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.findByUsername(TRAINER_USERNAME));
 
         assertEquals("Trainer not found with username: " + TRAINER_USERNAME, exception.getMessage());
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerMapper, never()).toResponse(any());
     }
 
@@ -222,7 +222,7 @@ class TrainerServiceImplTest {
         String username = "test.username";
         Trainer originalTrainer = buildTrainer();
 
-        when(trainerRepository.findByUsername(username)).thenReturn(Optional.of(originalTrainer));
+        when(trainerRepository.findTrainerByUser_Username(username)).thenReturn(Optional.of(originalTrainer));
         when(trainingTypeRepository.findByTrainingTypeName(updateRequest.getSpecialization().getTrainingTypeName()))
                 .thenReturn(Optional.empty());
 
@@ -239,7 +239,7 @@ class TrainerServiceImplTest {
         PasswordChangeRequest request = buildPasswordChangeRequest();
         Trainer trainer = buildTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
         when(userCredentialsGenerator.matches(PASSWORD, trainer.getUser().getPassword())).thenReturn(true);
         when(userCredentialsGenerator.encodePassword("newSecurePassword")).thenReturn("newSecurePassword");
 
@@ -248,7 +248,7 @@ class TrainerServiceImplTest {
         verify(trainerRepository).save(trainerCaptor.capture());
         Trainer updated = trainerCaptor.getValue();
         assertEquals("newSecurePassword", updated.getUser().getPassword());
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerRepository).save(any(Trainer.class));
     }
 
@@ -256,7 +256,7 @@ class TrainerServiceImplTest {
     void changePassword_ShouldThrowException_WhenUserNotFound() {
         PasswordChangeRequest request = buildPasswordChangeRequest();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.changePassword(request));
@@ -270,7 +270,7 @@ class TrainerServiceImplTest {
         PasswordChangeRequest request = buildPasswordChangeRequest();
         Trainer trainer = buildTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(trainer));
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.changePassword(request));
@@ -283,11 +283,11 @@ class TrainerServiceImplTest {
     void toggleTrainerActivation_ShouldToggleFromActiveToInactive() {
         Trainer existingTrainer = buildTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(existingTrainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(existingTrainer));
 
         service.toggleTrainerActivation(TRAINER_USERNAME, false);
 
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerRepository).save(trainerCaptor.capture());
         Trainer captured = trainerCaptor.getValue();
         assertFalse(captured.getUser().getIsActive());
@@ -297,11 +297,11 @@ class TrainerServiceImplTest {
     void toggleTrainerActivation_ShouldToggleFromInactiveToActive() {
         Trainer inactiveTrainer = buildInactiveTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
 
         service.toggleTrainerActivation(TRAINER_USERNAME, true);
 
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerRepository).save(trainerCaptor.capture());
         Trainer captured = trainerCaptor.getValue();
         assertTrue(captured.getUser().getIsActive());
@@ -309,7 +309,7 @@ class TrainerServiceImplTest {
 
     @Test
     void toggleTrainerActivation_ShouldThrowException_WhenTrainerNotFound() {
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.empty());
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTrainerActivation(TRAINER_USERNAME, true));
@@ -323,13 +323,13 @@ class TrainerServiceImplTest {
         String expectedMessage = String.format("Trainer with username: %s is already active", TRAINER_USERNAME);
         Trainer activeTrainer = buildTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(activeTrainer));
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTrainerActivation(TRAINER_USERNAME, true));
 
         assertEquals(expectedMessage, exception.getMessage());
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerRepository, never()).save(any(Trainer.class));
     }
 
@@ -338,13 +338,13 @@ class TrainerServiceImplTest {
         String expectedMessage = String.format("Trainer with username: %s is already inactive", TRAINER_USERNAME);
         Trainer inactiveTrainer = buildInactiveTrainer();
 
-        when(trainerRepository.findByUsername(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
+        when(trainerRepository.findTrainerByUser_Username(TRAINER_USERNAME)).thenReturn(Optional.of(inactiveTrainer));
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTrainerActivation(TRAINER_USERNAME, false));
 
         assertEquals(expectedMessage, exception.getMessage());
-        verify(trainerRepository).findByUsername(TRAINER_USERNAME);
+        verify(trainerRepository).findTrainerByUser_Username(TRAINER_USERNAME);
         verify(trainerRepository, never()).save(any(Trainer.class));
     }
 
@@ -363,7 +363,7 @@ class TrainerServiceImplTest {
                 createAvailableTrainerResponse("trainer3")
         );
 
-        when(traineeRepository.findByUsername(traineeUsername)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findTraineeByUser_Username(traineeUsername)).thenReturn(Optional.of(trainee));
         when(trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername)).thenReturn(unassignedTrainers);
         when(trainerMapper.toAvailableTrainerResponseDto(unassignedTrainers.get(0))).thenReturn(expectedResponses.get(0));
         when(trainerMapper.toAvailableTrainerResponseDto(unassignedTrainers.get(1))).thenReturn(expectedResponses.get(1));
@@ -376,7 +376,7 @@ class TrainerServiceImplTest {
         assertEquals("trainer1", actual.get(0).getUsername());
         assertEquals("trainer2", actual.get(1).getUsername());
         assertEquals("trainer3", actual.get(2).getUsername());
-        verify(traineeRepository).findByUsername(traineeUsername);
+        verify(traineeRepository).findTraineeByUser_Username(traineeUsername);
         verify(trainerRepository).findTrainersNotAssignedToTrainee(traineeUsername);
         verify(trainerMapper).toAvailableTrainerResponseDto(unassignedTrainers.get(0));
         verify(trainerMapper).toAvailableTrainerResponseDto(unassignedTrainers.get(1));
@@ -387,7 +387,7 @@ class TrainerServiceImplTest {
     void findTrainersNotAssignedToTrainee_ShouldThrowException_WhenTraineeNotFound() {
         String traineeUsername = "nonexistent.trainee";
 
-        when(traineeRepository.findByUsername(traineeUsername)).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(traineeUsername)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.findTrainersNotAssignedToTrainee(traineeUsername));

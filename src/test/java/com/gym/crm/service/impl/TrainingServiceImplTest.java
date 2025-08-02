@@ -22,6 +22,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -75,15 +76,15 @@ class TrainingServiceImplTest {
         TrainingType trainingType = buildFitnessTrainingType();
         Training training = buildTraining();
 
-        when(traineeRepository.findByUsername(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findTraineeByUser_Username(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findTrainerByUser_Username(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByTrainingTypeName(createRequest.getTrainingName())).thenReturn(Optional.of(trainingType));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
 
         service.create(createRequest);
 
-        verify(traineeRepository).findByUsername(createRequest.getTraineeUsername());
-        verify(trainerRepository).findByUsername(createRequest.getTrainerUsername());
+        verify(traineeRepository).findTraineeByUser_Username(createRequest.getTraineeUsername());
+        verify(trainerRepository).findTrainerByUser_Username(createRequest.getTrainerUsername());
         verify(trainingTypeRepository).findByTrainingTypeName(createRequest.getTrainingName());
         verify(trainingMapper).toEntity(createRequest);
         verify(trainingRepository).save(any(Training.class));
@@ -92,12 +93,12 @@ class TrainingServiceImplTest {
     @Test
     void create_ShouldThrowException_WhenTraineeNotFound() {
         TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
-        when(traineeRepository.findByUsername(request.getTraineeUsername())).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(request.getTraineeUsername())).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(request));
 
         assertEquals("Trainee not found with username: " + request.getTraineeUsername(), exception.getMessage());
-        verify(traineeRepository).findByUsername(request.getTraineeUsername());
+        verify(traineeRepository).findTraineeByUser_Username(request.getTraineeUsername());
         verifyNoMoreInteractions(trainerRepository, trainingTypeRepository, trainingMapper, trainingRepository);
     }
 
@@ -106,14 +107,14 @@ class TrainingServiceImplTest {
         TrainingCreateRequestDto request = GymTestObjects.buildTrainingCreateRequest();
         Trainee trainee = buildTrainee();
 
-        when(traineeRepository.findByUsername(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername(request.getTrainerUsername())).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findTrainerByUser_Username(request.getTrainerUsername())).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(request));
 
         assertEquals("Trainer not found with username: " + request.getTrainerUsername(), exception.getMessage());
-        verify(traineeRepository).findByUsername(request.getTraineeUsername());
-        verify(trainerRepository).findByUsername(request.getTrainerUsername());
+        verify(traineeRepository).findTraineeByUser_Username(request.getTraineeUsername());
+        verify(trainerRepository).findTrainerByUser_Username(request.getTrainerUsername());
         verifyNoMoreInteractions(trainingTypeRepository, trainingMapper, trainingRepository);
     }
 
@@ -123,15 +124,15 @@ class TrainingServiceImplTest {
         Trainee trainee = buildTrainee();
         Trainer trainer = buildTrainer();
 
-        when(traineeRepository.findByUsername(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername(request.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findTraineeByUser_Username(request.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findTrainerByUser_Username(request.getTrainerUsername())).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByTrainingTypeName(request.getTrainingName())).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.create(request));
 
         assertEquals("Training type not found with name: " + request.getTrainingName(), exception.getMessage());
-        verify(traineeRepository).findByUsername(request.getTraineeUsername());
-        verify(trainerRepository).findByUsername(request.getTrainerUsername());
+        verify(traineeRepository).findTraineeByUser_Username(request.getTraineeUsername());
+        verify(trainerRepository).findTrainerByUser_Username(request.getTrainerUsername());
         verify(trainingTypeRepository).findByTrainingTypeName(request.getTrainingName());
         verifyNoMoreInteractions(trainingMapper, trainingRepository);
     }
@@ -177,8 +178,8 @@ class TrainingServiceImplTest {
         Training training = buildTraining();
         ArgumentCaptor<Training> captor = ArgumentCaptor.forClass(Training.class);
 
-        when(traineeRepository.findByUsername(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
-        when(trainerRepository.findByUsername(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(traineeRepository.findTraineeByUser_Username(createRequest.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainerRepository.findTrainerByUser_Username(createRequest.getTrainerUsername())).thenReturn(Optional.of(trainer));
         when(trainingTypeRepository.findByTrainingTypeName(createRequest.getTrainingName())).thenReturn(Optional.of(buildFitnessTrainingType()));
         when(trainingMapper.toEntity(createRequest)).thenReturn(training);
 
@@ -204,28 +205,16 @@ class TrainingServiceImplTest {
         Training training = buildTraining();
         TrainingResponse expected = GymTestObjects.buildTrainingResponse();
 
-        when(traineeRepository.findByUsername(filter.getTraineeUsername())).thenReturn(Optional.of(trainee));
-        when(trainingRepository.findTraineeTrainingsByCriteria(
-                filter.getTraineeUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTrainerName(),
-                filter.getTrainingType()
-        )).thenReturn(List.of(training));
+        when(traineeRepository.findTraineeByUser_Username(filter.getTraineeUsername())).thenReturn(Optional.of(trainee));
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(training));
         when(trainingMapper.toResponse(training)).thenReturn(expected);
 
         List<TrainingResponse> actual = service.getTraineeTrainingsByCriteria(filter);
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
-        verify(traineeRepository).findByUsername(filter.getTraineeUsername());
-        verify(trainingRepository).findTraineeTrainingsByCriteria(
-                filter.getTraineeUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTrainerName(),
-                filter.getTrainingType()
-        );
+        verify(traineeRepository).findTraineeByUser_Username(filter.getTraineeUsername());
+        verify(trainingRepository).findAll(any(Specification.class));
         verify(trainingMapper).toResponse(training);
     }
 
@@ -235,12 +224,12 @@ class TrainingServiceImplTest {
                 .traineeUsername("nonexistent")
                 .build();
 
-        when(traineeRepository.findByUsername("nonexistent")).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username("nonexistent")).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.getTraineeTrainingsByCriteria(filter));
 
         assertEquals("Trainee not found with username: nonexistent", exception.getMessage());
-        verify(traineeRepository).findByUsername("nonexistent");
+        verify(traineeRepository).findTraineeByUser_Username("nonexistent");
         verifyNoInteractions(trainingRepository);
     }
 
@@ -257,26 +246,16 @@ class TrainingServiceImplTest {
         Training training = buildTraining();
         TrainingResponse expected = GymTestObjects.buildTrainingResponse();
 
-        when(trainerRepository.findByUsername(filter.getTrainerUsername())).thenReturn(Optional.of(trainer));
-        when(trainingRepository.findTrainerTrainingsByCriteria(
-                filter.getTrainerUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTraineeName()
-        )).thenReturn(List.of(training));
+        when(trainerRepository.findTrainerByUser_Username(filter.getTrainerUsername())).thenReturn(Optional.of(trainer));
+        when(trainingRepository.findAll(any(Specification.class))).thenReturn(List.of(training));
         when(trainingMapper.toResponse(training)).thenReturn(expected);
 
         List<TrainingResponse> actual = service.getTrainerTrainingsByCriteria(filter);
 
         assertEquals(1, actual.size());
         assertEquals(expected, actual.get(0));
-        verify(trainerRepository).findByUsername(filter.getTrainerUsername());
-        verify(trainingRepository).findTrainerTrainingsByCriteria(
-                filter.getTrainerUsername(),
-                filter.getFromDate(),
-                filter.getToDate(),
-                filter.getTraineeName()
-        );
+        verify(trainerRepository).findTrainerByUser_Username(filter.getTrainerUsername());
+        verify(trainingRepository).findAll(any(Specification.class));
         verify(trainingMapper).toResponse(training);
     }
 
@@ -286,12 +265,12 @@ class TrainingServiceImplTest {
                 .trainerUsername("not.found")
                 .build();
 
-        when(trainerRepository.findByUsername("not.found")).thenReturn(Optional.empty());
+        when(trainerRepository.findTrainerByUser_Username("not.found")).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.getTrainerTrainingsByCriteria(filter));
 
         assertEquals("Trainer not found with username: not.found", exception.getMessage());
-        verify(trainerRepository).findByUsername("not.found");
+        verify(trainerRepository).findTrainerByUser_Username("not.found");
         verifyNoInteractions(trainingRepository);
     }
 

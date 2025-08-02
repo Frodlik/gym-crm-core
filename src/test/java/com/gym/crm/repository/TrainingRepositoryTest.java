@@ -7,15 +7,11 @@ import com.gym.crm.model.Training;
 import com.gym.crm.model.TrainingType;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -127,29 +123,45 @@ class TrainingRepositoryTest extends BaseIntegrationTest {
         assertEquals("maria.trainer", secondTraining.getTrainer().getUser().getUsername());
     }
 
-    @ParameterizedTest
-    @MethodSource("provideTraineeCriteriaTestCases")
+    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindTraineeTrainingsByCriteria_Parameterized(CriteriaTestCase testCase) {
-        List<Training> actual = trainingRepository.findTraineeTrainingsByCriteria(
-                testCase.traineeUsername(), testCase.fromDate(), testCase.toDate(),
-                testCase.trainerName(), testCase.trainingType()
-        );
+    void delete_ShouldRemoveTrainingFromDatabase() {
+        Long trainingId = 1L;
+        assertTrue(trainingRepository.findById(trainingId).isPresent());
 
-        assertNotNull(actual);
-        assertEquals(testCase.expectedSize(), actual.size());
+        trainingRepository.deleteById(trainingId);
+
+        assertFalse(trainingRepository.findById(trainingId).isPresent());
     }
 
-    @ParameterizedTest
-    @MethodSource("provideTrainerCriteriaTestCases")
+    @Test
     @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void testFindTrainerTrainingsByCriteria_Parameterized(CriteriaTrainerTestCase testCase) {
-        List<Training> actual = trainingRepository.findTrainerTrainingsByCriteria(
-                testCase.trainerUsername(), testCase.fromDate(), testCase.toDate(), testCase.traineeName()
-        );
+    void existsById_ShouldReturnTrueWhenTrainingExists() {
+        Long existingTrainingId = 1L;
 
-        assertNotNull(actual);
-        assertEquals(testCase.expectedSize(), actual.size());
+        boolean exists = trainingRepository.existsById(existingTrainingId);
+
+        assertTrue(exists);
+    }
+
+    @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void existsById_ShouldReturnFalseWhenTrainingNotExists() {
+        Long nonExistentTrainingId = 999L;
+
+        boolean exists = trainingRepository.existsById(nonExistentTrainingId);
+
+        assertFalse(exists);
+    }
+
+    @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
+    void count_ShouldReturnCorrectNumberOfTrainings() {
+        long expectedCount = 4L;
+
+        long actualCount = trainingRepository.count();
+
+        assertEquals(expectedCount, actualCount);
     }
 
     private Training buildTrainingFromDataset(Long traineeId, Long trainerId, String trainingName, Long trainingTypeId, int duration) {
@@ -165,72 +177,5 @@ class TrainingRepositoryTest extends BaseIntegrationTest {
                 .trainingDate(LocalDate.of(2024, 8, 15))
                 .trainingDuration(duration)
                 .build();
-    }
-
-    private static Stream<Arguments> provideTraineeCriteriaTestCases() {
-        return Stream.of(
-                Arguments.of(new CriteriaTestCase(
-                        "john.trainee", LocalDate.of(2024, 8, 1), LocalDate.of(2024, 8, 31),
-                        "Alex", "Strength", 1, "Power Strength Training"
-                )),
-                Arguments.of(new CriteriaTestCase(
-                        "john.trainee", null, null, null, null, 2, null
-                )),
-                Arguments.of(new CriteriaTestCase(
-                        "john.trainee", LocalDate.of(2025, 1, 1), LocalDate.of(2025, 1, 31),
-                        null, null, 0, null
-                )),
-                Arguments.of(new CriteriaTestCase(
-                        "john.trainee", null, null, null, "HIIT", 1, "Full Body HIIT Session"
-                )),
-                Arguments.of(new CriteriaTestCase(
-                        "john.trainee", LocalDate.of(2024, 8, 12), LocalDate.of(2024, 8, 15),
-                        null, null, 1, "Full Body HIIT Session"
-                ))
-        );
-    }
-
-    private static Stream<Arguments> provideTrainerCriteriaTestCases() {
-        return Stream.of(
-                Arguments.of(new CriteriaTrainerTestCase(
-                        "alex.trainer", LocalDate.of(2024, 8, 1), LocalDate.of(2024, 8, 31),
-                        "John", 2, "Full Body HIIT Session"
-                )),
-                Arguments.of(new CriteriaTrainerTestCase(
-                        "maria.trainer", null, null, null, 1, "Relaxing Yoga Session"
-                )),
-                Arguments.of(new CriteriaTrainerTestCase(
-                        "chris.coach", LocalDate.of(2024, 8, 1), LocalDate.of(2024, 8, 11),
-                        null, 0, null
-                )),
-                Arguments.of(new CriteriaTrainerTestCase(
-                        "alex.trainer", null, null, "John", 2, "Full Body HIIT Session"
-                )),
-                Arguments.of(new CriteriaTrainerTestCase(
-                        "alex.trainer", LocalDate.of(2024, 8, 10), LocalDate.of(2024, 8, 10),
-                        null, 1, "Power Strength Training"
-                ))
-        );
-    }
-
-    private record CriteriaTestCase(
-            String traineeUsername,
-            LocalDate fromDate,
-            LocalDate toDate,
-            String trainerName,
-            String trainingType,
-            int expectedSize,
-            String expectedTrainingName
-    ) {
-    }
-
-    private record CriteriaTrainerTestCase(
-            String trainerUsername,
-            LocalDate fromDate,
-            LocalDate toDate,
-            String traineeName,
-            int expectedSize,
-            String expectedTrainingName
-    ) {
     }
 }

@@ -135,7 +135,7 @@ class TraineeServiceImplTest {
         Trainee buildTrainee = buildTrainee();
         TraineeGetResponseDto expected = buildTraineeGetResponse();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(buildTrainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(buildTrainee));
         when(traineeMapper.toResponse(buildTrainee)).thenReturn(expected);
 
         TraineeGetResponseDto actual = service.findByUsername(USERNAME);
@@ -143,19 +143,19 @@ class TraineeServiceImplTest {
         assertNotNull(actual);
         assertEquals(expected.getId(), actual.getId());
         assertEquals(expected.getUsername(), actual.getUsername());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeMapper).toResponse(buildTrainee);
     }
 
     @Test
     void findByUsername_ShouldThrowExceptionWhenNotExists() {
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.findByUsername(USERNAME));
 
         assertEquals("Unable to find trainee with username: " + USERNAME, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeMapper, never()).toResponse(any());
     }
 
@@ -165,7 +165,7 @@ class TraineeServiceImplTest {
         Trainee updatedTrainee = buildUpdatedTrainee();
         TraineeUpdateResponseDto expected = buildTraineeUpdateResponse();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(traineeRepository.save(any(Trainee.class))).thenReturn(updatedTrainee);
         when(traineeMapper.toUpdateResponseDto(any(Trainee.class))).thenReturn(expected);
 
@@ -175,7 +175,7 @@ class TraineeServiceImplTest {
         assertEquals(expected.getFirstName(), actual.getFirstName());
         assertEquals(expected.getLastName(), actual.getLastName());
         assertEquals(expected.isActive(), actual.isActive());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository).save(any(Trainee.class));
         verify(traineeMapper).toUpdateResponseDto(updatedTrainee);
         verify(traineeRepository).save(captor.capture());
@@ -192,13 +192,13 @@ class TraineeServiceImplTest {
     void update_ShouldThrowExceptionWhenTraineeNotFound() {
         TraineeUpdateRequestDto updateRequest = buildTraineeUpdateRequest();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.update(updateRequest, USERNAME));
 
         assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).save(any());
         verify(traineeMapper, never()).toUpdateResponseDto(any());
     }
@@ -210,7 +210,7 @@ class TraineeServiceImplTest {
         request.setOldPassword(PASSWORD);
         request.setNewPassword("newSecurePassword");
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(userCredentialsGenerator.matches(PASSWORD, trainee.getUser().getPassword())).thenReturn(true);
         when(userCredentialsGenerator.encodePassword("newSecurePassword")).thenReturn("newSecurePassword");
 
@@ -221,28 +221,28 @@ class TraineeServiceImplTest {
 
         Trainee updated = captor.getValue();
         assertEquals("newSecurePassword", updated.getUser().getPassword());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test
     void deleteByUsername_ShouldCallDAODeleteByUsername() {
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
 
         service.deleteByUsername(USERNAME);
 
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository).deleteByUser_Username(USERNAME);
     }
 
     @Test
     void deleteByUsername_ShouldThrowExceptionWhenTraineeNotFound() {
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class, () -> service.deleteByUsername(USERNAME));
 
         assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).deleteByUser_Username(USERNAME);
     }
 
@@ -250,7 +250,7 @@ class TraineeServiceImplTest {
     void toggleTraineeActivation_ShouldSetActivationToTrue() {
         Trainee inactiveTrainee = buildInactiveTrainee();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
 
         service.toggleTraineeActivation(USERNAME, true);
 
@@ -258,13 +258,13 @@ class TraineeServiceImplTest {
 
         Trainee captured = captor.getValue();
         assertTrue(captured.getUser().getIsActive());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test
     void toggleTraineeActivation_ShouldSetActivationToFalse() {
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(trainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
 
         service.toggleTraineeActivation(USERNAME, false);
 
@@ -272,19 +272,19 @@ class TraineeServiceImplTest {
 
         Trainee captured = captor.getValue();
         assertFalse(captured.getUser().getIsActive());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository).save(any(Trainee.class));
     }
 
     @Test
     void toggleTraineeActivation_ShouldThrowExceptionWhenTraineeNotFound() {
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.empty());
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTraineeActivation(USERNAME, true));
 
         assertEquals("Trainee not found with username: " + USERNAME, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).save(any());
     }
 
@@ -293,13 +293,13 @@ class TraineeServiceImplTest {
         String expectedMessage = String.format("Trainee with username: %s is already active", USERNAME);
         Trainee activeTrainee = buildTrainee();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(activeTrainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(activeTrainee));
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTraineeActivation(USERNAME, true));
 
         assertEquals(expectedMessage, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).save(any(Trainee.class));
     }
 
@@ -308,13 +308,13 @@ class TraineeServiceImplTest {
         String expectedMessage = String.format("Trainee with username: %s is already inactive", USERNAME);
         Trainee inactiveTrainee = buildInactiveTrainee();
 
-        when(traineeRepository.findByUsername(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
+        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(inactiveTrainee));
 
         CoreServiceException exception = assertThrows(CoreServiceException.class,
                 () -> service.toggleTraineeActivation(USERNAME, false));
 
         assertEquals(expectedMessage, exception.getMessage());
-        verify(traineeRepository).findByUsername(USERNAME);
+        verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).save(any(Trainee.class));
     }
 

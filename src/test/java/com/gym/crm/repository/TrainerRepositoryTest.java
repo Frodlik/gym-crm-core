@@ -23,10 +23,10 @@ class TrainerRepositoryTest extends BaseIntegrationTest {
 
     @Test
     @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void findByUsername_whenTrainerExists_shouldReturnTrainer() {
+    void findTrainerByUserUsername_whenTrainerExists_shouldReturnTrainer() {
         String existingUsername = "sarah.johnson";
 
-        Optional<Trainer> actual = trainerRepository.findByUsername(existingUsername);
+        Optional<Trainer> actual = trainerRepository.findTrainerByUser_Username(existingUsername);
 
         assertThat(actual).isPresent();
         assertThat(actual.get().getUser().getUsername()).isEqualTo(existingUsername);
@@ -37,10 +37,10 @@ class TrainerRepositoryTest extends BaseIntegrationTest {
 
     @Test
     @DataSet(value = "dataset/trainer-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
-    void findByUsername_whenTrainerNotExists_shouldReturnEmpty() {
+    void findTrainerByUserUsername_whenTrainerNotExists_shouldReturnEmpty() {
         String nonExistentUsername = "kakashi.hatake";
 
-        Optional<Trainer> actual = trainerRepository.findByUsername(nonExistentUsername);
+        Optional<Trainer> actual = trainerRepository.findTrainerByUser_Username(nonExistentUsername);
 
         assertThat(actual).isEmpty();
     }
