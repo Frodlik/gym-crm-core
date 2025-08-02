@@ -70,6 +70,7 @@ public class TestDataSourceConfig {
     public PlatformTransactionManager transactionManager(LocalContainerEntityManagerFactoryBean entityManagerFactory) {
         JpaTransactionManager transactionManager = new JpaTransactionManager();
         transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
+
         return transactionManager;
     }
 }

@@ -11,10 +11,7 @@ Before you build or run the project, make sure the following software is install
 | Docker     | 20.10+          |
 | MySQL      | 8.0+            |
 
-> ⚠️ **Important:** Docker must be running for tests to execute successfully. The project uses Testcontainers for integration testing, which requires Docker to spin up test database instances.
-
-> *Optional:* You can use MySQL Workbench or any other database client to inspect the schema, test queries, or browse data.
-
+> ⚠️ **Important:** Docker must be running for tests to execute successfully as project uses Testcontainers for integration testing.
 
 # Getting Started (Local Setup)
 
