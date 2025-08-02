@@ -1,22 +1,25 @@
 package com.gym.crm.config;
 
-import com.gym.crm.dao.hibernate.TransactionHandler;
-import com.gym.crm.model.Trainee;
-import com.gym.crm.model.Trainer;
-import com.gym.crm.model.Training;
-import com.gym.crm.model.TrainingType;
-import com.gym.crm.model.User;
-import com.mysql.cj.jdbc.MysqlDataSource;
-import org.hibernate.SessionFactory;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.testcontainers.containers.MySQLContainer;
 
 import javax.sql.DataSource;
+import java.util.Properties;
 
-@ComponentScan(basePackages = "com.gym.crm.dao")
 @Configuration
+@EnableJpaRepositories(basePackages = "com.gym.crm.repository")
+@EntityScan(basePackages = "com.gym.crm.model")
+@EnableTransactionManagement
 public class TestDataSourceConfig {
 
     @Bean(initMethod = "start", destroyMethod = "stop")
@@ -29,48 +32,45 @@ public class TestDataSourceConfig {
 
     @Bean
     public DataSource dataSource(MySQLContainer<?> mysqlContainer) {
-        MysqlDataSource dataSource = new MysqlDataSource();
-        dataSource.setURL(mysqlContainer.getJdbcUrl());
-        dataSource.setUser(mysqlContainer.getUsername());
-        dataSource.setPassword(mysqlContainer.getPassword());
+        HikariConfig hikariConfig = new HikariConfig();
+        hikariConfig.setJdbcUrl(mysqlContainer.getJdbcUrl());
+        hikariConfig.setUsername(mysqlContainer.getUsername());
+        hikariConfig.setPassword(mysqlContainer.getPassword());
+        hikariConfig.setDriverClassName("com.mysql.cj.jdbc.Driver");
 
-        return dataSource;
+        return new HikariDataSource(hikariConfig);
     }
 
     @Bean
-    public SessionFactory sessionFactory(MySQLContainer<?> mysqlContainer) {
-        return buildHibernateConfiguration(mysqlContainer).buildSessionFactory();
+    public LocalContainerEntityManagerFactoryBean entityManagerFactory(DataSource dataSource) {
+        LocalContainerEntityManagerFactoryBean em = new LocalContainerEntityManagerFactoryBean();
+        em.setDataSource(dataSource);
+        em.setPackagesToScan("com.gym.crm.model");
+
+        HibernateJpaVendorAdapter vendorAdapter = new HibernateJpaVendorAdapter();
+        vendorAdapter.setGenerateDdl(true);
+        vendorAdapter.setShowSql(true);
+        em.setJpaVendorAdapter(vendorAdapter);
+
+        Properties properties = new Properties();
+        properties.setProperty("hibernate.hbm2ddl.auto", "none");
+        properties.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
+        properties.setProperty("hibernate.format_sql", "true");
+        properties.setProperty("hibernate.use_sql_comments", "true");
+        properties.setProperty("hibernate.connection.characterEncoding", "utf8");
+        properties.setProperty("hibernate.connection.CharSet", "utf8");
+        properties.setProperty("hibernate.connection.useUnicode", "true");
+
+        em.setJpaProperties(properties);
+
+        return em;
     }
 
     @Bean
-    public TransactionHandler transactionHandler(SessionFactory sessionFactory) {
-        return new TransactionHandler(sessionFactory);
-    }
+    public PlatformTransactionManager transactionManager(LocalContainerEntityManagerFactoryBean entityManagerFactory) {
+        JpaTransactionManager transactionManager = new JpaTransactionManager();
+        transactionManager.setEntityManagerFactory(entityManagerFactory.getObject());
 
-    private org.hibernate.cfg.Configuration buildHibernateConfiguration(MySQLContainer<?> mysqlContainer) {
-        org.hibernate.cfg.Configuration configuration = new org.hibernate.cfg.Configuration();
-
-        configuration.setProperty("hibernate.connection.driver_class", "com.mysql.cj.jdbc.Driver");
-        configuration.setProperty("hibernate.connection.url", mysqlContainer.getJdbcUrl());
-        configuration.setProperty("hibernate.connection.username", mysqlContainer.getUsername());
-        configuration.setProperty("hibernate.connection.password", mysqlContainer.getPassword());
-
-        configuration.setProperty("hibernate.dialect", "org.hibernate.dialect.MySQLDialect");
-        configuration.setProperty("hibernate.hbm2ddl.auto", "create-drop");
-        configuration.setProperty("hibernate.show_sql", "true");
-        configuration.setProperty("hibernate.format_sql", "true");
-        configuration.setProperty("hibernate.use_sql_comments", "true");
-        configuration.setProperty("hibernate.current_session_context_class", "thread");
-        configuration.setProperty("hibernate.connection.characterEncoding", "utf8");
-        configuration.setProperty("hibernate.connection.CharSet", "utf8");
-        configuration.setProperty("hibernate.connection.useUnicode", "true");
-
-        configuration.addAnnotatedClass(User.class);
-        configuration.addAnnotatedClass(Trainee.class);
-        configuration.addAnnotatedClass(Trainer.class);
-        configuration.addAnnotatedClass(Training.class);
-        configuration.addAnnotatedClass(TrainingType.class);
-
-        return configuration;
+        return transactionManager;
     }
 }

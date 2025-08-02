@@ -1,8 +1,5 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dao.TraineeDAO;
-import com.gym.crm.dao.TrainerDAO;
-import com.gym.crm.dao.TrainingTypeDAO;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
 import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
@@ -15,14 +12,17 @@ import com.gym.crm.mapper.TrainerMapper;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.model.User;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.repository.TrainingTypeRepository;
 import com.gym.crm.service.TrainerService;
-import com.gym.crm.service.transaction.PersistenceTx;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
@@ -36,20 +36,20 @@ public class TrainerServiceImpl implements TrainerService {
 
     private static final String TRAINER_NOT_FOUND_MSG = "Trainer not found with username: ";
 
-    private final TrainerDAO trainerDAO;
-    private final TraineeDAO traineeDAO;
-    private final TrainingTypeDAO trainingTypeDAO;
+    private final TrainerRepository trainerRepository;
+    private final TraineeRepository traineeRepository;
+    private final TrainingTypeRepository trainingTypeRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final TrainerMapper trainerMapper;
 
     @Override
-    @PersistenceTx
+    @Transactional
     public TrainerCreateResponseDto create(@Valid TrainerCreateRequestDto request) {
         logger.debug("Creating trainer: {} {}", request.getFirstName(), request.getLastName());
 
         Trainer trainer = trainerMapper.toEntity(request);
 
-        List<String> existingUsernames = trainerDAO.findAll().stream()
+        List<String> existingUsernames = trainerRepository.findAll().stream()
                 .map(t -> t.getUser().getUsername())
                 .toList();
 
@@ -58,7 +58,7 @@ public class TrainerServiceImpl implements TrainerService {
         String rawPassword = userCredentialsGenerator.generateRawPassword();
         String encodedPassword = userCredentialsGenerator.encodePassword(rawPassword);
 
-        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User user = User.builder()
@@ -73,7 +73,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .specialization(specialization)
                 .build();
 
-        Trainer saved = trainerDAO.create(trainer);
+        Trainer saved = trainerRepository.save(trainer);
 
         logger.info("Successfully created trainer with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
 
@@ -84,31 +84,34 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Optional<TrainerGetResponseDto> findById(Long id) {
         logger.debug("Finding trainer by ID: {}", id);
 
-        return trainerDAO.findById(id)
+        return trainerRepository.findById(id)
                 .map(trainerMapper::toResponse);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public TrainerGetResponseDto findByUsername(String username) {
         logger.debug("Finding trainer by username: {}", username);
 
-        Trainer trainer = trainerDAO.findByUsername(username)
+        Trainer trainer = trainerRepository.findTrainerByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
         return trainerMapper.toResponse(trainer);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<AvailableTrainerResponseDto> findTrainersNotAssignedToTrainee(String traineeUsername) {
         logger.debug("Finding trainers not assigned to trainee with username: {}", traineeUsername);
 
-        traineeDAO.findByUsername(traineeUsername)
+        traineeRepository.findTraineeByUser_Username(traineeUsername)
                 .orElseThrow(() -> new CoreServiceException("Trainee not found with username: " + traineeUsername));
 
-        List<Trainer> trainers = trainerDAO.findTrainersNotAssignedToTrainee(traineeUsername);
+        List<Trainer> trainers = trainerRepository.findTrainersNotAssignedToTrainee(traineeUsername);
 
         logger.info("Found {} trainers not assigned to trainee: {}", trainers.size(), traineeUsername);
 
@@ -118,14 +121,14 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public TrainerUpdateResponseDto update(@Valid TrainerUpdateRequestDto request, String username) {
         logger.debug("Updating trainer with username: {}", username);
 
-        Trainer existingTrainer = trainerDAO.findByUsername(username)
+        Trainer existingTrainer = trainerRepository.findTrainerByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
 
-        TrainingType specialization = trainingTypeDAO.findByName(request.getSpecialization().getTrainingTypeName())
+        TrainingType specialization = trainingTypeRepository.findByTrainingTypeName(request.getSpecialization().getTrainingTypeName())
                 .orElseThrow(() -> new CoreServiceException("Training type not found: " + request.getSpecialization().getTrainingTypeName()));
 
         User updatedUser = existingTrainer.getUser().toBuilder()
@@ -138,7 +141,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .specialization(specialization)
                 .build();
 
-        Trainer updatedTrainer = trainerDAO.update(trainer);
+        Trainer updatedTrainer = trainerRepository.save(trainer);
 
         logger.info("Successfully updated trainer with username: {}", username);
 
@@ -146,10 +149,11 @@ public class TrainerServiceImpl implements TrainerService {
     }
 
     @Override
+    @Transactional
     public void changePassword(@Valid PasswordChangeRequest request) {
         logger.debug("Changing password for trainer: {}", request.getUsername());
 
-        Trainer trainer = trainerDAO.findByUsername(request.getUsername())
+        Trainer trainer = trainerRepository.findTrainerByUser_Username(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
         if (!userCredentialsGenerator.matches(request.getOldPassword(), trainer.getUser().getPassword())) {
@@ -165,17 +169,17 @@ public class TrainerServiceImpl implements TrainerService {
                 .user(updatedUser)
                 .build();
 
-        trainerDAO.update(updatedTrainer);
+        trainerRepository.save(updatedTrainer);
 
         logger.info("Password changed successfully for trainer: {}", request.getUsername());
     }
 
     @Override
-    @PersistenceTx
+    @Transactional
     public void toggleTrainerActivation(String username, boolean isActive) {
         logger.debug("Toggling activation for trainer with username: {}", username);
 
-        Trainer trainer = trainerDAO.findByUsername(username)
+        Trainer trainer = trainerRepository.findTrainerByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINER_NOT_FOUND_MSG + username));
         boolean currentStatus = trainer.getUser().getIsActive();
 
@@ -190,7 +194,7 @@ public class TrainerServiceImpl implements TrainerService {
                 .user(updatedUser)
                 .build();
 
-        trainerDAO.update(updatedTrainer);
+        trainerRepository.save(updatedTrainer);
 
         logger.info("Successfully set activation for trainer with username: {} to {}", username, isActive ? "active" : "inactive");
     }

@@ -1,7 +1,7 @@
 package com.gym.crm.service.impl;
 
-import com.gym.crm.dao.TraineeDAO;
-import com.gym.crm.dao.TrainerDAO;
+import com.gym.crm.repository.TraineeRepository;
+import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.exception.NotAuthenticatedException;
 import com.gym.crm.service.AuthenticationService;
@@ -22,8 +22,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private static final String TRAINER = "TRAINER";
     private static final String TRAINEE = "TRAINEE";
 
-    private final TraineeDAO traineeDAO;
-    private final TrainerDAO trainerDAO;
+    private final TraineeRepository traineeRepository;
+    private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
 
     @Override
@@ -41,13 +41,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private String tryAuthenticate(String username, String rawPassword) {
         if (isAuthenticated(TRAINEE, username, rawPassword,
-                traineeDAO::findByUsername,
+                traineeRepository::findTraineeByUser_Username,
                 trainee -> trainee.getUser().getPassword())) {
             return TRAINEE;
         }
 
         if (isAuthenticated(TRAINER, username, rawPassword,
-                trainerDAO::findByUsername,
+                trainerRepository::findTrainerByUser_Username,
                 trainer -> trainer.getUser().getPassword())) {
             return TRAINER;
         }
