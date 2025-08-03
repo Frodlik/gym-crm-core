@@ -25,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -225,6 +226,6 @@ public class TraineeServiceImpl implements TraineeService {
             throw new CoreServiceException("Trainers not found with usernames: " + missingUsernamesStr);
         }
 
-        return foundTrainers.stream().collect(Collectors.toSet());
+        return new HashSet<>(foundTrainers);
     }
 }

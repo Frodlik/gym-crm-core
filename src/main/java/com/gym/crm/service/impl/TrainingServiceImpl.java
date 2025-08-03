@@ -84,13 +84,7 @@ public class TrainingServiceImpl implements TrainingService {
             throw new CoreServiceException("Trainee not found with username: " + filter.getTraineeUsername());
         }
 
-        Specification<Training> spec = Specification
-                .where(TrainingSpecifications.hasTraineeUsername(filter.getTraineeUsername()))
-                .and(TrainingSpecifications.hasTrainingDateBetween(filter.getFromDate(), filter.getToDate()))
-                .and(TrainingSpecifications.hasTrainerNameContaining(filter.getTrainerName()))
-                .and(TrainingSpecifications.hasTrainingTypeContaining(filter.getTrainingType()))
-                .and(TrainingSpecifications.withEagerFetching())
-                .and(TrainingSpecifications.orderByTrainingDateDesc());
+        Specification<Training> spec = TrainingSpecifications.forTraineeSearch(filter);
         List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainee: {}", trainings.size(), filter.getTraineeUsername());
@@ -109,12 +103,7 @@ public class TrainingServiceImpl implements TrainingService {
             throw new CoreServiceException("Trainer not found with username: " + filter.getTrainerUsername());
         }
 
-        Specification<Training> spec = Specification
-                .where(TrainingSpecifications.hasTrainerUsername(filter.getTrainerUsername()))
-                .and(TrainingSpecifications.hasTrainingDateBetween(filter.getFromDate(), filter.getToDate()))
-                .and(TrainingSpecifications.hasTraineeNameContaining(filter.getTraineeName()))
-                .and(TrainingSpecifications.withEagerFetching())
-                .and(TrainingSpecifications.orderByTrainingDateDesc());
+        Specification<Training> spec = TrainingSpecifications.forTrainerSearch(filter);
         List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainer: {}", trainings.size(), filter.getTrainerUsername());

@@ -1,12 +1,13 @@
 package com.gym.crm.mapper;
 
-import com.gym.crm.dto.model.TrainerModel;
+import com.gym.crm.dto.model.TraineeModel;
 import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
 import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
 import com.gym.crm.dto.trainer.TrainerCreateResponseDto;
 import com.gym.crm.dto.trainer.TrainerGetResponseDto;
 import com.gym.crm.dto.trainer.TrainerUpdateRequestDto;
 import com.gym.crm.dto.trainer.TrainerUpdateResponseDto;
+import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.TrainingType;
 import com.gym.crm.openapi.model.AvailableTrainerGetResponse;
@@ -34,8 +35,7 @@ public interface TrainerMapper {
     @Mapping(target = "username", source = "user.username")
     @Mapping(target = "firstName", source = "user.firstName")
     @Mapping(target = "lastName", source = "user.lastName")
-    @Mapping(target = "specialization", source = "specialization")
-    TrainerModel toTrainerModel(Trainer trainer);
+    TraineeModel toTraineeModel(Trainee trainee);
 
     @Mapping(target = "specialization.trainingTypeName", source = "specialization")
     TrainerCreateRequestDto toCreateRequestDto(TrainerCreateRequest request);
