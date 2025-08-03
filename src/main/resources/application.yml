@@ -2,13 +2,10 @@ spring:
   application:
     name: gym-crm
 
-  config:
-    import: optional:file:.env[.properties]
-
   datasource:
-    url: ${DB_URL:jdbc:mysql://localhost:3306/gym_crm}
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:password}
+    url: jdbc:mysql://localhost:3306/gym_crm
+    username: gcauser
+    password: gcauser
     driver-class-name: com.mysql.cj.jdbc.Driver
     hikari:
       maximum-pool-size: 10
@@ -33,9 +30,9 @@ spring:
   liquibase:
     change-log: classpath:db/changelog/db.changelog-master.xml
     enabled: true
-    drop-first: false
-    contexts: ${LIQUIBASE_CONTEXTS:default}
-    default-schema: ${DB_SCHEMA:gym_crm}
+    drop-first: true
+    contexts: dev,default
+    default-schema: gym_crm
 
   jackson:
     serialization:

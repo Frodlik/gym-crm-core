@@ -27,9 +27,12 @@ GRANT ALL PRIVILEGES ON gym_crm.* TO 'gcauser'@'localhost';
 Create a .env file in the root directory of the project with the following configuration:
 
 ```
+# Database Configuration
 DB_USERNAME=gcauser
 DB_PASSWORD=gcauser
 DB_URL=jdbc:mysql://localhost:3306/gym_crm
+
+# Liquibase Configuration
 LIQUIBASE_CONTEXTS=dev
 DB_SCHEMA=gym_crm
 ```
@@ -55,13 +58,28 @@ The application will be available at http://localhost:8080/
 
 If Docker is not running, tests will fail with connection errors.
 
+## Environment Profiles
+
+The application supports multiple environments with different configurations:
+
+| Profile | Description | Logging Level |
+|---------|-------------|---------------|
+| `local` | Development with detailed SQL logging | DEBUG |
+| `dev` | Development environment | DEBUG |
+| `stg` | Staging environment | INFO |
+| `prod` | Production environment | WARN |
+
+To run with a specific profile:
+```bash
+mvn spring-boot:run -Dspring.profiles.active=dev
+```
 
 # API Documentation
 
 Once the application is running, you can access the interactive API documentation through **Swagger UI**:
 
 ## 🔗 Swagger UI
-**[http://localhost:8080/gym-crm-core/swagger-ui/index.html](http://localhost:8080/gym-crm-core/swagger-ui/index.html)**
+**[http://localhost:8080/swagger-ui/index.html](http://localhost:8080/gym-crm-core/swagger-ui/index.html)**
 
 ## 📮 Postman Collection
 
