@@ -1,9 +1,9 @@
 # Gym CRM Core
 **CRM system for gym management.**
 
-![Build](https://github.com/Frodlik/gym-crm-core/actions/workflows/ci.yml/badge.svg?branch=dev)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=coverage)](https://sonarcloud.io/summary/overall?id=Frodlik_gym-crm-core)
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=alert_status)](https://sonarcloud.io/summary/overall?id=Frodlik_gym-crm-core)
+[![Build](https://github.com/Frodlik/gym-crm-core/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/Frodlik/gym-crm-core/actions/workflows/sonarcloud.yml)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Frodlik_gym-crm-core)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Frodlik_gym-crm-core)
 
 # Prerequisites
 Before you build or run the project, make sure the following software is installed on your machine:
