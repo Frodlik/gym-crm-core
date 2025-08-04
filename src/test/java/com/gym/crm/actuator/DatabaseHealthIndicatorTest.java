@@ -11,8 +11,11 @@ import org.springframework.boot.actuate.health.Status;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,9 +35,11 @@ class DatabaseHealthIndicatorTest {
         Health actual = healthIndicator.health();
 
         assertThat(actual.getStatus()).isEqualTo(Status.UP);
-        assertThat(actual.getDetails()).containsEntry("database", "Available");
-        assertThat(actual.getDetails()).containsEntry("connectionTimeout", "5 seconds");
-        assertThat(actual.getDetails()).containsKey("timestamp");
+        assertThat(actual.getDetails()).hasSize(3)
+                .containsEntry("database", "Available")
+                .containsEntry("connectionTimeout", "5 seconds")
+                .containsKey("timestamp");
+        assertRecentTimestamp(actual.getDetails().get("timestamp"));
     }
 
     @Test
@@ -45,43 +50,43 @@ class DatabaseHealthIndicatorTest {
         Health actual = healthIndicator.health();
 
         assertThat(actual.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(actual.getDetails()).containsEntry("database", "Connection invalid");
-        assertThat(actual.getDetails()).containsKey("timestamp");
-        assertThat(actual.getDetails()).doesNotContainKey("connectionTimeout");
+        assertThat(actual.getDetails()).hasSize(2)
+                .containsEntry("database", "Connection invalid")
+                .containsKey("timestamp")
+                .doesNotContainKey("connectionTimeout");
+        assertRecentTimestamp(actual.getDetails().get("timestamp"));
     }
 
     @Test
-    void testHealth_whenSQLExceptionWithDifferentMessage_returnsDown() throws SQLException {
-        SQLException exception = new SQLException("Database unavailable");
+    void testHealth_whenSQLException_returnsDownWithValidAttributes() throws SQLException {
+        SQLException exception = new SQLException("Database connection timeout");
         when(dataSource.getConnection()).thenThrow(exception);
 
         Health actual = healthIndicator.health();
 
         assertThat(actual.getStatus()).isEqualTo(Status.DOWN);
-        assertThat(actual.getDetails()).containsEntry("database", "Connection failed");
-        assertThat(actual.getDetails()).containsEntry("error", "Database unavailable");
-        assertThat(actual.getDetails()).containsKey("timestamp");
+        assertThat(actual.getDetails()).hasSize(3)
+                .containsEntry("database", "Connection failed")
+                .containsEntry("error", "Database connection timeout")
+                .containsKey("timestamp");
+        assertRecentTimestamp(actual.getDetails().get("timestamp"));
     }
 
     @Test
-    void testHealth_allRequiredFieldsPresent() throws SQLException {
+    void testHealth_connectionTimeoutValueIsCorrect() throws SQLException {
         when(dataSource.getConnection()).thenReturn(connection);
         when(connection.isValid(5)).thenReturn(true);
 
         Health actual = healthIndicator.health();
+        String timeout = (String) actual.getDetails().get("connectionTimeout");
 
-        assertThat(actual.getDetails()).containsKeys("database", "timestamp");
-        assertThat(actual.getDetails().get("database")).isNotNull();
-        assertThat(actual.getDetails().get("timestamp")).isNotNull();
+        assertThat(timeout).isEqualTo("5 seconds")
+                .contains("5")
+                .contains("seconds");
     }
 
-    @Test
-    void testHealth_timestampIsAlwaysPresent() throws SQLException {
-        when(dataSource.getConnection()).thenThrow(new SQLException("Test"));
-
-        Health actual = healthIndicator.health();
-
-        assertThat(actual.getDetails()).containsKey("timestamp");
-        assertThat(actual.getDetails().get("timestamp")).isNotNull();
+    private void assertRecentTimestamp(Object value) {
+        assertThat(value).isInstanceOf(Instant.class);
+        assertThat((Instant) value).isCloseTo(Instant.now(), within(2, ChronoUnit.SECONDS));
     }
 }

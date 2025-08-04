@@ -68,4 +68,4 @@ management:
 
 gca:
   metrics:
-    threshold-bytes: 104857600
+    disk-space-threshold-bytes: 104857600
