@@ -38,16 +38,34 @@ class DatabaseHealthIndicatorTest {
 
         assertThat(actual.getStatus()).isEqualTo(Status.UP);
         assertThat(actual.getDetails()).containsEntry("database", "Available");
+        assertThat(actual.getDetails()).containsEntry("connectionTimeout", "5 seconds");
+        assertThat(actual.getDetails()).containsKey("timestamp");
     }
 
     @Test
-    void testHealth_whenDatabaseUnavailable_returnsDown() throws SQLException {
-        when(dataSource.getConnection()).thenThrow(new SQLException("Connection failed"));
+    void testHealth_whenConnectionInvalid_returnsDown() throws SQLException {
+        when(dataSource.getConnection()).thenReturn(connection);
+        when(connection.isValid(5)).thenReturn(false);
+
+        Health actual = healthIndicator.health();
+
+        assertThat(actual.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(actual.getDetails()).containsEntry("database", "Connection invalid");
+        assertThat(actual.getDetails()).containsKey("timestamp");
+        assertThat(actual.getDetails()).doesNotContainKey("connectionTimeout");
+    }
+
+    @Test
+    void testHealth_whenSQLExceptionWithDifferentMessage_returnsDown() throws SQLException {
+        SQLException exception = new SQLException("Database unavailable");
+        when(dataSource.getConnection()).thenThrow(exception);
 
         Health actual = healthIndicator.health();
 
         assertThat(actual.getStatus()).isEqualTo(Status.DOWN);
         assertThat(actual.getDetails()).containsEntry("database", "Connection failed");
+        assertThat(actual.getDetails()).containsEntry("error", "Database unavailable");
+        assertThat(actual.getDetails()).containsKey("timestamp");
     }
 
     @Test
@@ -59,6 +77,16 @@ class DatabaseHealthIndicatorTest {
 
         assertThat(actual.getDetails()).containsKeys("database", "timestamp");
         assertThat(actual.getDetails().get("database")).isNotNull();
+        assertThat(actual.getDetails().get("timestamp")).isNotNull();
+    }
+
+    @Test
+    void testHealth_timestampIsAlwaysPresent() throws SQLException {
+        when(dataSource.getConnection()).thenThrow(new SQLException("Test"));
+
+        Health actual = healthIndicator.health();
+
+        assertThat(actual.getDetails()).containsKey("timestamp");
         assertThat(actual.getDetails().get("timestamp")).isNotNull();
     }
 }

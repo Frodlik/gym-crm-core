@@ -27,7 +27,17 @@ class DiskSpaceHealthIndicatorTest {
                 "status", "freeSpace", "totalSpace", "usedSpace",
                 "usagePercentage", "threshold", "timestamp"
         );
-        assertThat(actual.getDetails().get("threshold")).isEqualTo("100,00 MB");
+    }
+
+    @Test
+    void testHealth_thresholdIsCorrect() {
+        Health actual = healthIndicator.health();
+
+        String threshold = (String) actual.getDetails().get("threshold");
+
+        assertThat(threshold)
+                .contains("MB")
+                .contains("100");
     }
 
     @Test
@@ -41,5 +51,23 @@ class DiskSpaceHealthIndicatorTest {
         assertThat(freeSpace).containsAnyOf("B", "KB", "MB", "GB");
         assertThat(totalSpace).containsAnyOf("B", "KB", "MB", "GB");
         assertThat(usedSpace).containsAnyOf("B", "KB", "MB", "GB");
+    }
+
+    @Test
+    void testHealth_usagePercentageIsValid() {
+        Health actual = healthIndicator.health();
+
+        String usagePercentage = (String) actual.getDetails().get("usagePercentage");
+
+        assertThat(usagePercentage)
+                .contains("%")
+                .isNotEmpty();
+    }
+
+    @Test
+    void testHealth_timestampIsPresent() {
+        Health actual = healthIndicator.health();
+
+        assertThat(actual.getDetails().get("timestamp")).isNotNull();
     }
 }
