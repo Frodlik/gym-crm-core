@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.UserProfileMetrics;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
@@ -43,6 +44,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final TraineeMapper traineeMapper;
+    private final UserProfileMetrics userProfileMetrics;
 
     @Override
     @Transactional
@@ -74,6 +76,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee saved = traineeRepository.save(trainee);
 
         logger.info("Successfully created trainee with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
+        userProfileMetrics.recordProfileCreation();
 
         return TraineeCreateResponseDto.builder()
                 .username(username)
@@ -123,6 +126,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee savedTrainee = traineeRepository.save(updatedTrainee);
 
         logger.info("Successfully updated trainee with username: {}", username);
+        userProfileMetrics.recordProfileUpdate();
 
         return traineeMapper.toUpdateResponseDto(savedTrainee);
     }
@@ -143,6 +147,7 @@ public class TraineeServiceImpl implements TraineeService {
         traineeRepository.save(updatedTrainee);
 
         logger.info("Successfully updated trainers list for trainee with username: {}", username);
+        userProfileMetrics.recordProfileUpdate();
 
         return traineeMapper.toTrainersUpdateResponse(updatedTrainee);
     }
