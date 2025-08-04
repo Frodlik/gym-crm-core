@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.UserProfileMetrics;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainer.AvailableTrainerResponseDto;
 import com.gym.crm.dto.trainer.TrainerCreateRequestDto;
@@ -63,6 +64,8 @@ class TrainerServiceImplTest {
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
     private TrainerMapper trainerMapper;
+    @Mock
+    private UserProfileMetrics userProfileMetrics;
     @InjectMocks
     private TrainerServiceImpl service;
 
@@ -104,6 +107,7 @@ class TrainerServiceImplTest {
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
         verify(trainingTypeRepository).findByTrainingTypeName(createRequest.getSpecialization().getTrainingTypeName());
         verify(trainerRepository).save(any(Trainer.class));
+        verify(userProfileMetrics).recordProfileCreation();
     }
 
     @Test
@@ -137,6 +141,7 @@ class TrainerServiceImplTest {
         verify(userCredentialsGenerator).generateRawPassword();
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
         verify(trainingTypeRepository).findByTrainingTypeName(createRequest.getSpecialization().getTrainingTypeName());
+        verify(userProfileMetrics).recordProfileCreation();
     }
 
     @Test
@@ -157,6 +162,7 @@ class TrainerServiceImplTest {
         assertEquals("Training type not found: " + createRequest.getSpecialization().getTrainingTypeName(),
                 exception.getMessage());
         verify(trainerRepository, never()).save(any());
+        verify(userProfileMetrics, never()).recordProfileCreation();
     }
 
     @Test
@@ -232,6 +238,7 @@ class TrainerServiceImplTest {
         assertEquals("Training type not found: " + updateRequest.getSpecialization().getTrainingTypeName(),
                 exception.getMessage());
         verify(trainerRepository, never()).save(any());
+        verify(userProfileMetrics, never()).recordProfileUpdate();
     }
 
     @Test

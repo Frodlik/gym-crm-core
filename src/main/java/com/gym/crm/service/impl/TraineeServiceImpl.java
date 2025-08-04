@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.UserProfileMetrics;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
@@ -43,6 +44,7 @@ public class TraineeServiceImpl implements TraineeService {
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final TraineeMapper traineeMapper;
+    private final UserProfileMetrics userProfileMetrics;
 
     @Override
     @Transactional
@@ -74,6 +76,7 @@ public class TraineeServiceImpl implements TraineeService {
         Trainee saved = traineeRepository.save(trainee);
 
         logger.info("Successfully created trainee with ID: {} and username: {}", saved.getId(), saved.getUser().getUsername());
+        userProfileMetrics.recordProfileCreation();
 
         return TraineeCreateResponseDto.builder()
                 .username(username)
@@ -84,8 +87,6 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional(readOnly = true)
     public Optional<TraineeGetResponseDto> findById(Long id) {
-        logger.debug("Finding trainee by ID: {}", id);
-
         return traineeRepository.findById(id)
                 .map(traineeMapper::toResponse);
     }
@@ -93,8 +94,6 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional(readOnly = true)
     public TraineeGetResponseDto findByUsername(String username) {
-        logger.debug("Finding trainee by username: {}", username);
-
         Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException("Unable to find trainee with username: " + username));
 
@@ -104,7 +103,6 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public TraineeUpdateResponseDto update(@Valid TraineeUpdateRequestDto request, String username) {
-        logger.debug("Updating trainee with username: {}", username);
 
         Trainee existingTrainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
@@ -122,7 +120,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         Trainee savedTrainee = traineeRepository.save(updatedTrainee);
 
-        logger.info("Successfully updated trainee with username: {}", username);
+        userProfileMetrics.recordProfileUpdate();
 
         return traineeMapper.toUpdateResponseDto(savedTrainee);
     }
@@ -130,8 +128,6 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public TraineeTrainersUpdateResponseDto updateTraineeTrainersList(@Valid TraineeTrainersUpdateRequestDto request, String username) {
-        logger.debug("Updating trainers list for trainee with username: {}", username);
-
         Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
         Set<Trainer> trainers = findTrainersByUsernames(request.getTrainerUsernames());
@@ -142,7 +138,7 @@ public class TraineeServiceImpl implements TraineeService {
 
         traineeRepository.save(updatedTrainee);
 
-        logger.info("Successfully updated trainers list for trainee with username: {}", username);
+        userProfileMetrics.recordProfileUpdate();
 
         return traineeMapper.toTrainersUpdateResponse(updatedTrainee);
     }
@@ -150,21 +146,15 @@ public class TraineeServiceImpl implements TraineeService {
     @Override
     @Transactional
     public void deleteByUsername(String username) {
-        logger.debug("Deleting trainee by username: {}", username);
-
         traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
 
         traineeRepository.deleteByUser_Username(username);
-
-        logger.info("Trainee deleted with username: {}", username);
     }
 
     @Override
     @Transactional
     public void changePassword(@Valid PasswordChangeRequest request) {
-        logger.debug("Changing password for trainee: {}", request.getUsername());
-
         Trainee trainee = traineeRepository.findTraineeByUser_Username(request.getUsername())
                 .orElseThrow(() -> new CoreServiceException("User not found with username: " + request.getUsername()));
 
@@ -182,15 +172,11 @@ public class TraineeServiceImpl implements TraineeService {
                 .build();
 
         traineeRepository.save(updatedTrainee);
-
-        logger.info("Password changed successfully for trainee: {}", request.getUsername());
     }
 
     @Override
     @Transactional
     public void toggleTraineeActivation(String username, boolean isActive) {
-        logger.debug("Setting activation for trainee with username: {} to {}", username, isActive);
-
         Trainee trainee = traineeRepository.findTraineeByUser_Username(username)
                 .orElseThrow(() -> new CoreServiceException(TRAINEE_NOT_FOUND_MSG + username));
         boolean currentStatus = trainee.getUser().getIsActive();
@@ -207,8 +193,6 @@ public class TraineeServiceImpl implements TraineeService {
                 .build();
 
         traineeRepository.save(updatedTrainee);
-
-        logger.info("Successfully set activation for trainee with username: {} to {}", username, isActive ? "active" : "inactive");
     }
 
     private Set<Trainer> findTrainersByUsernames(List<String> trainerUsernames) {

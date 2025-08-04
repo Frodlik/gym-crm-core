@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.TrainingMetrics;
 import com.gym.crm.dto.trainee.TraineeSearchFilter;
 import com.gym.crm.dto.trainer.TrainerSearchFilter;
 import com.gym.crm.dto.training.TrainingCreateRequestDto;
@@ -39,6 +40,7 @@ public class TrainingServiceImpl implements TrainingService {
     private final TrainerRepository trainerRepository;
     private final TrainingTypeRepository trainingTypeRepository;
     private final TrainingMapper trainingMapper;
+    private final TrainingMetrics trainingMetrics;
 
     @Override
     @Transactional
@@ -62,7 +64,7 @@ public class TrainingServiceImpl implements TrainingService {
                 .build();
 
         trainingRepository.save(training);
-
+        trainingMetrics.recordTrainingCreated();
         logger.info("Training created successfully");
     }
 
@@ -88,6 +90,7 @@ public class TrainingServiceImpl implements TrainingService {
         List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainee: {}", trainings.size(), filter.getTraineeUsername());
+        trainingMetrics.recordTrainingRetrieval();
 
         return trainings.stream()
                 .map(trainingMapper::toResponse)
@@ -107,6 +110,7 @@ public class TrainingServiceImpl implements TrainingService {
         List<Training> trainings = trainingRepository.findAll(spec);
 
         logger.info("Found {} trainings for trainer: {}", trainings.size(), filter.getTrainerUsername());
+        trainingMetrics.recordTrainingRetrieval();
 
         return trainings.stream()
                 .map(trainingMapper::toResponse)
