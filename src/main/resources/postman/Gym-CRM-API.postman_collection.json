@@ -1,7 +1,7 @@
 {
 	"info": {
 		"_postman_id": "e98a4026-6651-4a76-84f0-636b51a291d2",
-		"name": "gym-crm-core",
+		"name": "Gym-CRM-API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "32446445"
 	},
@@ -21,12 +21,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/register",
+					"raw": "{{baseURL}}/api/v1/trainees/register",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -42,16 +41,15 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/Naruto.Uzumaki",
+					"raw": "{{baseURL}}/api/v1/trainees/naruto.uzumaki",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
-						"Naruto.Uzumaki"
+						"naruto.uzumaki"
 					]
 				}
 			},
@@ -72,16 +70,15 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/Naruto.Uzumaki",
+					"raw": "{{baseURL}}/api/v1/trainees/naruto.uzumaki",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
-						"Naruto.Uzumaki"
+						"naruto.uzumaki"
 					]
 				}
 			},
@@ -102,12 +99,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/Naruto.Uzumaki/change-activation-status",
+					"raw": "{{baseURL}}/api/v1/trainees/Naruto.Uzumaki/change-activation-status",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -124,12 +120,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/naruto.uzumaki/available-trainers",
+					"raw": "{{baseURL}}/api/v1/trainees/naruto.uzumaki/available-trainers",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -155,12 +150,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/naruto.uzumaki/trainers",
+					"raw": "{{baseURL}}/api/v1/trainees/naruto.uzumaki/trainers",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -177,12 +171,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/sophia.taylor/trainings",
+					"raw": "{{baseURL}}/api/v1/trainees/sophia.taylor/trainings",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -199,12 +192,11 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainees/naruto.uzumaki",
+					"raw": "{{baseURL}}/api/v1/trainees/naruto.uzumaki",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainees",
@@ -229,12 +221,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainers/register",
+					"raw": "{{baseURL}}/api/v1/trainers/register",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainers",
@@ -250,12 +241,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainers/sarah.johnson",
+					"raw": "{{baseURL}}/api/v1/trainers/sarah.johnson",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainers",
@@ -280,12 +270,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainers/sarah.johnson",
+					"raw": "{{baseURL}}/api/v1/trainers/sarah.johnson",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainers",
@@ -310,12 +299,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainers/sarah.johnson/change-activation-status",
+					"raw": "{{baseURL}}/api/v1/trainers/sarah.johnson/change-activation-status",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainers",
@@ -339,12 +327,11 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainers/sarah.johnson/trainings",
+					"raw": "{{baseURL}}/api/v1/trainers/sarah.johnson/trainings",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainers",
@@ -361,12 +348,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainings/types",
+					"raw": "{{baseURL}}/api/v1/trainings/types",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainings",
@@ -383,7 +369,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"traineeUsername\": \"sophia.taylor\",\r\n  \"trainerUsername\": \"john.smith\",\r\n  \"trainingName\": \"Yoga\",\r\n  \"trainingDate\": \"2025-07-14\",\r\n  \"trainingDuration\": 90\r\n}",
+					"raw": "{\r\n  \"traineeUsername\": \"sophia.taylor\",\r\n  \"trainerUsername\": \"john.smith\",\r\n  \"trainingName\": \"Yoga\",\r\n  \"trainingDate\": \"2025-10-14\",\r\n  \"trainingDuration\": 90\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -391,12 +377,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/trainings",
+					"raw": "{{baseURL}}/api/v1/trainings",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"trainings"
@@ -412,7 +397,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"naruto.uzumaki\",\r\n    \"password\": \"6DkOb9Tkbe\"\r\n}",
+					"raw": "{\r\n    \"username\": \"naruto.uzumaki1\",\r\n    \"password\": \"wtsL1Xcvaq\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -420,12 +405,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/auth/login",
+					"raw": "{{baseURL}}/api/v1/auth/login",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"auth",
@@ -442,7 +426,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"naruto.uzumaki\",\r\n    \"oldPassword\": \"9OQ8SIm8kZ\",\r\n    \"newPassword\": \"Am50aeRyaD\"\r\n}",
+					"raw": "{\r\n    \"username\": \"naruto.uzumaki\",\r\n    \"oldPassword\": \"N2fJJCebcY\",\r\n    \"newPassword\": \"Am50aeRyaD\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -450,12 +434,11 @@
 					}
 				},
 				"url": {
-					"raw": "{{baseURL}}/gym-crm-core/api/v1/auth/login",
+					"raw": "{{baseURL}}/api/v1/auth/login",
 					"host": [
 						"{{baseURL}}"
 					],
 					"path": [
-						"gym-crm-core",
 						"api",
 						"v1",
 						"auth",

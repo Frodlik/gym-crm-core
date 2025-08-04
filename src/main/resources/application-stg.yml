@@ -1,0 +1,41 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      maximum-pool-size: 15
+      minimum-idle: 8
+      idle-timeout: 30000
+      connection-timeout: 20000
+      validation-timeout: 5000
+      leak-detection-threshold: 60000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  liquibase:
+    drop-first: false
+    contexts: staging,default
+    default-schema: ${DB_SCHEMA:gym_crm_staging}
+
+logging:
+  level:
+    com.gym.crm: INFO
+    root: WARN
+  file:
+    name: /var/log/gym-crm/app.log
+  logback:
+    rollingpolicy:
+      max-file-size: 100MB
+      max-history: 30
+
+
+server:
+  port: 8080

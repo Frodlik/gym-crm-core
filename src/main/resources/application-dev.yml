@@ -1,0 +1,26 @@
+spring:
+  config:
+    import: optional:file:.env[.properties]
+
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  liquibase:
+    drop-first: true
+    contexts: ${LIQUIBASE_CONTEXTS:default}
+    default-schema: ${DB_SCHEMA}
+
+logging:
+  level:
+    com.gym.crm: DEBUG
+    root: INFO
+  file:
+    name: /var/log/gym-crm/app.log
