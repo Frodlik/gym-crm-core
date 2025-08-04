@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.Status;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -69,5 +70,15 @@ class DiskSpaceHealthIndicatorTest {
         Health actual = healthIndicator.health();
 
         assertThat(actual.getDetails().get("timestamp")).isNotNull();
+    }
+
+    @Test
+    void testHealth_withCustomThreshold_detectsLowDiskSpace() {
+        ReflectionTestUtils.setField(healthIndicator, "thresholdBytes", Long.MAX_VALUE);
+
+        Health actual = healthIndicator.health();
+
+        assertThat(actual.getStatus()).isEqualTo(Status.DOWN);
+        assertThat(actual.getDetails()).containsEntry("status", "Low disk space");
     }
 }

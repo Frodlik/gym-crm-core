@@ -1,8 +1,8 @@
 package com.gym.crm.actuator;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.boot.actuate.health.Health;
@@ -21,13 +21,8 @@ class DatabaseHealthIndicatorTest {
     private DataSource dataSource;
     @Mock
     private Connection connection;
-
+    @InjectMocks
     private DatabaseHealthIndicator healthIndicator;
-
-    @BeforeEach
-    void setUp() {
-        healthIndicator = new DatabaseHealthIndicator(dataSource);
-    }
 
     @Test
     void testHealth_whenDatabaseAvailable_returnsUp() throws SQLException {

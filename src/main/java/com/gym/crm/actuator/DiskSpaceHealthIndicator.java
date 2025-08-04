@@ -2,16 +2,19 @@ package com.gym.crm.actuator;
 
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
 import java.time.Instant;
 
 @Component
+@ConfigurationProperties(prefix = "gca.metrics")
 public class DiskSpaceHealthIndicator implements HealthIndicator {
-    private static final long THRESHOLD_BYTES = 104857600;
     private static final String STATUS = "status";
     private static final String TIMESTAMP = "timestamp";
+
+    private final Long thresholdBytes  = 104857600L;
 
     @Override
     public Health health() {
@@ -38,7 +41,7 @@ public class DiskSpaceHealthIndicator implements HealthIndicator {
     }
 
     private Health buildHealthStatus(long free, long total, long used, double usage) {
-        Health.Builder builder = free < THRESHOLD_BYTES
+        Health.Builder builder = free < thresholdBytes
                 ? Health.down().withDetail(STATUS, "Low disk space")
                 : Health.up().withDetail(STATUS, "Sufficient disk space");
 
@@ -47,7 +50,7 @@ public class DiskSpaceHealthIndicator implements HealthIndicator {
                 .withDetail("totalSpace", formatBytes(total))
                 .withDetail("usedSpace", formatBytes(used))
                 .withDetail("usagePercentage", String.format("%.2f%%", usage))
-                .withDetail("threshold", formatBytes(THRESHOLD_BYTES))
+                .withDetail("threshold", formatBytes(thresholdBytes))
                 .withDetail(TIMESTAMP, Instant.now())
                 .build();
     }

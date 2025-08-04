@@ -65,3 +65,7 @@ management:
   health:
     defaults:
       enabled: true
+
+gca:
+  metrics:
+    threshold-bytes: 104857600
