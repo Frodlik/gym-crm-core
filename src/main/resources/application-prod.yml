@@ -43,8 +43,18 @@ logging:
       max-file-size: 100MB
       max-history: 60
 
+management:
+  endpoint:
+    health:
+      show-details: when_authorized
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+
 server:
   port: 8080
   tomcat:
-    max-threads: 200
-    min-spare-threads: 10
+    threads:
+      max: 200
+      min-spare: 20
