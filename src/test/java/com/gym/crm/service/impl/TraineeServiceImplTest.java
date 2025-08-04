@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.UserProfileMetrics;
 import com.gym.crm.dto.PasswordChangeRequest;
 import com.gym.crm.dto.trainee.TraineeCreateRequestDto;
 import com.gym.crm.dto.trainee.TraineeCreateResponseDto;
@@ -56,6 +57,8 @@ class TraineeServiceImplTest {
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
     private TraineeMapper traineeMapper;
+    @Mock
+    private UserProfileMetrics userProfileMetrics;
     @InjectMocks
     private TraineeServiceImpl service;
 
@@ -92,6 +95,7 @@ class TraineeServiceImplTest {
         verify(userCredentialsGenerator).encodePassword(RAW_PASSWORD);
         verify(traineeRepository).save(any(Trainee.class));
         verify(traineeRepository).save(captor.capture());
+        verify(userProfileMetrics).recordProfileCreation();
 
         Trainee captured = captor.getValue();
         assertEquals(ENCODED_PASSWORD, captured.getUser().getPassword());
@@ -186,6 +190,7 @@ class TraineeServiceImplTest {
         assertFalse(captured.getUser().getIsActive());
         assertEquals(LocalDate.of(1985, 5, 15), captured.getDateOfBirth());
         assertEquals("456 Oak Ave", captured.getAddress());
+        verify(userProfileMetrics).recordProfileUpdate();
     }
 
     @Test
@@ -201,6 +206,7 @@ class TraineeServiceImplTest {
         verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(traineeRepository, never()).save(any());
         verify(traineeMapper, never()).toUpdateResponseDto(any());
+        verify(userProfileMetrics, never()).recordProfileUpdate();
     }
 
     @Test

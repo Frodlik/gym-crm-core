@@ -1,5 +1,6 @@
 package com.gym.crm.service.impl;
 
+import com.gym.crm.actuator.prometheus.TrainingMetrics;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.repository.TrainingRepository;
@@ -65,6 +66,8 @@ class TrainingServiceImplTest {
     private TrainingTypeRepository trainingTypeRepository;
     @Mock
     private TrainingMapper trainingMapper;
+    @Mock
+    private TrainingMetrics trainingMetrics;
     @InjectMocks
     private TrainingServiceImpl service;
 
@@ -88,6 +91,7 @@ class TrainingServiceImplTest {
         verify(trainingTypeRepository).findByTrainingTypeName(createRequest.getTrainingName());
         verify(trainingMapper).toEntity(createRequest);
         verify(trainingRepository).save(any(Training.class));
+        verify(trainingMetrics).recordTrainingCreated();
     }
 
     @Test
@@ -100,6 +104,7 @@ class TrainingServiceImplTest {
         assertEquals("Trainee not found with username: " + request.getTraineeUsername(), exception.getMessage());
         verify(traineeRepository).findTraineeByUser_Username(request.getTraineeUsername());
         verifyNoMoreInteractions(trainerRepository, trainingTypeRepository, trainingMapper, trainingRepository);
+        verify(trainingMetrics, never()).recordTrainingCreated();
     }
 
     @Test
@@ -116,6 +121,7 @@ class TrainingServiceImplTest {
         verify(traineeRepository).findTraineeByUser_Username(request.getTraineeUsername());
         verify(trainerRepository).findTrainerByUser_Username(request.getTrainerUsername());
         verifyNoMoreInteractions(trainingTypeRepository, trainingMapper, trainingRepository);
+        verify(trainingMetrics, never()).recordTrainingCreated();
     }
 
     @Test
@@ -135,6 +141,7 @@ class TrainingServiceImplTest {
         verify(trainerRepository).findTrainerByUser_Username(request.getTrainerUsername());
         verify(trainingTypeRepository).findByTrainingTypeName(request.getTrainingName());
         verifyNoMoreInteractions(trainingMapper, trainingRepository);
+        verify(trainingMetrics, never()).recordTrainingCreated();
     }
 
     @Test
@@ -189,6 +196,7 @@ class TrainingServiceImplTest {
         Training captured = captor.getValue();
         assertEquals(traineeUserId, captured.getTrainee().getId());
         assertEquals(trainerUserId, captured.getTrainer().getId());
+        verify(trainingMetrics).recordTrainingCreated();
     }
 
     @Test
@@ -216,6 +224,7 @@ class TrainingServiceImplTest {
         verify(traineeRepository).findTraineeByUser_Username(filter.getTraineeUsername());
         verify(trainingRepository).findAll(any(Specification.class));
         verify(trainingMapper).toResponse(training);
+        verify(trainingMetrics).recordTrainingRetrieval();
     }
 
     @Test
@@ -231,6 +240,7 @@ class TrainingServiceImplTest {
         assertEquals("Trainee not found with username: nonexistent", exception.getMessage());
         verify(traineeRepository).findTraineeByUser_Username("nonexistent");
         verifyNoInteractions(trainingRepository);
+        verify(trainingMetrics, never()).recordTrainingRetrieval();
     }
 
     @Test
@@ -257,6 +267,7 @@ class TrainingServiceImplTest {
         verify(trainerRepository).findTrainerByUser_Username(filter.getTrainerUsername());
         verify(trainingRepository).findAll(any(Specification.class));
         verify(trainingMapper).toResponse(training);
+        verify(trainingMetrics).recordTrainingRetrieval();
     }
 
     @Test
@@ -272,6 +283,7 @@ class TrainingServiceImplTest {
         assertEquals("Trainer not found with username: not.found", exception.getMessage());
         verify(trainerRepository).findTrainerByUser_Username("not.found");
         verifyNoInteractions(trainingRepository);
+        verify(trainingMetrics, never()).recordTrainingRetrieval();
     }
 
     private Training buildTraining() {

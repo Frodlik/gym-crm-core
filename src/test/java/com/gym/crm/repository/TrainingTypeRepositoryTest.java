@@ -53,6 +53,7 @@ class TrainingTypeRepositoryTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DataSet(value = "dataset/training-test-data.xml", cleanBefore = true, cleanAfter = true, transactional = true, disableConstraints = true)
     void save_whenValidTrainingType_shouldPersistTrainingType() {
         TrainingType trainingType = TrainingType.builder()
                 .trainingTypeName("Sharingan Training")
