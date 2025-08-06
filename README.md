@@ -1,7 +1,7 @@
 # Gym CRM Core
 **CRM system for gym management.**
 
-[![Build](https://github.com/Frodlik/gym-crm-core/actions/workflows/ci.yml/badge.svg?branch=dev)](https://github.com/Frodlik/gym-crm-core/actions/workflows/sonarcloud.yml)
+[![Build](https://github.com/Frodlik/gym-crm-core/actions/workflows/sonarcloud.yml/badge.svg?branch=dev)](https://github.com/Frodlik/gym-crm-core/actions/workflows/sonarcloud.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Frodlik_gym-crm-core)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Frodlik_gym-crm-core&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Frodlik_gym-crm-core)
 
@@ -40,6 +40,7 @@ DB_URL=jdbc:mysql://localhost:3306/gym_crm
 LIQUIBASE_CONTEXTS=dev
 DB_SCHEMA=gym_crm
 ```
+
 3. ## Run the Application
 ```bash
 # Build the project
@@ -77,6 +78,11 @@ To run with a specific profile:
 ```bash
 mvn spring-boot:run -Dspring.profiles.active=dev
 ```
+
+### 📊 Monitoring & Metrics
+- **Health Check:** [http://localhost:8080/actuator/health](http://localhost:8080/actuator/health)
+- **Metrics:** [http://localhost:8080/actuator/metrics](http://localhost:8080/actuator/metrics)
+- **Prometheus metric:** `http://localhost:8080/actuator/metrics/{requiredMetricName}`
 
 # API Documentation
 
