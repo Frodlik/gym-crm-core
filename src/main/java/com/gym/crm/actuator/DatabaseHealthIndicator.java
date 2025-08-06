@@ -27,6 +27,7 @@ public class DatabaseHealthIndicator implements HealthIndicator {
                         .withDetail(TIMESTAMP, Instant.now())
                         .build();
             }
+
             return Health.up()
                     .withDetail(DATABASE, "Available")
                     .withDetail("connectionTimeout", "5 seconds")
