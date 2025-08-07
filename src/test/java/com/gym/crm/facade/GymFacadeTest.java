@@ -194,7 +194,7 @@ class GymFacadeTest {
                 request.getNewPassword()
         );
 
-        when(authenticationContext.getCurrentUserType()).thenReturn("TRAINEE");
+        when(authenticationContext.getCurrentUserType()).thenReturn(Optional.of("TRAINEE"));
 
         facade.changePassword(facadeRequest);
 

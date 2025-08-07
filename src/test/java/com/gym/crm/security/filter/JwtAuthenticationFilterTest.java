@@ -161,7 +161,7 @@ class JwtAuthenticationFilterTest {
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
-        verify(jwtTokenUtil, times(2)).getUsernameFromToken(JWT_TOKEN);
+        verify(jwtTokenUtil).getUsernameFromToken(JWT_TOKEN);
         verify(jwtTokenUtil).validateToken(JWT_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);

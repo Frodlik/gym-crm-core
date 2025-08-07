@@ -90,12 +90,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         Optional<Trainee> traineeOpt = traineeRepository.findTraineeByUser_Username(username);
         if (traineeOpt.isPresent()) {
             validatePassword(password, traineeOpt.get().getUser().getPassword(), TRAINEE, username);
+
             return TRAINEE;
         }
 
         Optional<Trainer> trainerOpt = trainerRepository.findTrainerByUser_Username(username);
         if (trainerOpt.isPresent()) {
             validatePassword(password, trainerOpt.get().getUser().getPassword(), TRAINER, username);
+
             return TRAINER;
         }
 

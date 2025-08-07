@@ -1,16 +1,14 @@
 package com.gym.crm.security;
 
 import jakarta.servlet.http.Cookie;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
-import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
@@ -19,23 +17,21 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationContextTest {
-    private static final String USERNAME = "john.doe";
+    private static final String USERNAME = "naga.siren";
     private static final String JWT_TOKEN = "jwt.token.string";
     private static final String JWT_COOKIE_NAME = "auth-token";
 
     @Mock
     private CustomUserDetailsService userDetailsService;
-    @Mock
-    private HttpServletRequest request;
-    @Mock
-    private HttpSession session;
     @InjectMocks
     private AuthenticationContext authenticationContext;
 
@@ -54,18 +50,19 @@ class AuthenticationContextTest {
 
         when(securityContext.getAuthentication()).thenReturn(authentication);
 
-        String result = authenticationContext.getCurrentUsername();
+        Optional<String> result = authenticationContext.getCurrentUsername();
 
-        assertEquals(USERNAME, result);
+        assertTrue(result.isPresent());
+        assertEquals(USERNAME, result.get());
     }
 
     @Test
     void testGetCurrentUsername_whenUserNotAuthenticated_shouldReturnNull() {
         SecurityContextHolder.clearContext();
 
-        String result = authenticationContext.getCurrentUsername();
+        Optional<String> result = authenticationContext.getCurrentUsername();
 
-        assertNull(result);
+        assertTrue(result.isEmpty());
     }
 
     @Test
@@ -78,119 +75,94 @@ class AuthenticationContextTest {
         when(securityContext.getAuthentication()).thenReturn(authentication);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 
-        String result = authenticationContext.getCurrentUserType();
+        Optional<String> result = authenticationContext.getCurrentUserType();
 
-        assertEquals("TRAINEE", result);
+        assertTrue(result.isPresent());
+        assertEquals("TRAINEE", result.get());
     }
 
     @Test
     void testGetCurrentUserType_whenUserNotAuthenticated_shouldReturnNull() {
-        SecurityContextHolder.clearContext();
+        MockHttpServletRequest mockHttpServletRequest = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockHttpServletRequest));
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(null);
+        Optional<String> result = authenticationContext.getCurrentUserType();
 
-            String result = authenticationContext.getCurrentUserType();
-
-            assertNull(result);
-        }
+        assertTrue(result.isEmpty());
     }
 
     @Test
     void testExtractTokenFromRequest_whenTokenInAuthorizationHeader_shouldReturnToken() {
-        ServletRequestAttributes requestAttributes = mock(ServletRequestAttributes.class);
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.addHeader("Authorization", "Bearer " + JWT_TOKEN);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
-            when(requestAttributes.getRequest()).thenReturn(request);
-            when(request.getHeader("Authorization")).thenReturn("Bearer " + JWT_TOKEN);
+        Optional<String> result = authenticationContext.extractTokenFromRequest();
 
-            String result = authenticationContext.extractTokenFromRequest();
-
-            assertEquals(JWT_TOKEN, result);
-        }
+        assertTrue(result.isPresent());
+        assertEquals(JWT_TOKEN, result.get());
     }
 
     @Test
     void testExtractTokenFromRequest_whenTokenInCookie_shouldReturnToken() {
-        ServletRequestAttributes requestAttributes = mock(ServletRequestAttributes.class);
-        Cookie jwtCookie = new Cookie(JWT_COOKIE_NAME, JWT_TOKEN);
-        Cookie[] cookies = {jwtCookie};
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.setCookies(new Cookie(JWT_COOKIE_NAME, JWT_TOKEN));
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
         setJwtCookieName();
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
-            when(requestAttributes.getRequest()).thenReturn(request);
-            when(request.getHeader("Authorization")).thenReturn(null);
-            when(request.getCookies()).thenReturn(cookies);
+        Optional<String> result = authenticationContext.extractTokenFromRequest();
 
-            String result = authenticationContext.extractTokenFromRequest();
-
-            assertEquals(JWT_TOKEN, result);
-        }
+        assertTrue(result.isPresent());
+        assertEquals(JWT_TOKEN, result.get());
     }
 
     @Test
-    void testExtractTokenFromRequest_whenNoToken_shouldReturnNull() {
-        ServletRequestAttributes requestAttributes = mock(ServletRequestAttributes.class);
+    void testExtractTokenFromRequest_whenNoToken_shouldReturnEmpty() {
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
-            when(requestAttributes.getRequest()).thenReturn(request);
-            when(request.getHeader("Authorization")).thenReturn(null);
-            when(request.getCookies()).thenReturn(null);
+        Optional<String> result = authenticationContext.extractTokenFromRequest();
 
-            String result = authenticationContext.extractTokenFromRequest();
-
-            assertNull(result);
-        }
+        assertTrue(result.isEmpty());
     }
 
     @Test
-    void testExtractTokenFromRequest_whenNoRequestContext_shouldReturnNull() {
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(null);
+    void testExtractTokenFromRequest_whenNoRequestContext_shouldReturnEmpty() {
+        RequestContextHolder.resetRequestAttributes();
 
-            String result = authenticationContext.extractTokenFromRequest();
+        Optional<String> result = authenticationContext.extractTokenFromRequest();
 
-            assertNull(result);
-        }
+        assertTrue(result.isEmpty());
     }
 
     @Test
     void testGetCurrentUserType_whenUserTypeInRequestAttribute_shouldReturnUserType() {
         SecurityContextHolder.clearContext();
-        ServletRequestAttributes requestAttributes = mock(ServletRequestAttributes.class);
         String expectedUserType = "TRAINER";
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        mockRequest.setAttribute("userType", expectedUserType);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
-            when(requestAttributes.getRequest()).thenReturn(request);
-            when(request.getAttribute("userType")).thenReturn(expectedUserType);
+        Optional<String> result = authenticationContext.getCurrentUserType();
 
-            String result = authenticationContext.getCurrentUserType();
-
-            assertEquals(expectedUserType, result);
-        }
+        assertTrue(result.isPresent());
+        assertEquals(expectedUserType, result.get());
     }
 
     @Test
     void testGetCurrentUserType_whenUserTypeInSession_shouldReturnUserType() {
         SecurityContextHolder.clearContext();
-        ServletRequestAttributes requestAttributes = mock(ServletRequestAttributes.class);
         String expectedUserType = "TRAINEE";
+        MockHttpServletRequest mockRequest = new MockHttpServletRequest();
+        MockHttpSession mockSession = new MockHttpSession();
+        mockSession.setAttribute("userType", expectedUserType);
+        mockRequest.setSession(mockSession);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockRequest));
 
-        try (MockedStatic<RequestContextHolder> mockedStatic = Mockito.mockStatic(RequestContextHolder.class)) {
-            mockedStatic.when(RequestContextHolder::getRequestAttributes).thenReturn(requestAttributes);
-            when(requestAttributes.getRequest()).thenReturn(request);
-            when(request.getAttribute("userType")).thenReturn(null);
-            when(request.getSession(false)).thenReturn(session);
-            when(session.getAttribute("userType")).thenReturn(expectedUserType);
+        Optional<String> result = authenticationContext.getCurrentUserType();
 
-            String result = authenticationContext.getCurrentUserType();
-
-            assertEquals(expectedUserType, result);
-        }
+        assertTrue(result.isPresent());
+        assertEquals(expectedUserType, result.get());
     }
 
     private void setJwtCookieName() {

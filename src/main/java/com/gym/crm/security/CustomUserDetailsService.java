@@ -1,7 +1,6 @@
 package com.gym.crm.security;
 
-import com.gym.crm.model.Trainee;
-import com.gym.crm.model.Trainer;
+import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,26 +22,31 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Optional<Trainee> trainee = traineeRepository.findTraineeByUser_Username(username);
-        if (trainee.isPresent()) {
-            return new CustomUserDetails(
-                    trainee.get().getUser().getUsername(),
-                    trainee.get().getUser().getPassword(),
-                    trainee.get().getUser().getIsActive(),
-                    "TRAINEE"
-            );
-        }
+        return findUserByType(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with username: " + username));
+    }
 
-        Optional<Trainer> trainer = trainerRepository.findTrainerByUser_Username(username);
-        if (trainer.isPresent()) {
-            return new CustomUserDetails(
-                    trainer.get().getUser().getUsername(),
-                    trainer.get().getUser().getPassword(),
-                    trainer.get().getUser().getIsActive(),
-                    "TRAINER"
-            );
-        }
+    private Optional<UserDetails> findUserByType(String username) {
+        return findTrainee(username)
+                .or(() -> findTrainer(username));
+    }
 
-        throw new UsernameNotFoundException("User not found with username: " + username);
+    private Optional<UserDetails> findTrainee(String username) {
+        return traineeRepository.findTraineeByUser_Username(username)
+                .map(trainee -> createUserDetails(trainee.getUser(), "TRAINEE"));
+    }
+
+    private Optional<UserDetails> findTrainer(String username) {
+        return trainerRepository.findTrainerByUser_Username(username)
+                .map(trainer -> createUserDetails(trainer.getUser(), "TRAINER"));
+    }
+
+    private CustomUserDetails createUserDetails(User user, String role) {
+        return new CustomUserDetails(
+                user.getUsername(),
+                user.getPassword(),
+                user.getIsActive(),
+                role
+        );
     }
 }

@@ -68,7 +68,6 @@ class AuthenticationServiceImplTest {
 
         verify(response).addCookie(cookieCaptor.capture());
         Cookie capturedCookie = cookieCaptor.getValue();
-
         assertEquals(JWT_COOKIE_NAME, capturedCookie.getName());
         assertEquals(JWT_TOKEN, capturedCookie.getValue());
         assertTrue(capturedCookie.isHttpOnly());
@@ -90,7 +89,6 @@ class AuthenticationServiceImplTest {
 
         verify(response).addCookie(cookieCaptor.capture());
         Cookie capturedCookie = cookieCaptor.getValue();
-
         assertEquals(JWT_COOKIE_NAME, capturedCookie.getName());
         assertEquals(JWT_TOKEN, capturedCookie.getValue());
     }

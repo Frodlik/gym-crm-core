@@ -120,7 +120,8 @@ public class GymFacade {
                 .newPassword(request.getNewPassword())
                 .build();
 
-        String userType = authenticationContext.getCurrentUserType();
+        String userType = authenticationContext.getCurrentUserType()
+                .orElseThrow(() -> new CoreServiceException("Unable to determine user type"));
 
         switch (userType) {
             case "TRAINEE":

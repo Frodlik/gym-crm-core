@@ -20,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -36,42 +37,38 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         log.debug("Processing JWT authentication for: {}", request.getRequestURI());
 
-        String token = extractTokenFromRequest(request);
-
-        if (token != null && isTokenValid(token)) {
-            setAuthenticationFromToken(token, request);
-        }
+        extractTokenFromRequest(request)
+                .filter(this::isTokenValid)
+                .ifPresent(token -> setAuthenticationFromToken(token, request));
 
         chain.doFilter(request, response);
     }
 
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-
-        return extractTokenFromCookies(request);
+    private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
+        return extractBearerToken(request)
+                .or(() -> extractTokenFromCookies(request));
     }
 
-    private String extractTokenFromCookies(HttpServletRequest request) {
-        Cookie[] cookies = request.getCookies();
-        if (cookies == null) {
-            return null;
-        }
+    private Optional<String> extractBearerToken(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader("Authorization"))
+                .filter(header -> header.startsWith("Bearer "))
+                .map(header -> header.substring(7));
+    }
 
-        return Arrays.stream(cookies)
+    private Optional<String> extractTokenFromCookies(HttpServletRequest request) {
+        return Optional.ofNullable(request.getCookies())
+                .stream()
+                .flatMap(Arrays::stream)
                 .filter(cookie -> jwtCookieName.equals(cookie.getName()))
                 .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
     private boolean isTokenValid(String token) {
         try {
-            String username = jwtTokenUtil.getUsernameFromToken(token);
-
-            return username != null && jwtTokenUtil.validateToken(token, username);
+            return extractUsernameFromToken(token)
+                    .map(username -> jwtTokenUtil.validateToken(token, username))
+                    .orElse(false);
         } catch (Exception e) {
             log.debug("Invalid JWT token: {}", e.getMessage());
 
@@ -79,23 +76,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
     }
 
-    private void setAuthenticationFromToken(String token, HttpServletRequest request) {
+    private Optional<String> extractUsernameFromToken(String token) {
         try {
-            String username = jwtTokenUtil.getUsernameFromToken(token);
+            return Optional.ofNullable(jwtTokenUtil.getUsernameFromToken(token));
+        } catch (Exception e) {
+            log.debug("Failed to extract username from token: {}", e.getMessage());
 
-            if (SecurityContextHolder.getContext().getAuthentication() != null) {
-                return;
-            }
+            return Optional.empty();
+        }
+    }
 
+    private void setAuthenticationFromToken(String token, HttpServletRequest request) {
+        if (SecurityContextHolder.getContext().getAuthentication() != null) {
+            return;
+        }
+
+        extractUsernameFromToken(token)
+                .ifPresent(username -> authenticateUser(username, request));
+    }
+
+    private void authenticateUser(String username, HttpServletRequest request) {
+        try {
             UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
 
             log.debug("User {} authenticated successfully", username);
         } catch (Exception e) {
-            log.warn("Failed to set authentication: {}", e.getMessage());
+            log.warn("Failed to authenticate user {}: {}", username, e.getMessage());
         }
     }
 }

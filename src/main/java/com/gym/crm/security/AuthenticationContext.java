@@ -7,11 +7,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
-import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Arrays;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -21,83 +21,83 @@ public class AuthenticationContext {
     @Value("${jwt.cookie.name}")
     private String jwtCookieName;
 
-    public String getCurrentUsername() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication != null && authentication.isAuthenticated()) {
-            return authentication.getName();
-        }
-        return null;
+    public Optional<String> getCurrentUsername() {
+        return Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .filter(Authentication::isAuthenticated)
+                .map(Authentication::getName);
     }
 
-    public String getCurrentUserType() {
-        String username = getCurrentUsername();
-        if (username == null) {
-            return getUserTypeFromRequest();
-        }
-
-        try {
-            CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
-
-            return userDetails.getRole();
-        } catch (Exception e) {
-            return getUserTypeFromRequest();
-        }
+    public Optional<String> getCurrentUserType() {
+        return getCurrentUsername()
+                .flatMap(this::getUserTypeByUsername)
+                .or(this::getUserTypeFromRequest);
     }
 
     public boolean isCurrentUserTrainee() {
-        return "TRAINEE".equals(getCurrentUserType());
+        return getCurrentUserType()
+                .map("TRAINEE"::equals)
+                .orElse(false);
     }
 
     public boolean isCurrentUserTrainer() {
-        return "TRAINER".equals(getCurrentUserType());
+        return getCurrentUserType()
+                .map("TRAINER"::equals)
+                .orElse(false);
     }
 
-    public String extractTokenFromRequest() {
-        HttpServletRequest request = getCurrentRequest();
-        if (request == null) {
-            return null;
-        }
+    public Optional<String> extractTokenFromRequest() {
+        return getCurrentRequest()
+                .flatMap(this::extractTokenFromRequest);
+    }
 
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+    private Optional<String> getUserTypeByUsername(String username) {
+        try {
+            CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(username);
+            return Optional.of(userDetails.getRole());
+        } catch (Exception e) {
+            return Optional.empty();
         }
+    }
 
-        if (request.getCookies() == null) {
-            return null;
-        }
+    private Optional<String> getUserTypeFromRequest() {
+        return getCurrentRequest()
+                .flatMap(this::extractUserTypeFromRequest);
+    }
 
-        return Arrays.stream(request.getCookies())
+    private Optional<String> extractUserTypeFromRequest(HttpServletRequest request) {
+        return Optional.ofNullable((String) request.getAttribute("userType"))
+                .or(() -> extractUserTypeFromSession(request));
+    }
+
+    private Optional<String> extractUserTypeFromSession(HttpServletRequest request) {
+        return Optional.ofNullable(request.getSession(false))
+                .map(session -> (String) session.getAttribute("userType"));
+    }
+
+    private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
+        return extractBearerToken(request)
+                .or(() -> extractTokenFromCookies(request));
+    }
+
+    private Optional<String> extractBearerToken(HttpServletRequest request) {
+        return Optional.ofNullable(request.getHeader("Authorization"))
+                .filter(header -> header.startsWith("Bearer "))
+                .map(header -> header.substring(7));
+    }
+
+    private Optional<String> extractTokenFromCookies(HttpServletRequest request) {
+        return Optional.ofNullable(request.getCookies())
+                .stream()
+                .flatMap(Arrays::stream)
                 .filter(cookie -> jwtCookieName.equals(cookie.getName()))
                 .map(Cookie::getValue)
-                .findFirst()
-                .orElse(null);
+                .findFirst();
     }
 
-    private String getUserTypeFromRequest() {
-        HttpServletRequest request = getCurrentRequest();
-        if (request == null) {
-            return null;
-        }
-
-        String userType = (String) request.getAttribute("userType");
-        if (userType != null) {
-            return userType;
-        }
-
-        if (request.getSession(false) != null) {
-            return (String) request.getSession(false).getAttribute("userType");
-        }
-
-        return null;
-    }
-
-    private HttpServletRequest getCurrentRequest() {
-        RequestAttributes attributes = RequestContextHolder.getRequestAttributes();
-        if (!(attributes instanceof ServletRequestAttributes servletAttributes)) {
-            return null;
-        }
-
-        return servletAttributes.getRequest();
+    private Optional<HttpServletRequest> getCurrentRequest() {
+        return Optional.ofNullable(RequestContextHolder.getRequestAttributes())
+                .filter(ServletRequestAttributes.class::isInstance)
+                .map(ServletRequestAttributes.class::cast)
+                .map(ServletRequestAttributes::getRequest);
     }
 }
