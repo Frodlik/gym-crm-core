@@ -10,7 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -36,8 +36,8 @@ public class AuthController {
             @ApiResponse(description = "Unexpected error")
     })
     @PostMapping("/login")
-    public ResponseEntity<Void> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
-        gymFacade.login(request, httpRequest);
+    public ResponseEntity<Void> login(@RequestBody LoginRequest request, HttpServletResponse response) {
+        gymFacade.login(request, response);
 
         return ResponseEntity.ok().build();
     }

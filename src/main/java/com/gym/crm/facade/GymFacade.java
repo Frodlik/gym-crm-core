@@ -41,8 +41,7 @@ import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,15 +64,10 @@ public class GymFacade {
     private final AuthenticationService authenticationService;
     private final AuthenticationContext authenticationContext;
 
-    public void login(LoginRequest request, HttpServletRequest httpRequest){
-        logger.info("Facade: Logging in user with username: {}", request.getUsername());
+    public void login(LoginRequest request, HttpServletResponse response) {
+        logger.info("Facade: Logging in user");
 
-        String userType = authenticationService.validateCredentials(request.getUsername(), request.getPassword());
-
-        HttpSession session = httpRequest.getSession(true);
-        session.setAttribute("username", request.getUsername());
-        session.setAttribute("userType", userType);
-        session.setAttribute("authenticated", true);
+        authenticationService.authenticateAndSetToken(request.getUsername(), request.getPassword(), response);
     }
 
     public TraineeCreateResponse createTrainee(TraineeCreateRequest request) {
@@ -86,7 +80,7 @@ public class GymFacade {
     }
 
     public TraineeGetResponse getTraineeByUsername(String targetUsername) {
-        logger.debug("Facade: Getting trainee by username: {}", targetUsername);
+        logger.debug("Facade: Getting trainee");
 
         var trainee = traineeService.findByUsername(targetUsername);
 
@@ -94,7 +88,7 @@ public class GymFacade {
     }
 
     public TraineeUpdateResponse updateTrainee(String username, TraineeUpdateRequest request) {
-        logger.info("Facade: Updating trainee with username: {}", username);
+        logger.info("Facade: Updating trainee");
 
         TraineeUpdateRequestDto requestDto = traineeMapper.toUpdateRequest(request);
         var updatedTrainee = traineeService.update(requestDto, username);
@@ -103,7 +97,7 @@ public class GymFacade {
     }
 
     public TraineeAssignedTrainersUpdateResponse updateTraineeTrainersList(String username, TraineeAssignedTrainersUpdateRequest request) {
-        logger.info("Facade: Updating trainers list for trainee with username: {}", username);
+        logger.info("Facade: Updating trainers list for trainee");
 
         TraineeTrainersUpdateRequestDto trainersUpdateRequest = traineeMapper.toTrainersUpdateRequest(request);
         var updatedTrainee = traineeService.updateTraineeTrainersList(trainersUpdateRequest, username);
@@ -112,13 +106,13 @@ public class GymFacade {
     }
 
     public void deleteTrainee(String targetUsername) {
-        logger.info("Facade: Deleting trainee with username: {}", targetUsername);
+        logger.info("Facade: Deleting trainee");
 
         traineeService.deleteByUsername(targetUsername);
     }
 
     public void changePassword(ChangePasswordRequest request) {
-        logger.info("Facade: Changing password for trainee with username: {}", request.getUsername());
+        logger.info("Facade: Changing password for user");
 
         PasswordChangeRequest passwordChangeRequest = PasswordChangeRequest.builder()
                 .username(request.getUsername())
@@ -126,16 +120,17 @@ public class GymFacade {
                 .newPassword(request.getNewPassword())
                 .build();
 
-        String userType = authenticationContext.getCurrentUserType();
+        String userType = authenticationContext.getCurrentUserType()
+                .orElseThrow(() -> new CoreServiceException("Unable to determine user type"));
 
         switch (userType) {
             case "TRAINEE":
                 traineeService.changePassword(passwordChangeRequest);
-                logger.info("Password changed for trainee: {}", passwordChangeRequest.getUsername());
+                logger.info("Password changed for trainee");
                 break;
             case "TRAINER":
                 trainerService.changePassword(passwordChangeRequest);
-                logger.info("Password changed for trainer: {}", passwordChangeRequest.getUsername());
+                logger.info("Password changed for trainer");
                 break;
             default:
                 throw new CoreServiceException("User not found with username: " + request.getUsername());
@@ -143,7 +138,7 @@ public class GymFacade {
     }
 
     public void toggleTraineeActivation(String targetUsername, boolean isActive) {
-        logger.info("Facade: Toggling activation for trainee with username: {}", targetUsername);
+        logger.info("Facade: Toggling activation for trainee");
 
         traineeService.toggleTraineeActivation(targetUsername, isActive);
     }
@@ -158,7 +153,7 @@ public class GymFacade {
     }
 
     public TrainerGetResponse getTrainerByUsername(String targetUsername) {
-        logger.debug("Facade: Getting trainer by username: {}", targetUsername);
+        logger.debug("Facade: Getting trainer by username");
 
         var trainer = trainerService.findByUsername(targetUsername);
 
@@ -166,7 +161,7 @@ public class GymFacade {
     }
 
     public List<AvailableTrainerGetResponse> getTrainersNotAssignedToTrainee(String traineeUsername) {
-        logger.debug("Facade: Getting trainers not assigned to trainee with username: {}", traineeUsername);
+        logger.debug("Facade: Getting trainers not assigned to trainee");
 
         List<AvailableTrainerResponseDto> trainerDtos = trainerService.findTrainersNotAssignedToTrainee(traineeUsername);
 
@@ -176,7 +171,7 @@ public class GymFacade {
     }
 
     public TrainerUpdateResponse updateTrainer(String username, TrainerUpdateRequest request) {
-        logger.info("Facade: Updating trainer with username: {}", username);
+        logger.info("Facade: Updating trainer with username");
 
         TrainerUpdateRequestDto updateRequestDto = trainerMapper.toUpdateRequestDto(request);
         var updatedTrainer = trainerService.update(updateRequestDto, username);
@@ -185,7 +180,7 @@ public class GymFacade {
     }
 
     public void toggleTrainerActivation(String targetUsername, boolean isActive) {
-        logger.info("Facade: Toggling activation for trainer with username: {}", targetUsername);
+        logger.info("Facade: Toggling activation for trainer with username");
 
         trainerService.toggleTrainerActivation(targetUsername, isActive);
     }
@@ -205,7 +200,7 @@ public class GymFacade {
     }
 
     public List<TraineeTrainingGetResponse> getTraineeTrainingsByCriteria(TraineeTrainingCriteriaRequestDto request) {
-        logger.debug("Facade: Getting trainee trainings by criteria for username: {}", request.getTraineeUsername());
+        logger.debug("Facade: Getting trainee trainings by criteria");
 
         TraineeSearchFilter filter = TraineeSearchFilter.builder()
                 .traineeUsername(request.getTraineeUsername())
@@ -223,7 +218,7 @@ public class GymFacade {
     }
 
     public List<TrainerTrainingGetResponse> getTrainerTrainingsByCriteria(TrainerTrainingCriteriaRequest request) {
-        logger.debug("Facade: Getting trainer trainings by criteria for username: {}", request.getTrainerUsername());
+        logger.debug("Facade: Getting trainer trainings by criteria");
 
         TrainerSearchFilter filter = TrainerSearchFilter.builder()
                 .trainerUsername(request.getTrainerUsername())
