@@ -29,7 +29,8 @@ public class ErrorHandler {
             "Invalid trainee username",
             "Invalid trainer username",
             "Invalid training type",
-            "Invalid date format"
+            "Invalid date format",
+            "Username and password are required"
     );
 
     @ExceptionHandler(CoreServiceException.class)

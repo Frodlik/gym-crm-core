@@ -1,6 +1,7 @@
 package com.gym.crm.util;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -72,14 +73,23 @@ public class JwtTokenUtil {
     }
 
     public Boolean isTokenExpired(String token) {
-        final Date tokenExpiration = getExpirationDateFromToken(token);
+        try {
+            final Date tokenExpiration = getExpirationDateFromToken(token);
 
-        return tokenExpiration.before(new Date());
+            return tokenExpiration.before(new Date());
+        } catch (ExpiredJwtException e) {
+            return true;
+        }
     }
 
     public Boolean validateToken(String token, String username) {
-        final String tokenUsername = getUsernameFromToken(token);
+        try {
+            final String tokenUsername = getUsernameFromToken(token);
 
-        return (tokenUsername.equals(username) && !isTokenExpired(token));
+            return (tokenUsername.equals(username) && !isTokenExpired(token));
+        } catch (ExpiredJwtException e) {
+            return false;
+        }
+
     }
 }

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.openapi.model.ChangePasswordRequest;
 import com.gym.crm.openapi.model.LoginRequest;
-import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +53,7 @@ class AuthControllerTest {
         request.setUsername(USERNAME);
         request.setPassword(PASSWORD);
 
-        doNothing().when(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        doNothing().when(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
 
         var result = mockMvc.perform(post(BASE_PATH + "/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -62,7 +62,7 @@ class AuthControllerTest {
         result.andExpect(status().isOk())
                 .andExpect(content().string(""));
 
-        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
@@ -77,7 +77,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isOk());
 
-        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
@@ -92,7 +92,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isOk());
 
-        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
@@ -107,7 +107,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isOk());
 
-        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
@@ -122,7 +122,7 @@ class AuthControllerTest {
 
         result.andExpect(status().isOk());
 
-        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletRequest.class));
+        verify(gymFacade).login(any(LoginRequest.class), any(HttpServletResponse.class));
     }
 
     @Test
