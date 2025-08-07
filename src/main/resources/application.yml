@@ -1,6 +1,8 @@
 spring:
   application:
     name: gym-crm
+  config:
+    import: optional:file:.env[.properties]
 
   datasource:
     url: jdbc:mysql://localhost:3306/gym_crm
@@ -69,3 +71,11 @@ management:
 gca:
   metrics:
     disk-space-threshold-bytes: 104857600
+
+jwt:
+  secret: ${JWT_KEY}
+  expiration: 86400
+  cookie:
+    name: auth-token
+    secure: false
+    http-only: true
