@@ -2,15 +2,14 @@ package com.gym.crm.security.filter;
 
 import com.gym.crm.security.CustomUserDetailsService;
 import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.util.TokenExtractor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Component
@@ -29,39 +27,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenUtil jwtTokenUtil;
     private final CustomUserDetailsService userDetailsService;
-
-    @Value("${jwt.cookie.name}")
-    private String jwtCookieName;
+    private final TokenExtractor tokenExtractor;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         log.debug("Processing JWT authentication for: {}", request.getRequestURI());
 
-        extractAccessTokenFromRequest(request)
+        tokenExtractor.extractAccessToken(request)
                 .filter(this::isValidAccessToken)
                 .ifPresent(token -> setAuthenticationFromToken(token, request));
 
         chain.doFilter(request, response);
-    }
-
-    private Optional<String> extractAccessTokenFromRequest(HttpServletRequest request) {
-        return extractBearerToken(request)
-                .or(() -> extractTokenFromCookies(request));
-    }
-
-    private Optional<String> extractBearerToken(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader("Authorization"))
-                .filter(header -> header.startsWith("Bearer "))
-                .map(header -> header.substring(7));
-    }
-
-    private Optional<String> extractTokenFromCookies(HttpServletRequest request) {
-        return Optional.ofNullable(request.getCookies())
-                .stream()
-                .flatMap(Arrays::stream)
-                .filter(cookie -> jwtCookieName.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst();
     }
 
     private boolean isValidAccessToken(String token) {

@@ -8,6 +8,7 @@ import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.util.TokenExtractor;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
-import java.util.Arrays;
 import java.util.Optional;
 
 @Service
@@ -33,12 +33,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final JwtTokenUtil jwtTokenUtil;
-
-    @Value("${jwt.cookie.name}")
-    private String jwtCookieName;
-
-    @Value("${jwt.refresh.cookie.name}")
-    private String refreshCookieName;
+    private final TokenExtractor tokenExtractor;
 
     @Value("${jwt.cookie.secure}")
     private boolean jwtCookieSecure;
@@ -72,7 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
         logger.debug("Refreshing access token");
 
-        String refreshToken = extractRefreshTokenFromRequest(request)
+        String refreshToken = tokenExtractor.extractRefreshToken(request)
                 .orElseThrow(() -> new NotAuthenticatedException("Refresh token not found"));
 
         try {
@@ -152,33 +147,24 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     private void setAccessTokenCookie(HttpServletResponse response, String token) {
-        Cookie jwtCookie = new Cookie(jwtCookieName, token);
+        Cookie jwtCookie = new Cookie("access-token", token);
         jwtCookie.setHttpOnly(jwtCookieHttpOnly);
         jwtCookie.setSecure(jwtCookieSecure);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(jwtExpiration.intValue());
 
         response.addCookie(jwtCookie);
-        logger.debug("Access token set in cookie: {}", jwtCookieName);
+        logger.debug("Access token set in cookie");
     }
 
     private void setRefreshTokenCookie(HttpServletResponse response, String token) {
-        Cookie refreshCookie = new Cookie(refreshCookieName, token);
+        Cookie refreshCookie = new Cookie("refresh-token", token);
         refreshCookie.setHttpOnly(true);
         refreshCookie.setSecure(jwtCookieSecure);
         refreshCookie.setPath("/");
         refreshCookie.setMaxAge(refreshExpiration.intValue());
 
         response.addCookie(refreshCookie);
-        logger.debug("Refresh token set in cookie: {}", refreshCookieName);
-    }
-
-    private Optional<String> extractRefreshTokenFromRequest(HttpServletRequest request) {
-        return Optional.ofNullable(request.getCookies())
-                .stream()
-                .flatMap(Arrays::stream)
-                .filter(cookie -> refreshCookieName.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst();
+        logger.debug("Refresh token set in cookie");
     }
 }
