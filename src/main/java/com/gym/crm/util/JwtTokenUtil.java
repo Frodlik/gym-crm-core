@@ -17,8 +17,12 @@ import java.util.function.Function;
 public class JwtTokenUtil {
     @Value("${jwt.secret}")
     private String secret;
+
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
+
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -31,19 +35,24 @@ public class JwtTokenUtil {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username) {
-        return createToken(username);
+    public String generateAccessToken(String username) {
+        return createToken(username, jwtExpiration, "access");
     }
 
-    private String createToken(String subject) {
+    public String generateRefreshToken(String username) {
+        return createToken(username, refreshExpiration, "refresh");
+    }
+
+    private String createToken(String subject, Long expiration, String tokenType) {
         Instant now = Instant.now();
-        Instant expirationTime = now.plusSeconds(jwtExpiration);
+        Instant expirationTime = now.plusSeconds(expiration);
 
         return Jwts.builder()
                 .header()
                 .type("JWT")
                 .and()
                 .subject(subject)
+                .claim("type", tokenType)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expirationTime))
                 .signWith(getSigningKey())
@@ -52,6 +61,10 @@ public class JwtTokenUtil {
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public String getTokenType(String token) {
+        return getClaimFromToken(token, claims -> claims.get("type", String.class));
     }
 
     public Date getExpirationDateFromToken(String token) {
@@ -82,14 +95,29 @@ public class JwtTokenUtil {
         }
     }
 
-    public Boolean validateToken(String token, String username) {
+    public Boolean validateAccessToken(String token, String username) {
         try {
             final String tokenUsername = getUsernameFromToken(token);
+            final String tokenType = getTokenType(token);
 
-            return (tokenUsername.equals(username) && !isTokenExpired(token));
+            return tokenUsername.equals(username) && "access".equals(tokenType) && !isTokenExpired(token);
         } catch (ExpiredJwtException e) {
             return false;
         }
+    }
 
+    public Boolean validateRefreshToken(String token, String username) {
+        try {
+            final String tokenUsername = getUsernameFromToken(token);
+            final String tokenType = getTokenType(token);
+
+            return tokenUsername.equals(username) && "refresh".equals(tokenType) && !isTokenExpired(token);
+        } catch (ExpiredJwtException e) {
+            return false;
+        }
+    }
+
+    public Boolean validateToken(String token, String username) {
+        return validateAccessToken(token, username);
     }
 }

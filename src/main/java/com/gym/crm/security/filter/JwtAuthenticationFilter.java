@@ -37,14 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         log.debug("Processing JWT authentication for: {}", request.getRequestURI());
 
-        extractTokenFromRequest(request)
-                .filter(this::isTokenValid)
+        extractAccessTokenFromRequest(request)
+                .filter(this::isValidAccessToken)
                 .ifPresent(token -> setAuthenticationFromToken(token, request));
 
         chain.doFilter(request, response);
     }
 
-    private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
+    private Optional<String> extractAccessTokenFromRequest(HttpServletRequest request) {
         return extractBearerToken(request)
                 .or(() -> extractTokenFromCookies(request));
     }
@@ -64,14 +64,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 .findFirst();
     }
 
-    private boolean isTokenValid(String token) {
+    private boolean isValidAccessToken(String token) {
         try {
             return extractUsernameFromToken(token)
-                    .map(username -> jwtTokenUtil.validateToken(token, username))
+                    .map(username -> jwtTokenUtil.validateAccessToken(token, username))
                     .orElse(false);
         } catch (Exception e) {
-            log.debug("Invalid JWT token: {}", e.getMessage());
-
+            log.debug("Invalid access token: {}", e.getMessage());
             return false;
         }
     }
