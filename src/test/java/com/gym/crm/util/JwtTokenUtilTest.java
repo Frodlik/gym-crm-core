@@ -27,7 +27,7 @@ class JwtTokenUtilTest {
     @Test
     void testGenerateToken_whenValidUsername_shouldGenerateValidToken() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         assertNotNull(token);
         assertTrue(token.contains("."));
@@ -39,7 +39,7 @@ class JwtTokenUtilTest {
     @Test
     void testGetUsernameFromToken_whenValidToken_shouldReturnUsername() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         String result = jwtTokenUtil.getUsernameFromToken(token);
 
@@ -49,7 +49,7 @@ class JwtTokenUtilTest {
     @Test
     void testGetExpirationDateFromToken_whenValidToken_shouldReturnFutureDate() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
         Date now = new Date();
 
         Date expirationDate = jwtTokenUtil.getExpirationDateFromToken(token);
@@ -61,7 +61,7 @@ class JwtTokenUtilTest {
     @Test
     void testIsTokenExpired_whenValidToken_shouldReturnFalse() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         Boolean isExpired = jwtTokenUtil.isTokenExpired(token);
 
@@ -71,7 +71,7 @@ class JwtTokenUtilTest {
     @Test
     void testValidateToken_whenValidTokenAndMatchingUsername_shouldReturnTrue() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         Boolean isValid = jwtTokenUtil.validateToken(token, USERNAME);
 
@@ -81,7 +81,7 @@ class JwtTokenUtilTest {
     @Test
     void testValidateToken_whenValidTokenButDifferentUsername_shouldReturnFalse() {
         setJwtProperties();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
         String differentUsername = "jane.smith";
 
         Boolean isValid = jwtTokenUtil.validateToken(token, differentUsername);
@@ -92,7 +92,7 @@ class JwtTokenUtilTest {
     @Test
     void testValidateToken_whenExpiredToken_shouldReturnFalse() {
         setJwtPropertiesWithShortExpiration();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         try {
             Thread.sleep(1100);
@@ -127,7 +127,7 @@ class JwtTokenUtilTest {
         ReflectionTestUtils.setField(jwtTokenUtil, "secret", shortSecret);
         ReflectionTestUtils.setField(jwtTokenUtil, "jwtExpiration", JWT_EXPIRATION);
 
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         assertNotNull(token);
         String extractedUsername = jwtTokenUtil.getUsernameFromToken(token);
@@ -137,7 +137,7 @@ class JwtTokenUtilTest {
     @Test
     void testIsTokenExpired_whenExpiredToken_shouldReturnTrue() {
         setJwtPropertiesWithShortExpiration();
-        String token = jwtTokenUtil.generateToken(USERNAME);
+        String token = jwtTokenUtil.generateAccessToken(USERNAME);
 
         try {
             Thread.sleep(1100);

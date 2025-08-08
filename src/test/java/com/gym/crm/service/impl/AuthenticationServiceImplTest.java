@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -38,6 +39,9 @@ class AuthenticationServiceImplTest {
     private static final String JWT_TOKEN = "jwt.token.string";
     private static final String JWT_COOKIE_NAME = "auth-token";
     private static final Long JWT_EXPIRATION = 86400L;
+    private static final String REFRESH_TOKEN = "refresh.token";
+    private static final String REFRESH_COOKIE_NAME = "refresh-token";
+    private static final Long REFRESH_EXPIRATION = 604800L;
 
     @Captor
     private ArgumentCaptor<Cookie> cookieCaptor;
@@ -62,12 +66,12 @@ class AuthenticationServiceImplTest {
 
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-        when(jwtTokenUtil.generateToken(USERNAME)).thenReturn(JWT_TOKEN);
+        when(jwtTokenUtil.generateAccessToken(USERNAME)).thenReturn(JWT_TOKEN);
 
         authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response);
 
-        verify(response).addCookie(cookieCaptor.capture());
-        Cookie capturedCookie = cookieCaptor.getValue();
+        verify(response, times(2)).addCookie(cookieCaptor.capture());
+        Cookie capturedCookie = cookieCaptor.getAllValues().getFirst();
         assertEquals(JWT_COOKIE_NAME, capturedCookie.getName());
         assertEquals(JWT_TOKEN, capturedCookie.getValue());
         assertTrue(capturedCookie.isHttpOnly());
@@ -83,12 +87,12 @@ class AuthenticationServiceImplTest {
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
         when(trainerRepository.findTrainerByUser_Username(USERNAME)).thenReturn(Optional.of(trainer));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-        when(jwtTokenUtil.generateToken(USERNAME)).thenReturn(JWT_TOKEN);
+        when(jwtTokenUtil.generateAccessToken(USERNAME)).thenReturn(JWT_TOKEN);
 
         authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response);
 
-        verify(response).addCookie(cookieCaptor.capture());
-        Cookie capturedCookie = cookieCaptor.getValue();
+        verify(response, times(2)).addCookie(cookieCaptor.capture());
+        Cookie capturedCookie = cookieCaptor.getAllValues().getFirst();
         assertEquals(JWT_COOKIE_NAME, capturedCookie.getName());
         assertEquals(JWT_TOKEN, capturedCookie.getValue());
     }
@@ -105,7 +109,7 @@ class AuthenticationServiceImplTest {
 
         assertEquals("Invalid password for trainee: " + USERNAME, exception.getMessage());
         verify(response, never()).addCookie(any());
-        verify(jwtTokenUtil, never()).generateToken(any());
+        verify(jwtTokenUtil, never()).generateAccessToken(any());
     }
 
     @Test
@@ -118,7 +122,7 @@ class AuthenticationServiceImplTest {
 
         assertEquals("User not found: " + USERNAME, exception.getMessage());
         verify(response, never()).addCookie(any());
-        verify(jwtTokenUtil, never()).generateToken(any());
+        verify(jwtTokenUtil, never()).generateAccessToken(any());
     }
 
     @Test
@@ -263,8 +267,12 @@ class AuthenticationServiceImplTest {
 
     private void setJwtProperties() {
         ReflectionTestUtils.setField(authenticationService, "jwtCookieName", JWT_COOKIE_NAME);
+        ReflectionTestUtils.setField(authenticationService, "refreshCookieName", REFRESH_COOKIE_NAME);
         ReflectionTestUtils.setField(authenticationService, "jwtCookieSecure", false);
         ReflectionTestUtils.setField(authenticationService, "jwtCookieHttpOnly", true);
         ReflectionTestUtils.setField(authenticationService, "jwtExpiration", JWT_EXPIRATION);
+        ReflectionTestUtils.setField(authenticationService, "refreshExpiration", REFRESH_EXPIRATION);
+
+        when(jwtTokenUtil.generateRefreshToken(USERNAME)).thenReturn(REFRESH_TOKEN);
     }
 }

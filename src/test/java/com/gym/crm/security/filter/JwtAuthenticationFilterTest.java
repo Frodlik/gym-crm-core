@@ -60,13 +60,13 @@ class JwtAuthenticationFilterTest {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(request.getHeader("Authorization")).thenReturn("Bearer " + JWT_TOKEN);
         when(jwtTokenUtil.getUsernameFromToken(JWT_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateToken(JWT_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenUtil.validateAccessToken(JWT_TOKEN, USERNAME)).thenReturn(true);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(jwtTokenUtil, times(2)).getUsernameFromToken(JWT_TOKEN);
-        verify(jwtTokenUtil).validateToken(JWT_TOKEN, USERNAME);
+        verify(jwtTokenUtil).validateAccessToken(JWT_TOKEN, USERNAME);
         verify(userDetailsService).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -83,13 +83,13 @@ class JwtAuthenticationFilterTest {
         when(request.getHeader("Authorization")).thenReturn(null);
         when(request.getCookies()).thenReturn(cookies);
         when(jwtTokenUtil.getUsernameFromToken(JWT_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateToken(JWT_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenUtil.validateAccessToken(JWT_TOKEN, USERNAME)).thenReturn(true);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(jwtTokenUtil, times(2)).getUsernameFromToken(JWT_TOKEN);
-        verify(jwtTokenUtil).validateToken(JWT_TOKEN, USERNAME);
+        verify(jwtTokenUtil).validateAccessToken(JWT_TOKEN, USERNAME);
         verify(userDetailsService).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -134,12 +134,12 @@ class JwtAuthenticationFilterTest {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(request.getHeader("Authorization")).thenReturn("Bearer " + JWT_TOKEN);
         when(jwtTokenUtil.getUsernameFromToken(JWT_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateToken(JWT_TOKEN, USERNAME)).thenReturn(false);
+        when(jwtTokenUtil.validateAccessToken(JWT_TOKEN, USERNAME)).thenReturn(false);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(jwtTokenUtil).getUsernameFromToken(JWT_TOKEN);
-        verify(jwtTokenUtil).validateToken(JWT_TOKEN, USERNAME);
+        verify(jwtTokenUtil).validateAccessToken(JWT_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -157,12 +157,12 @@ class JwtAuthenticationFilterTest {
         when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(request.getHeader("Authorization")).thenReturn("Bearer " + JWT_TOKEN);
         when(jwtTokenUtil.getUsernameFromToken(JWT_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateToken(JWT_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenUtil.validateAccessToken(JWT_TOKEN, USERNAME)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(jwtTokenUtil).getUsernameFromToken(JWT_TOKEN);
-        verify(jwtTokenUtil).validateToken(JWT_TOKEN, USERNAME);
+        verify(jwtTokenUtil).validateAccessToken(JWT_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
     }
