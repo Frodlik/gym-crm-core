@@ -10,6 +10,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -53,6 +54,19 @@ public class AuthController {
     @PutMapping("/login")
     public ResponseEntity<Void> changeLogin(@RequestBody ChangePasswordRequest request) {
         gymFacade.changePassword(request);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(summary = "User logout", description = "Logs out the current user by clearing authentication tokens")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Successfully logged out"),
+            @ApiResponse(responseCode = "500", description = "Internal server error", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(description = "Unexpected error")
+    })
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(HttpServletRequest request, HttpServletResponse response) {
+        gymFacade.logout(request, response);
 
         return ResponseEntity.ok().build();
     }
