@@ -1,5 +1,6 @@
-package com.gym.crm.util;
+package com.gym.crm.security;
 
+import com.gym.crm.service.enums.TokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,14 +12,19 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Component
-public class JwtTokenUtil {
+public class JwtTokenHandler {
     @Value("${jwt.secret}")
     private String secret;
+
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
+
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
 
     private SecretKey getSigningKey() {
         byte[] keyBytes = secret.getBytes(StandardCharsets.UTF_8);
@@ -28,22 +34,28 @@ public class JwtTokenUtil {
 
             return Keys.hmacShaKeyFor(paddedKey);
         }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(String username) {
-        return createToken(username);
+    public String generateAccessToken(String username) {
+        return createToken(username, jwtExpiration, "access");
     }
 
-    private String createToken(String subject) {
+    public String generateRefreshToken(String username) {
+        return createToken(username, refreshExpiration, "refresh");
+    }
+
+    private String createToken(String subject, Long expiration, String tokenType) {
         Instant now = Instant.now();
-        Instant expirationTime = now.plusSeconds(jwtExpiration);
+        Instant expirationTime = now.plusSeconds(expiration);
 
         return Jwts.builder()
                 .header()
                 .type("JWT")
                 .and()
                 .subject(subject)
+                .claim("type", tokenType)
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expirationTime))
                 .signWith(getSigningKey())
@@ -52,6 +64,15 @@ public class JwtTokenUtil {
 
     public String getUsernameFromToken(String token) {
         return getClaimFromToken(token, Claims::getSubject);
+    }
+
+    public String getTokenType(String token) {
+        return getClaimFromToken(token, claims -> claims.get("type", String.class));
+    }
+
+    public TokenType getTokenTypeEnum(String token) {
+        String tokenTypeString = getTokenType(token);
+        return TokenType.fromValue(tokenTypeString);
     }
 
     public Date getExpirationDateFromToken(String token) {
@@ -72,7 +93,7 @@ public class JwtTokenUtil {
                 .getPayload();
     }
 
-    public Boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         try {
             final Date tokenExpiration = getExpirationDateFromToken(token);
 
@@ -82,14 +103,25 @@ public class JwtTokenUtil {
         }
     }
 
-    public Boolean validateToken(String token, String username) {
+    public boolean validateAccessToken(String token, String username) {
         try {
-            final String tokenUsername = getUsernameFromToken(token);
+            String tokenUsername = getUsernameFromToken(token);
+            TokenType tokenType = getTokenTypeEnum(token);
 
-            return (tokenUsername.equals(username) && !isTokenExpired(token));
-        } catch (ExpiredJwtException e) {
+            return Objects.equals(username, tokenUsername) && TokenType.ACCESS == tokenType && !isTokenExpired(token);
+        } catch (Exception e) {
             return false;
         }
+    }
 
+    public boolean validateRefreshToken(String token, String username) {
+        try {
+            String tokenUsername = getUsernameFromToken(token);
+            TokenType tokenType = getTokenTypeEnum(token);
+
+            return Objects.equals(username, tokenUsername) && TokenType.REFRESH == tokenType && !isTokenExpired(token);
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

@@ -1,16 +1,15 @@
 package com.gym.crm.security.filter;
 
 import com.gym.crm.security.CustomUserDetailsService;
-import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.security.JwtTokenHandler;
+import com.gym.crm.util.TokenExtractor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -19,7 +18,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 
 @Component
@@ -27,61 +25,33 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenHandler jwtTokenHandler;
     private final CustomUserDetailsService userDetailsService;
-
-    @Value("${jwt.cookie.name}")
-    private String jwtCookieName;
+    private final TokenExtractor tokenExtractor;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        log.debug("Processing JWT authentication for: {}", request.getRequestURI());
-
-        extractTokenFromRequest(request)
-                .filter(this::isTokenValid)
+        tokenExtractor.extractAccessToken(request)
+                .filter(this::isValidAccessToken)
                 .ifPresent(token -> setAuthenticationFromToken(token, request));
 
         chain.doFilter(request, response);
     }
 
-    private Optional<String> extractTokenFromRequest(HttpServletRequest request) {
-        return extractBearerToken(request)
-                .or(() -> extractTokenFromCookies(request));
-    }
-
-    private Optional<String> extractBearerToken(HttpServletRequest request) {
-        return Optional.ofNullable(request.getHeader("Authorization"))
-                .filter(header -> header.startsWith("Bearer "))
-                .map(header -> header.substring(7));
-    }
-
-    private Optional<String> extractTokenFromCookies(HttpServletRequest request) {
-        return Optional.ofNullable(request.getCookies())
-                .stream()
-                .flatMap(Arrays::stream)
-                .filter(cookie -> jwtCookieName.equals(cookie.getName()))
-                .map(Cookie::getValue)
-                .findFirst();
-    }
-
-    private boolean isTokenValid(String token) {
+    private boolean isValidAccessToken(String token) {
         try {
             return extractUsernameFromToken(token)
-                    .map(username -> jwtTokenUtil.validateToken(token, username))
+                    .map(username -> jwtTokenHandler.validateAccessToken(token, username))
                     .orElse(false);
         } catch (Exception e) {
-            log.debug("Invalid JWT token: {}", e.getMessage());
-
             return false;
         }
     }
 
     private Optional<String> extractUsernameFromToken(String token) {
         try {
-            return Optional.ofNullable(jwtTokenUtil.getUsernameFromToken(token));
+            return Optional.ofNullable(jwtTokenHandler.getUsernameFromToken(token));
         } catch (Exception e) {
-            log.debug("Failed to extract username from token: {}", e.getMessage());
-
             return Optional.empty();
         }
     }
@@ -103,8 +73,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            log.debug("User {} authenticated successfully", username);
         } catch (Exception e) {
             log.warn("Failed to authenticate user {}: {}", username, e.getMessage());
         }

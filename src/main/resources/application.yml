@@ -74,8 +74,19 @@ gca:
 
 jwt:
   secret: ${JWT_KEY}
-  expiration: 86400
+  expiration: 900
   cookie:
-    name: auth-token
+    name: access-token
     secure: false
     http-only: true
+  refresh:
+    expiration: 604800
+    cookie:
+      name: refresh-token
+
+server:
+  servlet:
+    session:
+      cookie:
+        same-site: lax
+        secure: false

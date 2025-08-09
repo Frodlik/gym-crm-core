@@ -7,9 +7,12 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
 import com.gym.crm.service.AuthenticationService;
-import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.service.enums.UserType;
+import com.gym.crm.security.JwtTokenHandler;
+import com.gym.crm.util.TokenExtractor;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -19,21 +22,19 @@ import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
+import static com.gym.crm.service.enums.UserType.TRAINEE;
+import static com.gym.crm.service.enums.UserType.TRAINER;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationServiceImpl implements AuthenticationService {
     private static final Logger logger = LoggerFactory.getLogger(AuthenticationServiceImpl.class);
 
-    private static final String TRAINER = "TRAINER";
-    private static final String TRAINEE = "TRAINEE";
-
     private final TraineeRepository traineeRepository;
     private final TrainerRepository trainerRepository;
     private final UserCredentialsGenerator userCredentialsGenerator;
-    private final JwtTokenUtil jwtTokenUtil;
-
-    @Value("${jwt.cookie.name}")
-    private String jwtCookieName;
+    private final JwtTokenHandler jwtTokenHandler;
+    private final TokenExtractor tokenExtractor;
 
     @Value("${jwt.cookie.secure}")
     private boolean jwtCookieSecure;
@@ -44,25 +45,47 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     @Value("${jwt.expiration}")
     private Long jwtExpiration;
 
+    @Value("${jwt.refresh.expiration}")
+    private Long refreshExpiration;
+
     @Override
     public void authenticateAndSetToken(String username, String password, HttpServletResponse response) {
-        logger.info("Authenticating user: {}", username);
-
         if (username == null || password == null) {
             throw new CoreServiceException("Username and password are required");
         }
 
-        String userType = validateUserCredentials(username, password);
-        String token = jwtTokenUtil.generateToken(username);
+        UserType userType = validateUserCredentials(username, password);
+        String accessToken = jwtTokenHandler.generateAccessToken(username);
+        String refreshToken = jwtTokenHandler.generateRefreshToken(username);
 
-        setJwtCookie(response, token);
+        setTokenCookies(response, accessToken, refreshToken);
         logger.info("{} authenticated successfully: {}", userType, username);
     }
 
     @Override
-    public String validateCredentials(String username, String password) {
-        logger.debug("Validating credentials for user: {}", username);
+    public void refreshAccessToken(HttpServletRequest request, HttpServletResponse response) {
+        String refreshToken = tokenExtractor.extractRefreshToken(request)
+                .orElseThrow(() -> new NotAuthenticatedException("Refresh token not found"));
 
+        try {
+            String username = jwtTokenHandler.getUsernameFromToken(refreshToken);
+            boolean isValid = jwtTokenHandler.validateRefreshToken(refreshToken, username);
+
+            if (!isValid) {
+                throw new NotAuthenticatedException("Invalid refresh token");
+            }
+
+            String newAccessToken = jwtTokenHandler.generateAccessToken(username);
+            String newRefreshToken = jwtTokenHandler.generateRefreshToken(username);
+
+            setTokenCookies(response, newAccessToken, newRefreshToken);
+        } catch (Exception e) {
+            throw new NotAuthenticatedException("Failed to refresh token");
+        }
+    }
+
+    @Override
+    public UserType validateCredentials(String username, String password) {
         if (username == null || password == null) {
             throw new NotAuthenticatedException("Username and password are required");
         }
@@ -72,21 +95,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void validateTraineeCredentials(String username, String password) {
-        String userType = validateCredentials(username, password);
-        if (!TRAINEE.equals(userType)) {
-            throw new NotAuthenticatedException("Access denied. Only trainees can perform this operation.");
+        UserType userType = validateCredentials(username, password);
+
+        if (userType != TRAINEE) {
+            throw new NotAuthenticatedException("Access denied. Only trainees can perform this operation");
         }
     }
 
     @Override
     public void validateTrainerCredentials(String username, String password) {
-        String userType = validateCredentials(username, password);
-        if (!TRAINER.equals(userType)) {
-            throw new NotAuthenticatedException("Access denied. Only trainers can perform this operation.");
+        UserType userType = validateCredentials(username, password);
+
+        if (userType != TRAINER) {
+            throw new NotAuthenticatedException("Access denied. Only trainers can perform this operation");
         }
     }
 
-    private String validateUserCredentials(String username, String password) {
+    private UserType validateUserCredentials(String username, String password) {
         Optional<Trainee> traineeOpt = traineeRepository.findTraineeByUser_Username(username);
         if (traineeOpt.isPresent()) {
             validatePassword(password, traineeOpt.get().getUser().getPassword(), TRAINEE, username);
@@ -104,22 +129,38 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         throw new CoreServiceException("User not found: " + username);
     }
 
-    private void validatePassword(String rawPassword, String encodedPassword, String userType, String username) {
+    private void validatePassword(String rawPassword, String encodedPassword, UserType userType, String username) {
         if (!userCredentialsGenerator.matches(rawPassword, encodedPassword)) {
             throw new NotAuthenticatedException(
-                    String.format("Invalid password for %s: %s", userType.toLowerCase(), username)
+                    String.format("Invalid password for %s: %s", userType.toString().toLowerCase(), username)
             );
         }
     }
 
-    private void setJwtCookie(HttpServletResponse response, String token) {
-        Cookie jwtCookie = new Cookie(jwtCookieName, token);
+    private void setTokenCookies(HttpServletResponse response, String accessToken, String refreshToken) {
+        setAccessTokenCookie(response, accessToken);
+        setRefreshTokenCookie(response, refreshToken);
+    }
+
+    private void setAccessTokenCookie(HttpServletResponse response, String token) {
+        Cookie jwtCookie = new Cookie("access-token", token);
         jwtCookie.setHttpOnly(jwtCookieHttpOnly);
         jwtCookie.setSecure(jwtCookieSecure);
         jwtCookie.setPath("/");
         jwtCookie.setMaxAge(jwtExpiration.intValue());
 
         response.addCookie(jwtCookie);
-        logger.debug("JWT token set in cookie: {}", jwtCookieName);
+        logger.debug("Access token set in cookie");
+    }
+
+    private void setRefreshTokenCookie(HttpServletResponse response, String token) {
+        Cookie refreshCookie = new Cookie("refresh-token", token);
+        refreshCookie.setHttpOnly(true);
+        refreshCookie.setSecure(jwtCookieSecure);
+        refreshCookie.setPath("/");
+        refreshCookie.setMaxAge(refreshExpiration.intValue());
+
+        response.addCookie(refreshCookie);
+        logger.debug("Refresh token set in cookie");
     }
 }
