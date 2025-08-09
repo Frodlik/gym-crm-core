@@ -7,7 +7,8 @@ import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
-import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.service.enums.UserType;
+import com.gym.crm.security.JwtTokenHandler;
 import com.gym.crm.util.TokenExtractor;
 import com.gym.crm.util.UserCredentialsGenerator;
 import jakarta.servlet.http.Cookie;
@@ -55,7 +56,7 @@ class AuthenticationServiceImplTest {
     @Mock
     private UserCredentialsGenerator userCredentialsGenerator;
     @Mock
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
     @Mock
     private TokenExtractor tokenExtractor;
     @Mock
@@ -72,8 +73,8 @@ class AuthenticationServiceImplTest {
 
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-        when(jwtTokenUtil.generateAccessToken(USERNAME)).thenReturn(ACCESS_TOKEN);
-        when(jwtTokenUtil.generateRefreshToken(USERNAME)).thenReturn(REFRESH_TOKEN);
+        when(jwtTokenHandler.generateAccessToken(USERNAME)).thenReturn(ACCESS_TOKEN);
+        when(jwtTokenHandler.generateRefreshToken(USERNAME)).thenReturn(REFRESH_TOKEN);
 
         authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response);
 
@@ -96,8 +97,8 @@ class AuthenticationServiceImplTest {
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
         when(trainerRepository.findTrainerByUser_Username(USERNAME)).thenReturn(Optional.of(trainer));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
-        when(jwtTokenUtil.generateAccessToken(USERNAME)).thenReturn(ACCESS_TOKEN);
-        when(jwtTokenUtil.generateRefreshToken(USERNAME)).thenReturn(REFRESH_TOKEN);
+        when(jwtTokenHandler.generateAccessToken(USERNAME)).thenReturn(ACCESS_TOKEN);
+        when(jwtTokenHandler.generateRefreshToken(USERNAME)).thenReturn(REFRESH_TOKEN);
 
         authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response);
 
@@ -119,7 +120,7 @@ class AuthenticationServiceImplTest {
 
         assertEquals("Invalid password for trainee: " + USERNAME, exception.getMessage());
         verify(response, never()).addCookie(any());
-        verify(jwtTokenUtil, never()).generateAccessToken(any());
+        verify(jwtTokenHandler, never()).generateAccessToken(any());
     }
 
     @Test
@@ -132,7 +133,7 @@ class AuthenticationServiceImplTest {
 
         assertEquals("User not found: " + USERNAME, exception.getMessage());
         verify(response, never()).addCookie(any());
-        verify(jwtTokenUtil, never()).generateAccessToken(any());
+        verify(jwtTokenHandler, never()).generateAccessToken(any());
     }
 
     @Test
@@ -164,15 +165,15 @@ class AuthenticationServiceImplTest {
         setJwtProperties();
 
         when(tokenExtractor.extractRefreshToken(request)).thenReturn(Optional.of(REFRESH_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(REFRESH_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateRefreshToken(REFRESH_TOKEN, USERNAME)).thenReturn(true);
-        when(jwtTokenUtil.generateAccessToken(USERNAME)).thenReturn("new.access.token");
-        when(jwtTokenUtil.generateRefreshToken(USERNAME)).thenReturn("new.refresh.token");
+        when(jwtTokenHandler.getUsernameFromToken(REFRESH_TOKEN)).thenReturn(USERNAME);
+        when(jwtTokenHandler.validateRefreshToken(REFRESH_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenHandler.generateAccessToken(USERNAME)).thenReturn("new.access.token");
+        when(jwtTokenHandler.generateRefreshToken(USERNAME)).thenReturn("new.refresh.token");
 
         authenticationService.refreshAccessToken(request, response);
 
         verify(tokenExtractor).extractRefreshToken(request);
-        verify(jwtTokenUtil).validateRefreshToken(REFRESH_TOKEN, USERNAME);
+        verify(jwtTokenHandler).validateRefreshToken(REFRESH_TOKEN, USERNAME);
         verify(response, times(2)).addCookie(any(Cookie.class));
     }
 
@@ -194,9 +195,9 @@ class AuthenticationServiceImplTest {
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
 
-        String result = authenticationService.validateCredentials(USERNAME, PASSWORD);
+        UserType actual = authenticationService.validateCredentials(USERNAME, PASSWORD);
 
-        assertEquals("TRAINEE", result);
+        assertEquals("TRAINEE", actual.toString());
         verify(traineeRepository).findTraineeByUser_Username(USERNAME);
     }
 
@@ -208,9 +209,9 @@ class AuthenticationServiceImplTest {
         when(trainerRepository.findTrainerByUser_Username(USERNAME)).thenReturn(Optional.of(trainer));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(true);
 
-        String result = authenticationService.validateCredentials(USERNAME, PASSWORD);
+        UserType actual = authenticationService.validateCredentials(USERNAME, PASSWORD);
 
-        assertEquals("TRAINER", result);
+        assertEquals("TRAINER", actual.toString());
         verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(trainerRepository).findTrainerByUser_Username(USERNAME);
     }
@@ -249,7 +250,7 @@ class AuthenticationServiceImplTest {
         NotAuthenticatedException exception = assertThrows(NotAuthenticatedException.class,
                 () -> authenticationService.validateTraineeCredentials(USERNAME, PASSWORD));
 
-        assertEquals("Access denied. Only trainees can perform this operation.", exception.getMessage());
+        assertEquals("Access denied. Only trainees can perform this operation", exception.getMessage());
     }
 
     @Test
@@ -275,7 +276,7 @@ class AuthenticationServiceImplTest {
         NotAuthenticatedException exception = assertThrows(NotAuthenticatedException.class,
                 () -> authenticationService.validateTrainerCredentials(USERNAME, PASSWORD));
 
-        assertEquals("Access denied. Only trainers can perform this operation.", exception.getMessage());
+        assertEquals("Access denied. Only trainers can perform this operation", exception.getMessage());
     }
 
     private Trainee createTrainee() {

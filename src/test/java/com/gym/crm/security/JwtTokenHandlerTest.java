@@ -1,4 +1,4 @@
-package com.gym.crm.util;
+package com.gym.crm.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -17,47 +17,47 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
-class JwtTokenUtilTest {
+class JwtTokenHandlerTest {
     private static final String USERNAME = "anti.mage";
     private static final String JWT_SECRET = "myVeryLongSecretKeyForJWTTokenGenerationThatIsAtLeast32CharactersLong";
     private static final Long JWT_EXPIRATION = 3600L;
     private static final Long REFRESH_EXPIRATION = 86400L;
 
     @InjectMocks
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
 
     @Test
     void testGenerateAccessToken_whenValidUsername_shouldGenerateValidToken() {
         configureJwtProperties();
 
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
         assertNotNull(token);
         assertTrue(token.contains("."));
-        String extractedUsername = jwtTokenUtil.getUsernameFromToken(token);
+        String extractedUsername = jwtTokenHandler.getUsernameFromToken(token);
         assertEquals(USERNAME, extractedUsername);
-        assertEquals("access", jwtTokenUtil.getTokenType(token));
+        assertEquals("access", jwtTokenHandler.getTokenType(token));
     }
 
     @Test
     void testGenerateRefreshToken_whenValidUsername_shouldGenerateValidRefreshToken() {
         configureJwtProperties();
 
-        String token = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String token = jwtTokenHandler.generateRefreshToken(USERNAME);
 
         assertNotNull(token);
         assertTrue(token.contains("."));
-        String extractedUsername = jwtTokenUtil.getUsernameFromToken(token);
+        String extractedUsername = jwtTokenHandler.getUsernameFromToken(token);
         assertEquals(USERNAME, extractedUsername);
-        assertEquals("refresh", jwtTokenUtil.getTokenType(token));
+        assertEquals("refresh", jwtTokenHandler.getTokenType(token));
     }
 
     @Test
     void testGetUsernameFromToken_whenValidToken_shouldReturnUsername() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        String result = jwtTokenUtil.getUsernameFromToken(token);
+        String result = jwtTokenHandler.getUsernameFromToken(token);
 
         assertEquals(USERNAME, result);
     }
@@ -67,7 +67,7 @@ class JwtTokenUtilTest {
         configureJwtProperties();
         String invalidToken = "invalid.jwt.token";
 
-        assertThrows(JwtException.class, () -> jwtTokenUtil.getUsernameFromToken(invalidToken));
+        assertThrows(JwtException.class, () -> jwtTokenHandler.getUsernameFromToken(invalidToken));
     }
 
     @Test
@@ -75,15 +75,15 @@ class JwtTokenUtilTest {
         configureJwtProperties();
         String malformedToken = "not.a.jwt";
 
-        assertThrows(JwtException.class, () -> jwtTokenUtil.getUsernameFromToken(malformedToken));
+        assertThrows(JwtException.class, () -> jwtTokenHandler.getUsernameFromToken(malformedToken));
     }
 
     @Test
     void testGetTokenType_whenAccessToken_shouldReturnAccessType() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        String tokenType = jwtTokenUtil.getTokenType(token);
+        String tokenType = jwtTokenHandler.getTokenType(token);
 
         assertEquals("access", tokenType);
     }
@@ -91,9 +91,9 @@ class JwtTokenUtilTest {
     @Test
     void testGetTokenType_whenRefreshToken_shouldReturnRefreshType() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String token = jwtTokenHandler.generateRefreshToken(USERNAME);
 
-        String tokenType = jwtTokenUtil.getTokenType(token);
+        String tokenType = jwtTokenHandler.getTokenType(token);
 
         assertEquals("refresh", tokenType);
     }
@@ -101,10 +101,10 @@ class JwtTokenUtilTest {
     @Test
     void testGetExpirationDateFromToken_whenValidToken_shouldReturnFutureDate() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
         Date now = new Date();
 
-        Date expirationDate = jwtTokenUtil.getExpirationDateFromToken(token);
+        Date expirationDate = jwtTokenHandler.getExpirationDateFromToken(token);
 
         assertNotNull(expirationDate);
         assertTrue(expirationDate.after(now));
@@ -113,9 +113,9 @@ class JwtTokenUtilTest {
     @Test
     void isTokenExpired_whenValidToken_shouldReturnFalse() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        Boolean isExpired = jwtTokenUtil.isTokenExpired(token);
+        boolean isExpired = jwtTokenHandler.isTokenExpired(token);
 
         assertFalse(isExpired);
     }
@@ -123,7 +123,7 @@ class JwtTokenUtilTest {
     @Test
     void testIsTokenExpired_whenExpiredToken_shouldReturnTrue() {
         configureJwtPropertiesWithShortExpiration();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
         try {
             Thread.sleep(1100);
@@ -131,7 +131,7 @@ class JwtTokenUtilTest {
             Thread.currentThread().interrupt();
         }
 
-        Boolean isExpired = jwtTokenUtil.isTokenExpired(token);
+        boolean isExpired = jwtTokenHandler.isTokenExpired(token);
 
         assertTrue(isExpired);
     }
@@ -139,9 +139,9 @@ class JwtTokenUtilTest {
     @Test
     void testValidateAccessToken_whenValidTokenAndMatchingUsername_shouldReturnTrue() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        Boolean isValid = jwtTokenUtil.validateAccessToken(token, USERNAME);
+        boolean isValid = jwtTokenHandler.validateAccessToken(token, USERNAME);
 
         assertTrue(isValid);
     }
@@ -149,10 +149,10 @@ class JwtTokenUtilTest {
     @Test
     void testValidateAccessToken_whenValidTokenButDifferentUsername_shouldReturnFalse() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
         String differentUsername = "different.user";
 
-        Boolean isValid = jwtTokenUtil.validateAccessToken(token, differentUsername);
+        boolean isValid = jwtTokenHandler.validateAccessToken(token, differentUsername);
 
         assertFalse(isValid);
     }
@@ -160,9 +160,9 @@ class JwtTokenUtilTest {
     @Test
     void testValidateAccessToken_whenRefreshTokenProvided_shouldReturnFalse() {
         configureJwtProperties();
-        String refreshToken = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String refreshToken = jwtTokenHandler.generateRefreshToken(USERNAME);
 
-        Boolean isValid = jwtTokenUtil.validateAccessToken(refreshToken, USERNAME);
+        boolean isValid = jwtTokenHandler.validateAccessToken(refreshToken, USERNAME);
 
         assertFalse(isValid);
     }
@@ -170,7 +170,7 @@ class JwtTokenUtilTest {
     @Test
     void testValidateAccessToken_whenExpiredToken_shouldReturnFalse() {
         configureJwtPropertiesWithShortExpiration();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
         try {
             Thread.sleep(1100);
@@ -178,7 +178,7 @@ class JwtTokenUtilTest {
             Thread.currentThread().interrupt();
         }
 
-        Boolean isValid = jwtTokenUtil.validateAccessToken(token, USERNAME);
+        boolean isValid = jwtTokenHandler.validateAccessToken(token, USERNAME);
 
         assertFalse(isValid);
     }
@@ -186,9 +186,9 @@ class JwtTokenUtilTest {
     @Test
     void testValidateRefreshToken_whenValidRefreshTokenAndMatchingUsername_shouldReturnTrue() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String token = jwtTokenHandler.generateRefreshToken(USERNAME);
 
-        Boolean isValid = jwtTokenUtil.validateRefreshToken(token, USERNAME);
+        boolean isValid = jwtTokenHandler.validateRefreshToken(token, USERNAME);
 
         assertTrue(isValid);
     }
@@ -196,10 +196,10 @@ class JwtTokenUtilTest {
     @Test
     void testValidateRefreshToken_whenValidTokenButDifferentUsername_shouldReturnFalse() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String token = jwtTokenHandler.generateRefreshToken(USERNAME);
         String differentUsername = "different.user";
 
-        Boolean isValid = jwtTokenUtil.validateRefreshToken(token, differentUsername);
+        boolean isValid = jwtTokenHandler.validateRefreshToken(token, differentUsername);
 
         assertFalse(isValid);
     }
@@ -207,9 +207,9 @@ class JwtTokenUtilTest {
     @Test
     void testValidateRefreshToken_whenAccessTokenProvided_shouldReturnFalse() {
         configureJwtProperties();
-        String accessToken = jwtTokenUtil.generateAccessToken(USERNAME);
+        String accessToken = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        Boolean isValid = jwtTokenUtil.validateRefreshToken(accessToken, USERNAME);
+        boolean isValid = jwtTokenHandler.validateRefreshToken(accessToken, USERNAME);
 
         assertFalse(isValid);
     }
@@ -217,7 +217,7 @@ class JwtTokenUtilTest {
     @Test
     void testValidateRefreshToken_whenExpiredRefreshToken_shouldReturnFalse() throws Exception {
         configureRefreshTokenWithShortExpiration();
-        String token = jwtTokenUtil.generateRefreshToken(USERNAME);
+        String token = jwtTokenHandler.generateRefreshToken(USERNAME);
 
         try {
             Thread.sleep(1100);
@@ -225,44 +225,7 @@ class JwtTokenUtilTest {
             Thread.currentThread().interrupt();
         }
 
-        Boolean isValid = jwtTokenUtil.validateRefreshToken(token, USERNAME);
-
-        assertFalse(isValid);
-    }
-
-    @Test
-    void testValidateToken_whenValidTokenAndMatchingUsername_shouldReturnTrue() {
-        configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
-
-        Boolean isValid = jwtTokenUtil.validateToken(token, USERNAME);
-
-        assertTrue(isValid);
-    }
-
-    @Test
-    void testValidateToken_whenValidTokenButDifferentUsername_shouldReturnFalse() {
-        configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
-        String differentUsername = "jane.smith";
-
-        Boolean isValid = jwtTokenUtil.validateToken(token, differentUsername);
-
-        assertFalse(isValid);
-    }
-
-    @Test
-    void testValidateToken_whenExpiredToken_shouldReturnFalse() {
-        configureJwtPropertiesWithShortExpiration();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
-
-        try {
-            Thread.sleep(1100);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-        }
-
-        Boolean isValid = jwtTokenUtil.validateToken(token, USERNAME);
+        boolean isValid = jwtTokenHandler.validateRefreshToken(token, USERNAME);
 
         assertFalse(isValid);
     }
@@ -270,44 +233,44 @@ class JwtTokenUtilTest {
     @Test
     void testGenerateAccessToken_whenSecretTooShort_shouldPadSecretAndGenerateToken() {
         String shortSecret = "shortkey";
-        ReflectionTestUtils.setField(jwtTokenUtil, "secret", shortSecret);
-        ReflectionTestUtils.setField(jwtTokenUtil, "jwtExpiration", JWT_EXPIRATION);
-        ReflectionTestUtils.setField(jwtTokenUtil, "refreshExpiration", REFRESH_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "secret", shortSecret);
+        ReflectionTestUtils.setField(jwtTokenHandler, "jwtExpiration", JWT_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "refreshExpiration", REFRESH_EXPIRATION);
 
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
         assertNotNull(token);
-        String extractedUsername = jwtTokenUtil.getUsernameFromToken(token);
+        String extractedUsername = jwtTokenHandler.getUsernameFromToken(token);
         assertEquals(USERNAME, extractedUsername);
     }
 
     @Test
     void testGetClaimFromToken_whenValidToken_shouldReturnSpecificClaim() {
         configureJwtProperties();
-        String token = jwtTokenUtil.generateAccessToken(USERNAME);
+        String token = jwtTokenHandler.generateAccessToken(USERNAME);
 
-        String subject = jwtTokenUtil.getClaimFromToken(token, Claims::getSubject);
-        String tokenType = jwtTokenUtil.getClaimFromToken(token, claims -> claims.get("type", String.class));
+        String subject = jwtTokenHandler.getClaimFromToken(token, Claims::getSubject);
+        String tokenType = jwtTokenHandler.getClaimFromToken(token, claims -> claims.get("type", String.class));
 
         assertEquals(USERNAME, subject);
         assertEquals("access", tokenType);
     }
 
     private void configureJwtProperties() {
-        ReflectionTestUtils.setField(jwtTokenUtil, "secret", JWT_SECRET);
-        ReflectionTestUtils.setField(jwtTokenUtil, "jwtExpiration", JWT_EXPIRATION);
-        ReflectionTestUtils.setField(jwtTokenUtil, "refreshExpiration", REFRESH_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "secret", JWT_SECRET);
+        ReflectionTestUtils.setField(jwtTokenHandler, "jwtExpiration", JWT_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "refreshExpiration", REFRESH_EXPIRATION);
     }
 
     private void configureJwtPropertiesWithShortExpiration() {
-        ReflectionTestUtils.setField(jwtTokenUtil, "secret", JWT_SECRET);
-        ReflectionTestUtils.setField(jwtTokenUtil, "jwtExpiration", 1L);
-        ReflectionTestUtils.setField(jwtTokenUtil, "refreshExpiration", REFRESH_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "secret", JWT_SECRET);
+        ReflectionTestUtils.setField(jwtTokenHandler, "jwtExpiration", 1L);
+        ReflectionTestUtils.setField(jwtTokenHandler, "refreshExpiration", REFRESH_EXPIRATION);
     }
 
     private void configureRefreshTokenWithShortExpiration() {
-        ReflectionTestUtils.setField(jwtTokenUtil, "secret", JWT_SECRET);
-        ReflectionTestUtils.setField(jwtTokenUtil, "jwtExpiration", JWT_EXPIRATION);
-        ReflectionTestUtils.setField(jwtTokenUtil, "refreshExpiration", 1L);
+        ReflectionTestUtils.setField(jwtTokenHandler, "secret", JWT_SECRET);
+        ReflectionTestUtils.setField(jwtTokenHandler, "jwtExpiration", JWT_EXPIRATION);
+        ReflectionTestUtils.setField(jwtTokenHandler, "refreshExpiration", 1L);
     }
 }

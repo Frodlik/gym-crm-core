@@ -37,10 +37,10 @@ class TokenExtractorTest {
         request.addHeader("Authorization", "Bearer " + JWT_TOKEN);
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isPresent());
-        assertEquals(JWT_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(JWT_TOKEN, actual.get());
     }
 
     @Test
@@ -49,10 +49,10 @@ class TokenExtractorTest {
         request.setCookies(new Cookie(JWT_COOKIE_NAME, JWT_TOKEN));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isPresent());
-        assertEquals(JWT_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(JWT_TOKEN, actual.get());
     }
 
     @Test
@@ -64,10 +64,10 @@ class TokenExtractorTest {
         request.setCookies(new Cookie(JWT_COOKIE_NAME, cookieToken));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isPresent());
-        assertEquals(bearerToken, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(bearerToken, actual.get());
     }
 
     @Test
@@ -75,9 +75,9 @@ class TokenExtractorTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
     }
 
     @Test
@@ -86,9 +86,9 @@ class TokenExtractorTest {
         request.addHeader("Authorization", "InvalidPrefix " + JWT_TOKEN);
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
     }
 
     @Test
@@ -97,10 +97,10 @@ class TokenExtractorTest {
         request.setCookies(new Cookie(REFRESH_COOKIE_NAME, REFRESH_TOKEN));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractRefreshToken(request);
+        Optional<String> actual = tokenExtractor.extractRefreshToken(request);
 
-        assertTrue(result.isPresent());
-        assertEquals(REFRESH_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(REFRESH_TOKEN, actual.get());
     }
 
     @Test
@@ -108,9 +108,9 @@ class TokenExtractorTest {
         MockHttpServletRequest request = new MockHttpServletRequest();
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractRefreshToken(request);
+        Optional<String> actual = tokenExtractor.extractRefreshToken(request);
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
     }
 
     @Test
@@ -119,9 +119,9 @@ class TokenExtractorTest {
         request.setCookies(new Cookie("wrong-cookie-name", REFRESH_TOKEN));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractRefreshToken(request);
+        Optional<String> actual = tokenExtractor.extractRefreshToken(request);
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
     }
 
     @Test
@@ -131,10 +131,10 @@ class TokenExtractorTest {
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessTokenFromCurrentRequest();
+        Optional<String> actual = tokenExtractor.extractAccessTokenFromCurrentRequest();
 
-        assertTrue(result.isPresent());
-        assertEquals(JWT_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(JWT_TOKEN, actual.get());
     }
 
     @Test
@@ -142,9 +142,9 @@ class TokenExtractorTest {
         RequestContextHolder.resetRequestAttributes();
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessTokenFromCurrentRequest();
+        Optional<String> actual = tokenExtractor.extractAccessTokenFromCurrentRequest();
 
-        assertTrue(result.isEmpty());
+        assertTrue(actual.isEmpty());
     }
 
     @Test
@@ -154,10 +154,10 @@ class TokenExtractorTest {
         RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractRefreshTokenFromCurrentRequest();
+        Optional<String> actual = tokenExtractor.extractRefreshTokenFromCurrentRequest();
 
-        assertTrue(result.isPresent());
-        assertEquals(REFRESH_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(REFRESH_TOKEN, actual.get());
     }
 
     @Test
@@ -171,10 +171,10 @@ class TokenExtractorTest {
         request.setCookies(cookies);
         setTokenProperties();
 
-        Optional<String> result = tokenExtractor.extractAccessToken(request);
+        Optional<String> actual = tokenExtractor.extractAccessToken(request);
 
-        assertTrue(result.isPresent());
-        assertEquals(JWT_TOKEN, result.get());
+        assertTrue(actual.isPresent());
+        assertEquals(JWT_TOKEN, actual.get());
     }
 
     private void setTokenProperties() {

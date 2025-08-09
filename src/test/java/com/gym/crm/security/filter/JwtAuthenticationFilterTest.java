@@ -2,7 +2,7 @@ package com.gym.crm.security.filter;
 
 import com.gym.crm.security.CustomUserDetails;
 import com.gym.crm.security.CustomUserDetailsService;
-import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.security.JwtTokenHandler;
 import com.gym.crm.util.TokenExtractor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -31,10 +31,9 @@ import static org.mockito.Mockito.when;
 class JwtAuthenticationFilterTest {
     private static final String USERNAME = "shadow.fiend";
     private static final String ACCESS_TOKEN = "access.token.string";
-    private static final String REQUEST_URI = "/api/trainees/profile";
 
     @Mock
-    private JwtTokenUtil jwtTokenUtil;
+    private JwtTokenHandler jwtTokenHandler;
     @Mock
     private CustomUserDetailsService userDetailsService;
     @Mock
@@ -57,17 +56,16 @@ class JwtAuthenticationFilterTest {
     void testDoFilterInternal_whenValidTokenProvided_shouldSetAuthentication() throws ServletException, IOException {
         CustomUserDetails userDetails = createCustomUserDetails();
 
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(ACCESS_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenHandler.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
+        when(jwtTokenHandler.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil, times(2)).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler, times(2)).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNotNull(SecurityContextHolder.getContext().getAuthentication());
@@ -75,14 +73,13 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void testDoFilterInternal_whenNoTokenProvided_shouldNotSetAuthentication() throws ServletException, IOException {
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.empty());
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil, never()).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil, never()).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler, never()).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler, never()).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -90,15 +87,14 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void testDoFilterInternal_whenInvalidTokenProvided_shouldNotSetAuthentication() throws ServletException, IOException {
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(ACCESS_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(ACCESS_TOKEN)).thenThrow(new RuntimeException("Invalid token"));
+        when(jwtTokenHandler.getUsernameFromToken(ACCESS_TOKEN)).thenThrow(new RuntimeException("Invalid token"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil, never()).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler, never()).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -106,16 +102,15 @@ class JwtAuthenticationFilterTest {
 
     @Test
     void testDoFilterInternal_whenTokenValidationFails_shouldNotSetAuthentication() throws ServletException, IOException {
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(ACCESS_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(false);
+        when(jwtTokenHandler.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
+        when(jwtTokenHandler.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(false);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
@@ -128,33 +123,31 @@ class JwtAuthenticationFilterTest {
                 userDetails, null, userDetails.getAuthorities());
         SecurityContextHolder.getContext().setAuthentication(existingAuth);
 
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(ACCESS_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenHandler.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
+        when(jwtTokenHandler.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService, never()).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
     }
 
     @Test
     void testDoFilterInternal_whenUserDetailsServiceFails_shouldNotSetAuthentication() throws ServletException, IOException {
-        when(request.getRequestURI()).thenReturn(REQUEST_URI);
         when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(ACCESS_TOKEN));
-        when(jwtTokenUtil.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
-        when(jwtTokenUtil.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
+        when(jwtTokenHandler.getUsernameFromToken(ACCESS_TOKEN)).thenReturn(USERNAME);
+        when(jwtTokenHandler.validateAccessToken(ACCESS_TOKEN, USERNAME)).thenReturn(true);
         when(userDetailsService.loadUserByUsername(USERNAME)).thenThrow(new RuntimeException("User not found"));
 
         jwtAuthenticationFilter.doFilterInternal(request, response, filterChain);
 
         verify(tokenExtractor).extractAccessToken(request);
-        verify(jwtTokenUtil, times(2)).getUsernameFromToken(ACCESS_TOKEN);
-        verify(jwtTokenUtil).validateAccessToken(ACCESS_TOKEN, USERNAME);
+        verify(jwtTokenHandler, times(2)).getUsernameFromToken(ACCESS_TOKEN);
+        verify(jwtTokenHandler).validateAccessToken(ACCESS_TOKEN, USERNAME);
         verify(userDetailsService).loadUserByUsername(USERNAME);
         verify(filterChain).doFilter(request, response);
         assertNull(SecurityContextHolder.getContext().getAuthentication());
