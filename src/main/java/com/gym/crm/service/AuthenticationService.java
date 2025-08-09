@@ -1,5 +1,6 @@
 package com.gym.crm.service;
 
+import com.gym.crm.service.enums.UserType;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -8,7 +9,7 @@ public interface AuthenticationService {
 
     void refreshAccessToken(HttpServletRequest request, HttpServletResponse response);
 
-    String validateCredentials(String username, String password);
+    UserType validateCredentials(String username, String password);
 
     void validateTraineeCredentials(String username, String password);
 

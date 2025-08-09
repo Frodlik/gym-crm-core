@@ -1,5 +1,6 @@
-package com.gym.crm.util;
+package com.gym.crm.security;
 
+import com.gym.crm.service.enums.TokenType;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
@@ -11,10 +12,11 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.Objects;
 import java.util.function.Function;
 
 @Component
-public class JwtTokenUtil {
+public class JwtTokenHandler {
     @Value("${jwt.secret}")
     private String secret;
 
@@ -32,6 +34,7 @@ public class JwtTokenUtil {
 
             return Keys.hmacShaKeyFor(paddedKey);
         }
+
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -67,6 +70,11 @@ public class JwtTokenUtil {
         return getClaimFromToken(token, claims -> claims.get("type", String.class));
     }
 
+    public TokenType getTokenTypeEnum(String token) {
+        String tokenTypeString = getTokenType(token);
+        return TokenType.fromValue(tokenTypeString);
+    }
+
     public Date getExpirationDateFromToken(String token) {
         return getClaimFromToken(token, Claims::getExpiration);
     }
@@ -85,7 +93,7 @@ public class JwtTokenUtil {
                 .getPayload();
     }
 
-    public Boolean isTokenExpired(String token) {
+    public boolean isTokenExpired(String token) {
         try {
             final Date tokenExpiration = getExpirationDateFromToken(token);
 
@@ -95,29 +103,25 @@ public class JwtTokenUtil {
         }
     }
 
-    public Boolean validateAccessToken(String token, String username) {
+    public boolean validateAccessToken(String token, String username) {
         try {
-            final String tokenUsername = getUsernameFromToken(token);
-            final String tokenType = getTokenType(token);
+            String tokenUsername = getUsernameFromToken(token);
+            TokenType tokenType = getTokenTypeEnum(token);
 
-            return tokenUsername.equals(username) && "access".equals(tokenType) && !isTokenExpired(token);
-        } catch (ExpiredJwtException e) {
+            return Objects.equals(username, tokenUsername) && TokenType.ACCESS == tokenType && !isTokenExpired(token);
+        } catch (Exception e) {
             return false;
         }
     }
 
-    public Boolean validateRefreshToken(String token, String username) {
+    public boolean validateRefreshToken(String token, String username) {
         try {
-            final String tokenUsername = getUsernameFromToken(token);
-            final String tokenType = getTokenType(token);
+            String tokenUsername = getUsernameFromToken(token);
+            TokenType tokenType = getTokenTypeEnum(token);
 
-            return tokenUsername.equals(username) && "refresh".equals(tokenType) && !isTokenExpired(token);
-        } catch (ExpiredJwtException e) {
+            return Objects.equals(username, tokenUsername) && TokenType.REFRESH == tokenType && !isTokenExpired(token);
+        } catch (Exception e) {
             return false;
         }
-    }
-
-    public Boolean validateToken(String token, String username) {
-        return validateAccessToken(token, username);
     }
 }

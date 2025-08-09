@@ -76,13 +76,13 @@ jwt:
   secret: ${JWT_KEY}
   expiration: 900
   cookie:
-    name: auth-token
+    name: access-token
     secure: false
     http-only: true
   refresh:
     expiration: 604800
     cookie:
-      name: refreshToken
+      name: refresh-token
 
 server:
   servlet:

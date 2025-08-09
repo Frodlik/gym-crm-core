@@ -1,7 +1,7 @@
 package com.gym.crm.security.filter;
 
 import com.gym.crm.security.CustomUserDetailsService;
-import com.gym.crm.util.JwtTokenUtil;
+import com.gym.crm.security.JwtTokenHandler;
 import com.gym.crm.util.TokenExtractor;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -25,14 +25,12 @@ import java.util.Optional;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    private final JwtTokenUtil jwtTokenUtil;
+    private final JwtTokenHandler jwtTokenHandler;
     private final CustomUserDetailsService userDetailsService;
     private final TokenExtractor tokenExtractor;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
-        log.debug("Processing JWT authentication for: {}", request.getRequestURI());
-
         tokenExtractor.extractAccessToken(request)
                 .filter(this::isValidAccessToken)
                 .ifPresent(token -> setAuthenticationFromToken(token, request));
@@ -43,20 +41,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isValidAccessToken(String token) {
         try {
             return extractUsernameFromToken(token)
-                    .map(username -> jwtTokenUtil.validateAccessToken(token, username))
+                    .map(username -> jwtTokenHandler.validateAccessToken(token, username))
                     .orElse(false);
         } catch (Exception e) {
-            log.debug("Invalid access token: {}", e.getMessage());
             return false;
         }
     }
 
     private Optional<String> extractUsernameFromToken(String token) {
         try {
-            return Optional.ofNullable(jwtTokenUtil.getUsernameFromToken(token));
+            return Optional.ofNullable(jwtTokenHandler.getUsernameFromToken(token));
         } catch (Exception e) {
-            log.debug("Failed to extract username from token: {}", e.getMessage());
-
             return Optional.empty();
         }
     }
@@ -78,8 +73,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
             SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            log.debug("User {} authenticated successfully", username);
         } catch (Exception e) {
             log.warn("Failed to authenticate user {}: {}", username, e.getMessage());
         }
