@@ -26,6 +26,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -279,6 +280,54 @@ class AuthenticationServiceImplTest {
         assertEquals("Access denied. Only trainers can perform this operation", exception.getMessage());
     }
 
+    @Test
+    void testLogout_whenBothTokensPresent_shouldClearCookiesAndLogUsername() {
+        String accessToken = "valid-access-token";
+        String refreshToken = "valid-refresh-token";
+        setJwtProperties();
+
+        when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(accessToken));
+        when(tokenExtractor.extractRefreshToken(request)).thenReturn(Optional.of(refreshToken));
+        when(jwtTokenHandler.getUsernameFromToken(accessToken)).thenReturn(USERNAME);
+
+        authenticationService.logout(request, response);
+
+        verify(response, times(2)).addCookie(cookieCaptor.capture());
+        var cookies = cookieCaptor.getAllValues();
+        verifyTokenCookieCleared(cookies, ACCESS_COOKIE_NAME);
+        verifyTokenCookieCleared(cookies, REFRESH_COOKIE_NAME);
+        verify(jwtTokenHandler).getUsernameFromToken(accessToken);
+    }
+
+    @Test
+    void testLogout_whenOnlyAccessTokenPresent_shouldClearCookiesAndLogUsername() {
+        String accessToken = "valid-access-token";
+        setJwtProperties();
+
+        when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.of(accessToken));
+        when(tokenExtractor.extractRefreshToken(request)).thenReturn(Optional.empty());
+        when(jwtTokenHandler.getUsernameFromToken(accessToken)).thenReturn(USERNAME);
+
+        authenticationService.logout(request, response);
+
+        verify(response, times(2)).addCookie(any(Cookie.class));
+        verify(jwtTokenHandler).getUsernameFromToken(accessToken);
+    }
+
+    @Test
+    void testLogout_whenOnlyRefreshTokenPresent_shouldClearCookies() {
+        String refreshToken = "valid-refresh-token";
+        setJwtProperties();
+
+        when(tokenExtractor.extractAccessToken(request)).thenReturn(Optional.empty());
+        when(tokenExtractor.extractRefreshToken(request)).thenReturn(Optional.of(refreshToken));
+
+        authenticationService.logout(request, response);
+
+        verify(response, times(2)).addCookie(any(Cookie.class));
+        verify(jwtTokenHandler, never()).getUsernameFromToken(any());
+    }
+
     private Trainee createTrainee() {
         User user = createUser();
         return Trainee.builder()
@@ -310,5 +359,16 @@ class AuthenticationServiceImplTest {
         ReflectionTestUtils.setField(authenticationService, "jwtCookieHttpOnly", true);
         ReflectionTestUtils.setField(authenticationService, "jwtExpiration", JWT_EXPIRATION);
         ReflectionTestUtils.setField(authenticationService, "refreshExpiration", REFRESH_EXPIRATION);
+    }
+
+    private void verifyTokenCookieCleared(java.util.List<Cookie> cookies, String cookieName) {
+        Cookie cookie = cookies.stream()
+                .filter(c -> cookieName.equals(c.getName()))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("Cookie " + cookieName + " not found"));
+
+        assertNull(cookie.getValue());
+        assertEquals(0, cookie.getMaxAge());
+        assertEquals("/", cookie.getPath());
     }
 }

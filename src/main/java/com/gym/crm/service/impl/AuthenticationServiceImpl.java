@@ -111,6 +111,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    @Override
+    public void logout(HttpServletRequest request, HttpServletResponse response) {
+        Optional<String> accessTokenOpt = tokenExtractor.extractAccessToken(request);
+        Optional<String> refreshTokenOpt = tokenExtractor.extractRefreshToken(request);
+
+        if (accessTokenOpt.isEmpty() && refreshTokenOpt.isEmpty()) {
+            return;
+        }
+
+        clearTokenCookies(response);
+
+        accessTokenOpt.map(jwtTokenHandler::getUsernameFromToken)
+                .ifPresent(username -> logger.info("User logged out successfully: {}", username));
+    }
+
     private UserType validateUserCredentials(String username, String password) {
         Optional<Trainee> traineeOpt = traineeRepository.findTraineeByUser_Username(username);
         if (traineeOpt.isPresent()) {
@@ -162,5 +177,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         response.addCookie(refreshCookie);
         logger.debug("Refresh token set in cookie");
+    }
+
+    private void clearTokenCookies(HttpServletResponse response) {
+        clearAccessTokenCookie(response);
+        clearRefreshTokenCookie(response);
+    }
+
+    private void clearAccessTokenCookie(HttpServletResponse response) {
+        Cookie accessTokenCookie = new Cookie("access-token", null);
+        accessTokenCookie.setHttpOnly(jwtCookieHttpOnly);
+        accessTokenCookie.setSecure(jwtCookieSecure);
+        accessTokenCookie.setPath("/");
+        accessTokenCookie.setMaxAge(0);
+
+        response.addCookie(accessTokenCookie);
+        logger.debug("Access token cookie cleared");
+    }
+
+    private void clearRefreshTokenCookie(HttpServletResponse response) {
+        Cookie refreshTokenCookie = new Cookie("refresh-token", null);
+        refreshTokenCookie.setHttpOnly(true);
+        refreshTokenCookie.setSecure(jwtCookieSecure);
+        refreshTokenCookie.setPath("/");
+        refreshTokenCookie.setMaxAge(0);
+
+        response.addCookie(refreshTokenCookie);
+        logger.debug("Refresh token cookie cleared");
     }
 }

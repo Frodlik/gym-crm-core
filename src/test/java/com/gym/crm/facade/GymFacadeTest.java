@@ -41,9 +41,12 @@ import com.gym.crm.openapi.model.TrainerUpdateRequest;
 import com.gym.crm.openapi.model.TrainerUpdateResponse;
 import com.gym.crm.openapi.model.TrainingCreateRequest;
 import com.gym.crm.security.AuthenticationContext;
+import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -75,7 +78,9 @@ import static com.gym.crm.facade.GymTestObjects.buildTrainerUpdateResponseDto;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingCreateRequest;
 import static com.gym.crm.facade.GymTestObjects.buildTrainingResponse;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -94,7 +99,13 @@ class GymFacadeTest {
     @Mock
     private TrainingMapper trainingMapper;
     @Mock
+    private AuthenticationService authenticationService;
+    @Mock
     private AuthenticationContext authenticationContext;
+    @Mock
+    private HttpServletRequest servletRequest;
+    @Mock
+    private HttpServletResponse servletResponse;
     @InjectMocks
     private GymFacade facade;
 
@@ -388,5 +399,23 @@ class GymFacadeTest {
                 .containsExactly(mappedResponse);
         verify(trainingService).getTrainerTrainingsByCriteria(expectedFilter);
         verify(trainingMapper).toRestTrainerTrainingGetResponse(serviceResponse);
+    }
+
+    @Test
+    void logout_whenSuccessful_shouldCallAuthenticationService() {
+        doNothing().when(authenticationService).logout(servletRequest, servletResponse);
+
+        facade.logout(servletRequest, servletResponse);
+
+        verify(authenticationService).logout(servletRequest, servletResponse);
+    }
+
+    @Test
+    void testLogoutThrowsException() {
+        doThrow(new RuntimeException("Logout failed"))
+                .when(authenticationService).logout(servletRequest, servletResponse);
+
+        assertThrows(RuntimeException.class, () -> facade.logout(servletRequest, servletResponse));
+        verify(authenticationService).logout(servletRequest, servletResponse);
     }
 }

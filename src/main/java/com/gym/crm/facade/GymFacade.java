@@ -41,6 +41,7 @@ import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.TraineeService;
 import com.gym.crm.service.TrainerService;
 import com.gym.crm.service.TrainingService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -68,6 +69,12 @@ public class GymFacade {
         logger.info("Facade: Logging in user");
 
         authenticationService.authenticateAndSetToken(request.getUsername(), request.getPassword(), response);
+    }
+
+    public void logout(HttpServletRequest request, HttpServletResponse response){
+        logger.info("Facade: User logout");
+
+        authenticationService.logout(request, response);
     }
 
     public TraineeCreateResponse createTrainee(TraineeCreateRequest request) {

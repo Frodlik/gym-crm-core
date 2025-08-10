@@ -5,6 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.gym.crm.facade.GymFacade;
 import com.gym.crm.openapi.model.ChangePasswordRequest;
 import com.gym.crm.openapi.model.LoginRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -276,5 +277,37 @@ class AuthControllerTest {
         result.andExpect(status().isOk());
 
         verify(gymFacade).changePassword(any(ChangePasswordRequest.class));
+    }
+
+    @Test
+    void testLogoutSuccess() throws Exception {
+        doNothing().when(gymFacade).logout(any(HttpServletRequest.class), any(HttpServletResponse.class));
+
+        var result = mockMvc.perform(post(BASE_PATH + "/auth/logout")
+                .contentType(MediaType.APPLICATION_JSON));
+
+        result.andExpect(status().isOk())
+                .andExpect(content().string(""));
+
+        verify(gymFacade).logout(any(HttpServletRequest.class), any(HttpServletResponse.class));
+    }
+
+    @Test
+    void logout_withoutContentType_shouldStillWork() throws Exception {
+        doNothing().when(gymFacade).logout(any(HttpServletRequest.class), any(HttpServletResponse.class));
+
+        mockMvc.perform(post(BASE_PATH + "/auth/logout"))
+                .andExpect(status().isOk());
+
+        verify(gymFacade).logout(any(HttpServletRequest.class), any(HttpServletResponse.class));
+    }
+
+    @Test
+    void logout_withGetMethod_shouldReturnMethodNotAllowed() throws Exception {
+        mockMvc.perform(post(BASE_PATH + "/auth/logout").with(request -> {
+                    request.setMethod("GET");
+                    return request;
+                }))
+                .andExpect(status().isMethodNotAllowed());
     }
 }

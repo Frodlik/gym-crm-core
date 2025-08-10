@@ -14,4 +14,6 @@ public interface AuthenticationService {
     void validateTraineeCredentials(String username, String password);
 
     void validateTrainerCredentials(String username, String password);
+
+    void logout(HttpServletRequest request, HttpServletResponse response);
 }
