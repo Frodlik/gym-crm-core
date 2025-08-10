@@ -2,11 +2,13 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.exception.NotAuthenticatedException;
+import com.gym.crm.exception.UserBlockedException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.model.User;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.service.BruteForceProtectionService;
 import com.gym.crm.service.enums.UserType;
 import com.gym.crm.security.JwtTokenHandler;
 import com.gym.crm.util.TokenExtractor;
@@ -23,6 +25,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -61,6 +64,8 @@ class AuthenticationServiceImplTest {
     @Mock
     private TokenExtractor tokenExtractor;
     @Mock
+    private BruteForceProtectionService bruteForceProtectionService;
+    @Mock
     private HttpServletRequest request;
     @Mock
     private HttpServletResponse response;
@@ -79,6 +84,7 @@ class AuthenticationServiceImplTest {
 
         authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response);
 
+        verify(bruteForceProtectionService).recordSuccessfulAttempt(USERNAME);
         verify(response, times(2)).addCookie(cookieCaptor.capture());
         Cookie accessCookie = cookieCaptor.getAllValues().get(0);
         Cookie refreshCookie = cookieCaptor.getAllValues().get(1);
@@ -88,6 +94,23 @@ class AuthenticationServiceImplTest {
         assertEquals(REFRESH_COOKIE_NAME, refreshCookie.getName());
         assertEquals(REFRESH_TOKEN, refreshCookie.getValue());
         assertTrue(refreshCookie.isHttpOnly());
+    }
+
+    @Test
+    void testAuthenticateAndSetToken_whenUserIsBlocked_shouldThrowUserBlockedException() {
+        LocalDateTime blockExpiration = LocalDateTime.now().plusMinutes(5);
+
+        when(bruteForceProtectionService.isUserBlocked(USERNAME)).thenReturn(true);
+        when(bruteForceProtectionService.getBlockExpiration(USERNAME)).thenReturn(blockExpiration);
+
+        UserBlockedException exception = assertThrows(UserBlockedException.class,
+                () -> authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response));
+
+        assertEquals(USERNAME, exception.getUsername());
+        assertEquals(blockExpiration, exception.getBlockedUntil());
+        verify(bruteForceProtectionService, never()).recordFailedAttempt(any());
+        verify(bruteForceProtectionService, never()).recordSuccessfulAttempt(any());
+        verify(response, never()).addCookie(any());
     }
 
     @Test
@@ -113,6 +136,7 @@ class AuthenticationServiceImplTest {
     void testAuthenticateAndSetToken_whenInvalidPassword_shouldThrowNotAuthenticatedException() {
         Trainee trainee = createTrainee();
 
+        when(bruteForceProtectionService.isUserBlocked(USERNAME)).thenReturn(false);
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.of(trainee));
         when(userCredentialsGenerator.matches(PASSWORD, ENCODED_PASSWORD)).thenReturn(false);
 
@@ -120,19 +144,22 @@ class AuthenticationServiceImplTest {
                 () -> authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response));
 
         assertEquals("Invalid password for trainee: " + USERNAME, exception.getMessage());
+        verify(bruteForceProtectionService).recordFailedAttempt(USERNAME);
         verify(response, never()).addCookie(any());
         verify(jwtTokenHandler, never()).generateAccessToken(any());
     }
 
     @Test
     void testAuthenticateAndSetToken_whenUserNotFound_shouldThrowCoreServiceException() {
+        when(bruteForceProtectionService.isUserBlocked(USERNAME)).thenReturn(false);
         when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
         when(trainerRepository.findTrainerByUser_Username(USERNAME)).thenReturn(Optional.empty());
 
-        CoreServiceException exception = assertThrows(CoreServiceException.class,
+        NotAuthenticatedException exception = assertThrows(NotAuthenticatedException.class,
                 () -> authenticationService.authenticateAndSetToken(USERNAME, PASSWORD, response));
 
-        assertEquals("User not found: " + USERNAME, exception.getMessage());
+        assertEquals("Invalid username or password", exception.getMessage());
+        verify(bruteForceProtectionService).recordFailedAttempt(USERNAME);
         verify(response, never()).addCookie(any());
         verify(jwtTokenHandler, never()).generateAccessToken(any());
     }
@@ -215,17 +242,6 @@ class AuthenticationServiceImplTest {
         assertEquals("TRAINER", actual.toString());
         verify(traineeRepository).findTraineeByUser_Username(USERNAME);
         verify(trainerRepository).findTrainerByUser_Username(USERNAME);
-    }
-
-    @Test
-    void testValidateCredentials_whenUserNotFound_shouldThrowCoreServiceException() {
-        when(traineeRepository.findTraineeByUser_Username(USERNAME)).thenReturn(Optional.empty());
-        when(trainerRepository.findTrainerByUser_Username(USERNAME)).thenReturn(Optional.empty());
-
-        CoreServiceException exception = assertThrows(CoreServiceException.class,
-                () -> authenticationService.validateCredentials(USERNAME, PASSWORD));
-
-        assertEquals("User not found: " + USERNAME, exception.getMessage());
     }
 
     @Test
