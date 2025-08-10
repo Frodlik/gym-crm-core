@@ -19,6 +19,7 @@ import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
 import static com.gym.crm.exception.ApiError.INVALID_REQUEST_ERROR;
 import static com.gym.crm.exception.ApiError.NOT_FOUND_ERROR;
 import static com.gym.crm.exception.ApiError.SERVER_ERROR;
+import static com.gym.crm.exception.ApiError.TOO_MANY_REQUESTS_ERROR;
 import static com.gym.crm.exception.ApiError.VALIDATION_ERROR;
 
 @ControllerAdvice
@@ -76,6 +77,13 @@ public class ErrorHandler {
         logger.error("Authentication Exception: {}", ex.getMessage(), ex);
 
         return buildErrorResponse(AUTHENTICATION_ERROR);
+    }
+
+    @ExceptionHandler(UserBlockedException.class)
+    public ResponseEntity<ErrorResponse> handleUserBlockedException(Exception ex){
+        logger.error("User Blocked Exception: {}", ex.getMessage());
+
+        return buildErrorResponse(TOO_MANY_REQUESTS_ERROR);
     }
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(ApiError apiError) {

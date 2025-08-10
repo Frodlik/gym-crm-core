@@ -1,6 +1,6 @@
 package com.gym.crm.config;
 
-import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.service.CustomUserDetailsService;
 import com.gym.crm.security.filter.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

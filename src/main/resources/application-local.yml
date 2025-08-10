@@ -22,3 +22,8 @@ management:
     web:
       exposure:
         include: "*"
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5

@@ -90,3 +90,8 @@ server:
       cookie:
         same-site: lax
         secure: false
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5

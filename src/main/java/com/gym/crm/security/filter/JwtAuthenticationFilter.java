@@ -1,6 +1,6 @@
 package com.gym.crm.security.filter;
 
-import com.gym.crm.security.CustomUserDetailsService;
+import com.gym.crm.security.service.CustomUserDetailsService;
 import com.gym.crm.security.JwtTokenHandler;
 import com.gym.crm.util.TokenExtractor;
 import jakarta.servlet.FilterChain;

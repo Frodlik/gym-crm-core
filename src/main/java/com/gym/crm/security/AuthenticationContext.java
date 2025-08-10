@@ -1,5 +1,6 @@
 package com.gym.crm.security;
 
+import com.gym.crm.security.service.CustomUserDetailsService;
 import com.gym.crm.util.TokenExtractor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

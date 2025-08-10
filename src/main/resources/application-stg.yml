@@ -39,3 +39,8 @@ logging:
 
 server:
   port: 8080
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5
