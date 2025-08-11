@@ -60,11 +60,13 @@ public class BruteForceProtectionService {
 
     @Scheduled(fixedRate = 600000)
     public void cleanupExpiredEntries() {
-        attemptCache.entrySet().removeIf(entry -> {
-            LoginAttemptInfo info = entry.getValue();
-
-            return !info.isBlocked() && info.getFailedAttempts() > 0;
-        });
+        attemptCache.entrySet().removeIf(this::isExpiredEntry);
         logger.debug("Cleaned up expired brute force entries");
+    }
+
+    private boolean isExpiredEntry(Map.Entry<String, LoginAttemptInfo> entry) {
+        LoginAttemptInfo info = entry.getValue();
+
+        return !info.isBlocked() && info.getFailedAttempts() > 0;
     }
 }

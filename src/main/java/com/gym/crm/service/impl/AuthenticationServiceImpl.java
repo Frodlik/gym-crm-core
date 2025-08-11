@@ -66,10 +66,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             setTokenCookies(response, accessToken, refreshToken);
             logger.info("{} authenticated successfully: {}", userType, username);
-
         } catch (NotAuthenticatedException | CoreServiceException e) {
             bruteForceProtectionService.recordFailedAttempt(username);
-            logger.warn("Failed authentication attempt for user: {} - {}", username, e.getMessage());
             throw e;
         }
     }
@@ -108,11 +106,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
             bruteForceProtectionService.recordSuccessfulAttempt(username);
             logger.debug("Credentials validated successfully for user: {}", username);
-            return userType;
 
+            return userType;
         } catch (NotAuthenticatedException | CoreServiceException e) {
             bruteForceProtectionService.recordFailedAttempt(username);
-            logger.warn("Failed credential validation for user: {} - {}", username, e.getMessage());
             throw e;
         }
     }
@@ -159,7 +156,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private void checkUserNotBlocked(String username) {
         if (bruteForceProtectionService.isUserBlocked(username)) {
             LocalDateTime blockExpiration = bruteForceProtectionService.getBlockExpiration(username);
-            logger.warn("Blocked user {} attempted to authenticate. Blocked until: {}", username, blockExpiration);
             throw new UserBlockedException(username, blockExpiration);
         }
     }
