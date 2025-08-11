@@ -58,3 +58,8 @@ server:
     threads:
       max: 200
       min-spare: 20
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5

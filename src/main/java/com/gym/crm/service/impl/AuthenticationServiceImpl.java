@@ -2,10 +2,12 @@ package com.gym.crm.service.impl;
 
 import com.gym.crm.exception.CoreServiceException;
 import com.gym.crm.exception.NotAuthenticatedException;
+import com.gym.crm.exception.UserBlockedException;
 import com.gym.crm.model.Trainee;
 import com.gym.crm.model.Trainer;
 import com.gym.crm.repository.TraineeRepository;
 import com.gym.crm.repository.TrainerRepository;
+import com.gym.crm.security.service.BruteForceProtectionService;
 import com.gym.crm.service.AuthenticationService;
 import com.gym.crm.service.enums.UserType;
 import com.gym.crm.security.JwtTokenHandler;
@@ -20,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static com.gym.crm.service.enums.UserType.TRAINEE;
@@ -35,6 +38,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final UserCredentialsGenerator userCredentialsGenerator;
     private final JwtTokenHandler jwtTokenHandler;
     private final TokenExtractor tokenExtractor;
+    private final BruteForceProtectionService bruteForceProtectionService;
 
     @Value("${jwt.cookie.secure}")
     private boolean jwtCookieSecure;
@@ -50,16 +54,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public void authenticateAndSetToken(String username, String password, HttpServletResponse response) {
-        if (username == null || password == null) {
-            throw new CoreServiceException("Username and password are required");
+        validateInputCredentials(username, password);
+        checkUserNotBlocked(username);
+
+        try {
+            UserType userType = performAuthentication(username, password);
+            bruteForceProtectionService.recordSuccessfulAttempt(username);
+
+            String accessToken = jwtTokenHandler.generateAccessToken(username);
+            String refreshToken = jwtTokenHandler.generateRefreshToken(username);
+
+            setTokenCookies(response, accessToken, refreshToken);
+            logger.info("{} authenticated successfully: {}", userType, username);
+        } catch (NotAuthenticatedException | CoreServiceException e) {
+            bruteForceProtectionService.recordFailedAttempt(username);
+            throw e;
         }
-
-        UserType userType = validateUserCredentials(username, password);
-        String accessToken = jwtTokenHandler.generateAccessToken(username);
-        String refreshToken = jwtTokenHandler.generateRefreshToken(username);
-
-        setTokenCookies(response, accessToken, refreshToken);
-        logger.info("{} authenticated successfully: {}", userType, username);
     }
 
     @Override
@@ -69,8 +79,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         try {
             String username = jwtTokenHandler.getUsernameFromToken(refreshToken);
-            boolean isValid = jwtTokenHandler.validateRefreshToken(refreshToken, username);
+            checkUserNotBlocked(username);
 
+            boolean isValid = jwtTokenHandler.validateRefreshToken(refreshToken, username);
             if (!isValid) {
                 throw new NotAuthenticatedException("Invalid refresh token");
             }
@@ -79,6 +90,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             String newRefreshToken = jwtTokenHandler.generateRefreshToken(username);
 
             setTokenCookies(response, newAccessToken, newRefreshToken);
+            logger.debug("Tokens refreshed successfully for user: {}", username);
         } catch (Exception e) {
             throw new NotAuthenticatedException("Failed to refresh token");
         }
@@ -86,11 +98,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public UserType validateCredentials(String username, String password) {
-        if (username == null || password == null) {
-            throw new NotAuthenticatedException("Username and password are required");
-        }
+        validateInputCredentials(username, password);
+        checkUserNotBlocked(username);
 
-        return validateUserCredentials(username, password);
+        try {
+            UserType userType = performAuthentication(username, password);
+
+            bruteForceProtectionService.recordSuccessfulAttempt(username);
+            logger.debug("Credentials validated successfully for user: {}", username);
+
+            return userType;
+        } catch (NotAuthenticatedException | CoreServiceException e) {
+            bruteForceProtectionService.recordFailedAttempt(username);
+            throw e;
+        }
     }
 
     @Override
@@ -126,7 +147,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .ifPresent(username -> logger.info("User logged out successfully: {}", username));
     }
 
-    private UserType validateUserCredentials(String username, String password) {
+    private void validateInputCredentials(String username, String password) {
+        if (username == null || password == null) {
+            throw new CoreServiceException("Username and password are required");
+        }
+    }
+
+    private void checkUserNotBlocked(String username) {
+        if (bruteForceProtectionService.isUserBlocked(username)) {
+            LocalDateTime blockExpiration = bruteForceProtectionService.getBlockExpiration(username);
+            throw new UserBlockedException(username, blockExpiration);
+        }
+    }
+
+    private UserType performAuthentication(String username, String password) {
         Optional<Trainee> traineeOpt = traineeRepository.findTraineeByUser_Username(username);
         if (traineeOpt.isPresent()) {
             validatePassword(password, traineeOpt.get().getUser().getPassword(), TRAINEE, username);
@@ -141,7 +175,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             return TRAINER;
         }
 
-        throw new CoreServiceException("User not found: " + username);
+        throw new NotAuthenticatedException("Invalid username or password");
     }
 
     private void validatePassword(String rawPassword, String encodedPassword, UserType userType, String username) {

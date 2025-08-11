@@ -9,11 +9,14 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.http.ResponseEntity;
 
+import java.time.LocalDateTime;
+
 import static com.gym.crm.exception.ApiError.AUTHENTICATION_ERROR;
 import static com.gym.crm.exception.ApiError.DATABASE_ERROR;
 import static com.gym.crm.exception.ApiError.INVALID_REQUEST_ERROR;
 import static com.gym.crm.exception.ApiError.NOT_FOUND_ERROR;
 import static com.gym.crm.exception.ApiError.SERVER_ERROR;
+import static com.gym.crm.exception.ApiError.TOO_MANY_REQUESTS_ERROR;
 import static com.gym.crm.exception.ApiError.VALIDATION_ERROR;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -21,6 +24,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 class ErrorHandlerTest {
@@ -136,6 +140,30 @@ class ErrorHandlerTest {
         assertEquals(INTERNAL_SERVER_ERROR, actual.getStatusCode());
         assertEquals(String.valueOf(SERVER_ERROR.getCode()), actual.getBody().getErrorCode().toString());
         assertEquals(SERVER_ERROR.getMessage(), actual.getBody().getErrorMessage());
+    }
+
+    @Test
+    void handleUserBlockedException_shouldReturnTooManyRequestsError() {
+        LocalDateTime blockExpiration = LocalDateTime.now().plusMinutes(5);
+        UserBlockedException ex = new UserBlockedException("user.test", blockExpiration);
+
+        ResponseEntity<ErrorResponse> actual = errorHandler.handleUserBlockedException(ex);
+
+        assertNotNull(actual.getBody());
+        assertEquals(TOO_MANY_REQUESTS, actual.getStatusCode());
+        assertEquals(String.valueOf(TOO_MANY_REQUESTS_ERROR.getCode()), actual.getBody().getErrorCode().toString());
+        assertEquals(TOO_MANY_REQUESTS_ERROR.getMessage(), actual.getBody().getErrorMessage());
+    }
+
+    @Test
+    void handleUserBlockedException_shouldHandleNullBlockExpiration() {
+        UserBlockedException ex = new UserBlockedException("test.user", null);
+
+        ResponseEntity<ErrorResponse> actual = errorHandler.handleUserBlockedException(ex);
+
+        assertNotNull(actual.getBody());
+        assertEquals(TOO_MANY_REQUESTS, actual.getStatusCode());
+        assertTrue(actual.getBody().getErrorMessage().contains("Too many requests"));
     }
 }
 

@@ -24,3 +24,8 @@ logging:
     root: INFO
   file:
     name: /var/log/gym-crm/app.log
+
+security:
+  brute-force:
+    max-attempts: 3
+    block-duration-minutes: 5

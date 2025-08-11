@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.TOO_MANY_REQUESTS;
 import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 
 @Getter
@@ -16,7 +17,8 @@ public enum ApiError {
     AUTHORIZATION_ERROR(2806, "User is not authorized for request operation", UNAUTHORIZED),
     NOT_FOUND_ERROR(2835, "Requested data was not found: ", NOT_FOUND),
     SERVER_ERROR(3200, "Internal processing error", INTERNAL_SERVER_ERROR),
-    DATABASE_ERROR(3358, "Unexpected database access failure", INTERNAL_SERVER_ERROR);
+    DATABASE_ERROR(3358, "Unexpected database access failure", INTERNAL_SERVER_ERROR),
+    TOO_MANY_REQUESTS_ERROR(4290, "Too many requests, please try again later", TOO_MANY_REQUESTS);
 
     private final int code;
     private final String message;

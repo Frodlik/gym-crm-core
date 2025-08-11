@@ -1,5 +1,6 @@
 package com.gym.crm.security;
 
+import com.gym.crm.security.service.CustomUserDetailsService;
 import com.gym.crm.util.TokenExtractor;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
