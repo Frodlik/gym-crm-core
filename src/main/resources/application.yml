@@ -70,8 +70,7 @@ management:
 
 gca:
   cors:
-    allowed-origins:
-      - "*"
+    allowed-origins: "*"
   metrics:
     disk-space-threshold-bytes: 104857600
 
