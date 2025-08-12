@@ -69,6 +69,9 @@ management:
       enabled: true
 
 gca:
+  cors:
+    allowed-origins:
+      - "*"
   metrics:
     disk-space-threshold-bytes: 104857600
 
